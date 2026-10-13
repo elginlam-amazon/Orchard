@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Drivers;
 using Orchard.ContentManagement.Handlers;
@@ -12,6 +15,7 @@ using Orchard.Data;
 using Orchard.DisplayManagement;
 using Orchard.Forms.Services;
 using Orchard.Localization;
+using Orchard.Mvc;
 using Orchard.Projections.Descriptors.Layout;
 using Orchard.Projections.Descriptors.Property;
 using Orchard.Projections.Models;
@@ -65,7 +69,7 @@ namespace Orchard.Projections.Drivers
             var query = part.Record.QueryPartRecord;
 
             // retrieving paging parameters
-            var queryString = _orchardServices.WorkContext.HttpContext.Request.QueryString;
+            var queryString = _orchardServices.WorkContext.HttpContext.Request.Query;
 
             var pageKey = string.IsNullOrWhiteSpace(part.Record.PagerSuffix) ? "page" : "page-" + part.Record.PagerSuffix;
             var page = 0;
@@ -74,7 +78,7 @@ namespace Orchard.Projections.Drivers
             int pageSize = part.Record.Items;
 
             // don't try to page if not necessary
-            if (part.Record.DisplayPager && queryString.AllKeys.Contains(pageKey))
+            if (part.Record.DisplayPager && queryString.Keys.Contains(pageKey))
             {
                 int.TryParse(queryString[pageKey], out page);
             }
@@ -88,7 +92,7 @@ namespace Orchard.Projections.Drivers
             // if pageSize is provided on the query string, ensure it is compatible with allowed limits
             var pageSizeKey = "pageSize" + part.Record.PagerSuffix;
 
-            if (queryString.AllKeys.Contains(pageSizeKey))
+            if (queryString.Keys.Contains(pageSizeKey))
             {
                 if (int.TryParse(queryString[pageSizeKey], out int qsPageSize))
                 {
@@ -228,7 +232,7 @@ namespace Orchard.Projections.Drivers
                             // add the Context to the shape
                             localResult.Context(renderLayoutContext);
 
-                            list.Add(_orchardServices.New.LayoutGroup(Key: new MvcHtmlString(group.Key), List: localResult));
+                            list.Add(_orchardServices.New.LayoutGroup(Key: new HtmlString(group.Key), List: localResult));
                         }
 
                         return list;

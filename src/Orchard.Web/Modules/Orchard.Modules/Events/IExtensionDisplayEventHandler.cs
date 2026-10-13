@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Environment.Extensions.Models;
 using Orchard.Events;
 
@@ -10,6 +10,6 @@ namespace Orchard.Modules.Events
         /// <summary>
         /// Called before an extension is displayed
         /// </summary>
-        IEnumerable<string> Displaying(ExtensionDescriptor extensionDescriptor, RequestContext requestContext);
+        IEnumerable<string> Displaying(ExtensionDescriptor extensionDescriptor, ActionContext requestContext);
     }
 }

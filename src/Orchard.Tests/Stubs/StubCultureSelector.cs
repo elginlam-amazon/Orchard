@@ -1,4 +1,4 @@
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Localization.Services;
 
 namespace Orchard.Tests.Stubs
@@ -12,7 +12,7 @@ namespace Orchard.Tests.Stubs
             _cultureName = cultureName;
         }
 
-        public CultureSelectorResult GetCulture(HttpContextBase context)
+        public CultureSelectorResult GetCulture(HttpContext context)
         {
             return new CultureSelectorResult { Priority = 1, CultureName = _cultureName };
         }

@@ -5,6 +5,7 @@ using Orchard.ContentManagement;
 using Orchard.Core.Common.Models;
 using Orchard.Core.XmlRpc;
 using Orchard.Core.XmlRpc.Models;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Core.Common.Services
 {

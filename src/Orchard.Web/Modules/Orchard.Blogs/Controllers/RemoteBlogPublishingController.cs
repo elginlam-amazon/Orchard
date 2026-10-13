@@ -1,13 +1,13 @@
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Blogs.Models;
 using Orchard.Blogs.Routing;
 using Orchard.Blogs.Services;
 using Orchard.Environment.Extensions;
 using Orchard.Logging;
 using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
+using Orchard.Mvc.Routes;
 
 namespace Orchard.Blogs.Controllers
 {
@@ -16,13 +16,13 @@ namespace Orchard.Blogs.Controllers
     {
         private readonly IBlogService _blogService;
         private readonly IRsdConstraint _rsdConstraint;
-        private readonly RouteCollection _routeCollection;
+        private readonly OrchardRouteCollection _routeCollection;
 
         public RemoteBlogPublishingController(
             IOrchardServices services,
             IBlogService blogService,
             IRsdConstraint rsdConstraint,
-            RouteCollection routeCollection)
+            OrchardRouteCollection routeCollection)
         {
             _blogService = blogService;
             _rsdConstraint = rsdConstraint;
@@ -39,16 +39,16 @@ namespace Orchard.Blogs.Controllers
             var blogPath = _rsdConstraint.FindPath(path);
 
             if (blogPath == null)
-                return HttpNotFound();
+                return NotFound();
 
             BlogPart blogPart = _blogService.Get(blogPath);
 
             if (blogPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             const string manifestUri = "http://archipelago.phrasewise.com/rsd";
 
-            var urlHelper = new UrlHelper(ControllerContext.RequestContext, _routeCollection);
+            var urlHelper = HtmlHelperFactory.CreateUrlHelper(ControllerContext);
             var url = urlHelper.AbsoluteAction("", "", new { Area = "XmlRpc" });
 
             var options = new XElement(
@@ -68,7 +68,7 @@ namespace Orchard.Blogs.Controllers
                                         new XAttribute("version", "1.0"),
                                         options));
 
-            Response.Cache.SetCacheability(HttpCacheability.NoCache);
+            Response.Headers.CacheControl = "no-cache";
             return Content(doc.ToString(), "text/xml");
         }
     }

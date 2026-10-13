@@ -1,5 +1,5 @@
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
+using System;
+using Azure.Storage.Blobs;
 using NUnit.Framework;
 using Orchard.Azure.Services.Environment.Configuration;
 
@@ -9,7 +9,7 @@ namespace Orchard.Azure.Tests
     {
         protected IPlatformConfigurationAccessor PlatformConfigurationAccessor = new DefaultPlatformConfigurationAccessor();
         protected abstract string StorageConnectionStringName { get; }
-        protected CloudStorageAccount DevAccount { get; private set; }
+        protected BlobServiceClient DevAccount { get; private set; }
 
         protected abstract void OnInit();
 
@@ -18,44 +18,27 @@ namespace Orchard.Azure.Tests
         {
             var connectionString = PlatformConfigurationAccessor.GetSetting(StorageConnectionStringName, "default", "");
 
-            CloudStorageAccount.TryParse(connectionString, out CloudStorageAccount devAccount);
-            DevAccount = devAccount;
+            // formerly CloudStorageAccount.TryParse: an invalid connection string leaves the account undefined
+            try
+            {
+                DevAccount = string.IsNullOrEmpty(connectionString) ? null : new BlobServiceClient(connectionString);
+            }
+            catch (FormatException)
+            {
+                DevAccount = null;
+            }
 
             OnInit();
         }
 
-        protected void DeleteAllBlobs(string containerName, CloudStorageAccount account)
+        protected void DeleteAllBlobs(string containerName, BlobServiceClient account)
         {
-            var blobClient = account.CreateCloudBlobClient();
-            var container = blobClient.GetContainerReference(containerName);
+            var container = account.GetBlobContainerClient(containerName);
 
-            foreach (var blob in container.ListBlobs())
+            // the flat listing returns the blobs of all the virtual directories
+            foreach (var blob in container.GetBlobs())
             {
-                if (blob is CloudBlob blobLeaf)
-                {
-                    blobLeaf.DeleteIfExists();
-                }
-
-                if (blob is CloudBlobDirectory directory)
-                {
-                    DeleteAllBlobs(directory);
-                }
-            }
-        }
-
-        private static void DeleteAllBlobs(CloudBlobDirectory cloudBlobDirectory)
-        {
-            foreach (var blob in cloudBlobDirectory.ListBlobs())
-            {
-                if (blob is CloudBlob blobLeaf)
-                {
-                    blobLeaf.DeleteIfExists();
-                }
-
-                if (blob is CloudBlobDirectory directory)
-                {
-                    DeleteAllBlobs(directory);
-                }
+                container.DeleteBlobIfExists(blob.Name);
             }
         }
     }

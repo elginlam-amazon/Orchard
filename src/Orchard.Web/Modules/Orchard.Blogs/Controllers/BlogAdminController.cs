@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Blogs.Extensions;
 using Orchard.Blogs.Models;
 using Orchard.Blogs.Services;
@@ -9,6 +9,7 @@ using Orchard.Data;
 using Orchard.DisplayManagement;
 using Orchard.Localization;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.Settings;
 using Orchard.UI.Admin;
 using Orchard.UI.Navigation;
@@ -17,7 +18,7 @@ using Orchard.UI.Notify;
 namespace Orchard.Blogs.Controllers
 {
 
-    [ValidateInput(false), Admin]
+    [Admin]
     public class BlogAdminController : Controller, IUpdateModel
     {
         private readonly IBlogService _blogService;
@@ -55,11 +56,11 @@ namespace Orchard.Blogs.Controllers
         public ActionResult Create()
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageBlogs, T("Not allowed to create blogs")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             BlogPart blog = Services.ContentManager.New<BlogPart>("Blog");
             if (blog == null)
-                return HttpNotFound();
+                return NotFound();
 
             var model = Services.ContentManager.BuildEditor(blog);
             return View(model);
@@ -69,7 +70,7 @@ namespace Orchard.Blogs.Controllers
         public ActionResult CreatePOST()
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageBlogs, T("Couldn't create blog")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var blog = Services.ContentManager.New<BlogPart>("Blog");
 
@@ -91,10 +92,10 @@ namespace Orchard.Blogs.Controllers
             var blog = _blogService.Get(blogId, VersionOptions.Latest);
 
             if (!Services.Authorizer.Authorize(Permissions.ManageBlogs, blog, T("Not allowed to edit blog")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (blog == null)
-                return HttpNotFound();
+                return NotFound();
 
             var model = Services.ContentManager.BuildEditor(blog);
             return View(model);
@@ -105,11 +106,11 @@ namespace Orchard.Blogs.Controllers
         public ActionResult EditDeletePOST(int blogId)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageBlogs, T("Couldn't delete blog")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var blog = _blogService.Get(blogId, VersionOptions.DraftRequired);
             if (blog == null)
-                return HttpNotFound();
+                return NotFound();
             _blogService.Delete(blog);
 
             Services.Notifier.Success(T("Blog was deleted."));
@@ -125,10 +126,10 @@ namespace Orchard.Blogs.Controllers
             var blog = _blogService.Get(blogId, VersionOptions.DraftRequired);
 
             if (!Services.Authorizer.Authorize(Permissions.ManageBlogs, blog, T("Couldn't edit blog")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (blog == null)
-                return HttpNotFound();
+                return NotFound();
 
             var model = Services.ContentManager.UpdateEditor(blog, this);
             if (!ModelState.IsValid)
@@ -147,12 +148,12 @@ namespace Orchard.Blogs.Controllers
         public ActionResult Remove(int blogId)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageBlogs, T("Couldn't delete blog")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var blog = _blogService.Get(blogId, VersionOptions.Latest);
 
             if (blog == null)
-                return HttpNotFound();
+                return NotFound();
 
             _blogService.Delete(blog);
 
@@ -183,7 +184,7 @@ namespace Orchard.Blogs.Controllers
             BlogPart blogPart = _blogService.Get(blogId, VersionOptions.Latest).As<BlogPart>();
 
             if (blogPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             var blogPosts = _blogPostService.Get(blogPart, pager.GetStartIndex(), pager.PageSize, VersionOptions.Latest).ToArray();
             var blogPostsShapes = blogPosts.Select(bp => _contentManager.BuildDisplay(bp, "SummaryAdmin")).ToArray();
@@ -201,7 +202,7 @@ namespace Orchard.Blogs.Controllers
             var request = Services.WorkContext.HttpContext.Request;
 
             // Set the currently selected path
-            Stack<MenuItem> selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, request.RequestContext.RouteData);
+            Stack<MenuItem> selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, request.HttpContext.GetActionContext().RouteData);
 
             // Populate local nav
             dynamic localMenuShape = Shape.LocalMenu().MenuName("local-admin");
@@ -214,7 +215,7 @@ namespace Orchard.Blogs.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

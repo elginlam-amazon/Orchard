@@ -1,25 +1,20 @@
-using System.Web.Mvc;
-using System.Web.Mvc.Html;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Orchard.Mvc.Html
 {
     public class MvcFormAntiForgeryPost : MvcForm
     {
-        private readonly HtmlHelper _htmlHelper;
+        private readonly IHtmlHelper _htmlHelper;
 
-        public MvcFormAntiForgeryPost(HtmlHelper htmlHelper) : base(htmlHelper.ViewContext)
+        public MvcFormAntiForgeryPost(IHtmlHelper htmlHelper) : base(htmlHelper.ViewContext, System.Text.Encodings.Web.HtmlEncoder.Default)
         {
             _htmlHelper = htmlHelper;
         }
 
-        protected override void Dispose(bool disposing)
+        protected override void GenerateEndForm()
         {
-            if (disposing)
-            {
-                _htmlHelper.ViewContext.Writer.Write(_htmlHelper.AntiForgeryTokenOrchard());
-            }
-
-            base.Dispose(disposing);
+            _htmlHelper.ViewContext.Writer.Write(_htmlHelper.AntiForgeryTokenOrchard());
+            base.GenerateEndForm();
         }
     }
 }

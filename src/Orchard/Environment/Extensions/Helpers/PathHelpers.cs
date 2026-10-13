@@ -1,5 +1,3 @@
-using System.Web.Hosting;
-
 namespace Orchard.Environment.Extensions.Helpers
 {
     public static class PathHelpers

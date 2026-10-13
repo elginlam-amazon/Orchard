@@ -1,4 +1,5 @@
-using Glimpse.Core.Message;
+
+using Orchard.Glimpse.Models;
 
 namespace Orchard.Glimpse
 {

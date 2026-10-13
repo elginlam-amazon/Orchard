@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Indexing.Services;
 using Orchard.Indexing.ViewModels;
 using Orchard.Localization;
@@ -66,7 +66,7 @@ namespace Orchard.Indexing.Controllers
         public ActionResult Create()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to manage the search index.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return View("Create");
         }
@@ -75,7 +75,7 @@ namespace Orchard.Indexing.Controllers
         public ActionResult CreatePOST(string id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to manage the search index.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var provider = _indexManager.GetSearchIndexProvider();
             if (!IsValidIndexName(id))
@@ -109,7 +109,7 @@ namespace Orchard.Indexing.Controllers
         public ActionResult Update(string id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to manage the search index.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (IsValidIndexName(id))
             {
@@ -127,7 +127,7 @@ namespace Orchard.Indexing.Controllers
         public ActionResult Rebuild(string id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to manage the search index.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (IsValidIndexName(id))
             {
@@ -145,7 +145,7 @@ namespace Orchard.Indexing.Controllers
         public ActionResult Delete(string id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to manage the search index.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (IsValidIndexName(id))
             {

@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
-using System.Web;
-using System.Web.Hosting;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
 using Orchard.Specs.Util;
+using Orchard.Web;
 using Path = Bleroy.FluentPath.Path;
 
 namespace Orchard.Specs.Hosting
@@ -15,10 +16,9 @@ namespace Orchard.Specs.Hosting
     public class WebHost
     {
         private readonly Path _orchardTemp;
-        private WebHostAgent _webHostAgent;
+        private WebApplication _application;
         private Path _tempSite;
         private Path _orchardWebPath;
-        private Path _codeGenDir;
         private IEnumerable<string> _knownModules;
         private IEnumerable<string> _knownThemes;
         private IEnumerable<string> _knownBinAssemblies;
@@ -111,9 +111,7 @@ namespace Orchard.Specs.Hosting
                     .DeepCopy("*.*", _tempSite.Combine("bin").Combine("roslyn"));
             }
 
-            // Copy binaries of this project, so that remote execution of lambda
-            // can be achieved through serialization to the ASP.NET appdomain
-            // (see Execute(Action) method)
+            // Copy binaries of this project (the site runs in-process, they are resolved from the test output folder)
             Log("Copy Orchard.Specflow test project binaries");
             baseDir.ShallowCopy(
                 path => IsSpecFlowTestAssembly(path) && !_tempSite.Combine("bin").Combine(path.FileName).Exists,
@@ -122,42 +120,61 @@ namespace Orchard.Specs.Hosting
             Log("Copy Orchard recipes");
             _orchardWebPath.Combine("Modules").Combine("Orchard.Setup").Combine("Recipes").DeepCopy("*.xml", _tempSite.Combine("Modules").Combine("Orchard.Setup").Combine("Recipes"));
 
-            StartAspNetHost(virtualDirectory);
+            StartAspNetHost(templateName, virtualDirectory);
 
             Log("ASP.NET host initialization completed in {0} sec", stopwatch.Elapsed.TotalSeconds);
         }
 
-        private void StartAspNetHost(string virtualDirectory)
+        /// <summary>
+        /// Starts the site in-process with the ASP.NET Core test server (formerly in an ASP.NET AppDomain).
+        /// </summary>
+        private void StartAspNetHost(string templateName, string virtualDirectory)
         {
             Log("Starting up ASP.NET host");
             HostName = "localhost";
             PhysicalDirectory = _tempSite;
             VirtualDirectory = virtualDirectory;
 
-            _webHostAgent = (WebHostAgent)ApplicationHost.CreateApplicationHost(typeof(WebHostAgent), VirtualDirectory, PhysicalDirectory);
+            var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+            {
+                ContentRootPath = PhysicalDirectory,
+                ApplicationName = typeof(OrchardApplication).Assembly.GetName().Name
+            });
+            builder.WebHost.UseTestServer();
 
+            if (templateName == "Simple.Web")
+            {
+                _application = builder.Build();
+                SimpleWebApplication.Configure(_application);
+            }
+            else
+            {
+                var orchardApplication = OrchardApplication.Create(builder);
+                _application = orchardApplication.App;
+                orchardApplication.Start();
 
-            var shuttle = new Shuttle();
-            Execute(() => { shuttle.CodeGenDir = HttpRuntime.CodegenDir; });
+                // the host container is available once the warmup is over (the first request is held until then)
+                global::Orchard.Specs.Hosting.Orchard.Web.MvcApplication.Application = orchardApplication;
+            }
 
-            // ASP.NET folder seems to be always nested into an empty directory
-            _codeGenDir = shuttle.CodeGenDir;
-            _codeGenDir = _codeGenDir.Parent;
-            Log("ASP.NET CodeGenDir: \"{0}\"", _codeGenDir);
+            _application.StartAsync().GetAwaiter().GetResult();
+            Server = _application.GetTestServer();
         }
 
-        [Serializable]
-        public class Shuttle
-        {
-            public string CodeGenDir;
-        }
+        /// <summary>
+        /// The test server running the site.
+        /// </summary>
+        public TestServer Server { get; private set; }
 
         public void Dispose()
         {
-            if (_webHostAgent != null)
+            if (_application != null)
             {
-                _webHostAgent.Shutdown();
-                _webHostAgent = null;
+                _application.StopAsync().GetAwaiter().GetResult();
+                ((IDisposable)_application).Dispose();
+                _application = null;
+                Server = null;
+                global::Orchard.Specs.Hosting.Orchard.Web.MvcApplication.Application = null;
             }
             Clean();
         }
@@ -186,20 +203,6 @@ namespace Orchard.Specs.Hosting
         private bool TryDeleteTempFiles(bool lastTry)
         {
             var result = true;
-            if (_codeGenDir != null && _codeGenDir.Exists)
-            {
-                Log("Trying to delete temporary files at \"{0}\"", _codeGenDir);
-                try
-                {
-                    _codeGenDir.Delete(true); // <- clean as much as possible
-                }
-                catch (Exception e)
-                {
-                    if (lastTry)
-                        Log("Failure: \"{0}\"", e);
-                    result = false;
-                }
-            }
 
             if (_tempSite != null && _tempSite.Exists)
                 try
@@ -325,22 +328,12 @@ namespace Orchard.Specs.Hosting
         public string Cookies { get; set; }
 
 
+        /// <summary>
+        /// Executes an action in the site (formerly in its ASP.NET AppDomain, now in-process).
+        /// </summary>
         public void Execute(Action action)
         {
-            var shuttleSend = new SerializableDelegate<Action>(action);
-            var shuttleRecv = _webHostAgent.Execute(shuttleSend);
-            CopyFields(shuttleRecv.Delegate.Target, shuttleSend.Delegate.Target);
-        }
-
-        private static void CopyFields<T>(T from, T to) where T : class
-        {
-            if (from == null || to == null)
-                return;
-            foreach (FieldInfo fieldInfo in from.GetType().GetFields())
-            {
-                var value = fieldInfo.GetValue(from);
-                fieldInfo.SetValue(to, value);
-            }
+            action();
         }
     }
 }

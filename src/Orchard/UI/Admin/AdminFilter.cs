@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.Localization;
 using Orchard.Mvc.Filters;
 using Orchard.Security;
+using Orchard.Mvc.Extensions;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 
 namespace Orchard.UI.Admin
 {
@@ -22,36 +24,36 @@ namespace Orchard.UI.Admin
 
         public Localizer T { get; set; }
 
-        public void OnAuthorization(AuthorizationContext filterContext)
+        public void OnAuthorization(AuthorizationFilterContext filterContext)
         {
             if (IsAdmin(filterContext))
             {
-                Apply(filterContext.RequestContext);
+                Apply(filterContext);
 
                 if (!_authorizer.Authorize(StandardPermissions.AccessAdminPanel, T("Can't access the admin")))
                 {
-                    filterContext.Result = new HttpUnauthorizedResult();
+                    filterContext.Result = new UnauthorizedResult();
                 }
             }
         }
 
-        public static void Apply(RequestContext context)
+        public static void Apply(ActionContext context)
         {
             // the value isn't important
             context.HttpContext.Items[typeof(AdminFilter)] = null;
         }
 
-        public static bool IsApplied(RequestContext context)
+        public static bool IsApplied(ActionContext context)
         {
             return IsApplied(context.HttpContext);
         }
 
-        public static bool IsApplied(HttpContextBase context)
+        public static bool IsApplied(HttpContext context)
         {
-            return context.Items.Contains(typeof(AdminFilter));
+            return context.Items.ContainsKey(typeof(AdminFilter));
         }
 
-        private static bool IsAdmin(AuthorizationContext filterContext)
+        private static bool IsAdmin(AuthorizationFilterContext filterContext)
         {
             if (IsNameAdmin(filterContext) || IsNameAdminProxy(filterContext))
             {
@@ -66,23 +68,23 @@ namespace Orchard.UI.Admin
             return false;
         }
 
-        private static bool IsNameAdmin(AuthorizationContext filterContext)
+        private static bool IsNameAdmin(AuthorizationFilterContext filterContext)
         {
-            return string.Equals(filterContext.ActionDescriptor.ControllerDescriptor.ControllerName, "Admin",
+            return string.Equals(filterContext.ActionDescriptor.GetControllerName(), "Admin",
                                  StringComparison.OrdinalIgnoreCase);
         }
 
-        private static bool IsNameAdminProxy(AuthorizationContext filterContext)
+        private static bool IsNameAdminProxy(AuthorizationFilterContext filterContext)
         {
-            return filterContext.ActionDescriptor.ControllerDescriptor.ControllerName.StartsWith(
+            return filterContext.ActionDescriptor.GetControllerName().StartsWith(
                 "AdminControllerProxy", StringComparison.InvariantCultureIgnoreCase) &&
-                filterContext.ActionDescriptor.ControllerDescriptor.ControllerName.Length == "AdminControllerProxy".Length + 32;
+                filterContext.ActionDescriptor.GetControllerName().Length == "AdminControllerProxy".Length + 32;
         }
 
         private static IEnumerable<AdminAttribute> GetAdminAttributes(ActionDescriptor descriptor)
         {
             return descriptor.GetCustomAttributes(typeof(AdminAttribute), true)
-                .Concat(descriptor.ControllerDescriptor.GetCustomAttributes(typeof(AdminAttribute), true))
+                .Concat(descriptor.GetControllerCustomAttributes(typeof(AdminAttribute), true))
                 .OfType<AdminAttribute>();
         }
 

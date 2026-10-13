@@ -93,14 +93,14 @@ namespace Orchard.Security.Providers
 
         private SymmetricAlgorithm CreateSymmetricAlgorithm()
         {
-            var algorithm = SymmetricAlgorithm.Create(_shellSettings.EncryptionAlgorithm);
+            var algorithm = CryptographyAlgorithms.CreateSymmetricAlgorithm(_shellSettings.EncryptionAlgorithm);
             algorithm.Key = _shellSettings.EncryptionKey.ToByteArray();
             return algorithm;
         }
 
         private HMAC CreateHashAlgorithm()
         {
-            var algorithm = HMAC.Create(_shellSettings.HashAlgorithm);
+            var algorithm = CryptographyAlgorithms.CreateHmac(_shellSettings.HashAlgorithm);
             algorithm.Key = _shellSettings.HashKey.ToByteArray();
             return algorithm;
         }

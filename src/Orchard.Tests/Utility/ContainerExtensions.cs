@@ -43,7 +43,7 @@ namespace Orchard.Tests.Utility
 
             IEnumerable<IComponentRegistration> IRegistrationSource.RegistrationsFor(
                 Service service,
-                Func<Service, IEnumerable<IComponentRegistration>> registrationAccessor)
+                Func<Service, IEnumerable<ServiceRegistration>> registrationAccessor)
             {
 
                 var swt = service as IServiceWithType;

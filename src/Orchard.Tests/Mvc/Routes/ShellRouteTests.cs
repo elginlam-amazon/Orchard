@@ -1,9 +1,10 @@
 using System;
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NUnit.Framework;
 using Orchard.Caching;
@@ -14,25 +15,76 @@ using Orchard.Mvc;
 using Orchard.Mvc.Routes;
 using Orchard.Tests.Stubs;
 using Orchard.Tests.Utility;
+using IHttpContextAccessor = Orchard.Mvc.IHttpContextAccessor;
+using Route = Orchard.Mvc.Routes.Route;
 
 namespace Orchard.Tests.Mvc.Routes
 {
     [TestFixture]
     public class ShellRouteTests
     {
-        private RouteCollection _routes;
+        private OrchardRouteCollection _routes;
         private ILifetimeScope _containerA;
         private ILifetimeScope _containerB;
         private ShellSettings _settingsA;
         private ShellSettings _settingsB;
         private IContainer _rootContainer;
+        private IRouter _mvcRouteHandler;
+
+        // the services of the requests (the routes resolve their constraints and loggers from the request services)
+        private static readonly IServiceProvider _requestServices = new ServiceCollection().AddLogging().AddRouting().BuildServiceProvider();
+
+        private static HttpContext Request(string appRelativePath, string host = "localhost")
+        {
+            return new StubHttpContext(appRelativePath, host) { RequestServices = _requestServices };
+        }
+
+        /// <summary>
+        /// A request for a tenant with a url prefix: the prefix is moved into the path base by the host.
+        /// </summary>
+        private static HttpContext TenantRequest(string prefix, string appRelativePath)
+        {
+            var httpContext = Request(appRelativePath);
+            if (httpContext.Request.Path.StartsWithSegments(prefix, StringComparison.OrdinalIgnoreCase, out var matched, out var remaining))
+            {
+                httpContext.Request.PathBase = matched;
+                httpContext.Request.Path = remaining;
+            }
+            return httpContext;
+        }
+
+        /// <summary>
+        /// Returns the route data of the request if a route matches it (formerly RouteBase.GetRouteData).
+        /// </summary>
+        private static RouteData GetRouteData(IRouter router, HttpContext httpContext)
+        {
+            var context = new RouteContext(httpContext);
+            context.RouteData.Routers.Add(router);
+            router.RouteAsync(context).GetAwaiter().GetResult();
+            return context.Handler == null ? null : context.RouteData;
+        }
+
+        private static string GetRequiredString(RouteData routeData, string key)
+        {
+            return (string)routeData.Values[key];
+        }
+
+        [TearDown]
+        public void Cleanup()
+        {
+            MvcRouteHandler.Inner = _mvcRouteHandler;
+        }
 
         [SetUp]
         public void Init()
         {
+            // the matched routes are handled by MVC
+            _mvcRouteHandler = MvcRouteHandler.Inner;
+            MvcRouteHandler.Inner = new RouteHandler(httpContext => System.Threading.Tasks.Task.CompletedTask);
+
             _settingsA = new ShellSettings { Name = "Alpha" };
             _settingsB = new ShellSettings { Name = "Beta", };
-            _routes = new RouteCollection();
+            _routes = new OrchardRouteCollection();
 
             var rootBuilder = new ContainerBuilder();
             rootBuilder.Register(ctx => _routes);
@@ -40,21 +92,21 @@ namespace Orchard.Tests.Mvc.Routes
             rootBuilder.RegisterType<RunningShellTable>().As<IRunningShellTable>().SingleInstance();
             rootBuilder.RegisterModule(new WorkContextModule());
             rootBuilder.RegisterType<WorkContextAccessor>().As<IWorkContextAccessor>().InstancePerMatchingLifetimeScope("shell");
-            rootBuilder.RegisterType<HttpContextAccessor>().As<IHttpContextAccessor>();
+            rootBuilder.RegisterType<Orchard.Mvc.HttpContextAccessor>().As<IHttpContextAccessor>();
             rootBuilder.RegisterType<ExtensionManager>().As<IExtensionManager>();
             rootBuilder.RegisterType<StubCacheManager>().As<ICacheManager>();
             rootBuilder.RegisterType<StubAsyncTokenProvider>().As<IAsyncTokenProvider>();
             rootBuilder.RegisterType<StubParallelCacheContext>().As<IParallelCacheContext>();
 
-            rootBuilder.Register<Func<RouteBase, ShellRoute>>(c =>
+            rootBuilder.Register<Func<IRouter, ShellRoute>>(c =>
             {
                 var context = c.Resolve<IComponentContext>();
-                return new Func<RouteBase, ShellRoute>(routeBase =>
+                return new Func<IRouter, ShellRoute>(routeBase =>
                     new ShellRoute(
                         routeBase,
                         _settingsA,
                         context.Resolve<IWorkContextAccessor>(),
-                        context.Resolve<IRunningShellTable>(), objects => { return null; }));
+                        context.Resolve<IRunningShellTable>(), null));
             });
 
             _rootContainer = rootBuilder.Build();
@@ -84,21 +136,18 @@ namespace Orchard.Tests.Mvc.Routes
             builder.RegisterAutoMocking();
 
             var container = builder.Build();
-            var buildShellRoute = new Func<RouteBase, ShellRoute>(routeBase =>
+            var buildShellRoute = new Func<IRouter, ShellRoute>(routeBase =>
                     new ShellRoute(
                         routeBase,
                         _settingsA,
                         container.Resolve<IWorkContextAccessor>(),
                         container.Resolve<IRunningShellTable>(),
-                        objects => { return null; }));
+                        null));
 
             var routeA = new Route("foo", new MvcRouteHandler());
             var route1 = buildShellRoute(routeA);
 
-            var routeB = new Route("bar", new MvcRouteHandler())
-            {
-                DataTokens = new RouteValueDictionary { { "area", _settingsB.Name } }
-            };
+            var routeB = new Route("bar", null, null, new RouteValueDictionary { { "area", _settingsB.Name } }, new MvcRouteHandler());
             var route2 = buildShellRoute(routeB);
 
             Assert.That(route1, Is.Not.SameAs(route2));
@@ -180,12 +229,12 @@ namespace Orchard.Tests.Mvc.Routes
                 new[] { new RouteDescriptor { Priority = 0, Route = routeFoo } });
             _rootContainer.Resolve<IRunningShellTable>().Add(_settingsB);
 
-            var httpContext = new StubHttpContext("~/foo");
-            var routeData = _routes.GetRouteData(httpContext);
+            var httpContext = Request("~/foo");
+            var routeData = GetRouteData(_routes, httpContext);
             Assert.That(routeData, Is.Null);
 
-            var httpContextA = new StubHttpContext("~/foo", "a.example.com");
-            var routeDataA = _routes.GetRouteData(httpContextA);
+            var httpContextA = Request("~/foo", "a.example.com");
+            var routeDataA = GetRouteData(_routes, httpContextA);
             Assert.That(routeDataA, Is.Not.Null);
             Assert.That(routeDataA.DataTokens.ContainsKey("IWorkContextAccessor"), Is.True);
             var workContextAccessorA = (IWorkContextAccessor)routeDataA.DataTokens["IWorkContextAccessor"];
@@ -194,8 +243,8 @@ namespace Orchard.Tests.Mvc.Routes
             Assert.That(workContextScopeA.Resolve<IRoutePublisher>(), Is.SameAs(_containerA.Resolve<IRoutePublisher>()));
             Assert.That(workContextScopeA.Resolve<IRoutePublisher>(), Is.Not.SameAs(_containerB.Resolve<IRoutePublisher>()));
 
-            var httpContextB = new StubHttpContext("~/foo", "b.example.com");
-            var routeDataB = _routes.GetRouteData(httpContextB);
+            var httpContextB = Request("~/foo", "b.example.com");
+            var routeDataB = GetRouteData(_routes, httpContextB);
             Assert.That(routeDataB, Is.Not.Null);
             Assert.That(routeDataB.DataTokens.ContainsKey("IWorkContextAccessor"), Is.True);
             var workContextAccessorB = (IWorkContextAccessor)routeDataB.DataTokens["IWorkContextAccessor"];
@@ -218,17 +267,17 @@ namespace Orchard.Tests.Mvc.Routes
 
             var container = builder.Build();
             container.Mock<IRunningShellTable>()
-                .Setup(x => x.Match(It.IsAny<HttpContextBase>()))
+                .Setup(x => x.Match(It.IsAny<HttpContext>()))
                 .Returns(settings);
 
 
-            var shellRouteFactory = new Func<RouteBase, ShellRoute>(routeBase =>
+            var shellRouteFactory = new Func<IRouter, ShellRoute>(routeBase =>
                     new ShellRoute(
                         routeBase,
                         settings,
                         container.Resolve<IWorkContextAccessor>(),
                         container.Resolve<IRunningShellTable>(),
-                        objects => { return null; }));
+                        null));
 
             var helloRoute = shellRouteFactory(new Route(
                 "hello",
@@ -245,53 +294,54 @@ namespace Orchard.Tests.Mvc.Routes
                 new RouteValueDictionary { { "controller", "home" }, { "action", "index" } },
                 new MvcRouteHandler()));
 
-            var routes = new RouteCollection { helloRoute, tagsRoute, defaultRoute };
+            var routes = new OrchardRouteCollection { helloRoute, tagsRoute, defaultRoute };
 
-            var helloRouteData = routes.GetRouteData(new StubHttpContext("~/Foo/Hello"));
+            var helloRouteData = GetRouteData(routes, TenantRequest("/Foo", "~/Foo/Hello"));
             Assert.That(helloRouteData, Is.Not.Null);
             Assert.That(helloRouteData.Values.Count(), Is.EqualTo(2));
-            Assert.That(helloRouteData.GetRequiredString("controller"), Is.EqualTo("foo"));
-            Assert.That(helloRouteData.GetRequiredString("action"), Is.EqualTo("bar"));
+            Assert.That(GetRequiredString(helloRouteData, "controller"), Is.EqualTo("foo"));
+            Assert.That(GetRequiredString(helloRouteData, "action"), Is.EqualTo("bar"));
 
-            var tagsRouteData = routes.GetRouteData(new StubHttpContext("~/Foo/Tags/my-tag-name"));
+            var tagsRouteData = GetRouteData(routes, TenantRequest("/Foo", "~/Foo/Tags/my-tag-name"));
             Assert.That(tagsRouteData, Is.Not.Null);
             Assert.That(tagsRouteData.Values.Count(), Is.EqualTo(3));
-            Assert.That(tagsRouteData.GetRequiredString("controller"), Is.EqualTo("tags"));
-            Assert.That(tagsRouteData.GetRequiredString("action"), Is.EqualTo("show"));
-            Assert.That(tagsRouteData.GetRequiredString("tagName"), Is.EqualTo("my-tag-name"));
+            Assert.That(GetRequiredString(tagsRouteData, "controller"), Is.EqualTo("tags"));
+            Assert.That(GetRequiredString(tagsRouteData, "action"), Is.EqualTo("show"));
+            Assert.That(GetRequiredString(tagsRouteData, "tagName"), Is.EqualTo("my-tag-name"));
 
-            var defaultRouteData = routes.GetRouteData(new StubHttpContext("~/Foo/Alpha/Beta"));
+            var defaultRouteData = GetRouteData(routes, TenantRequest("/Foo", "~/Foo/Alpha/Beta"));
             Assert.That(defaultRouteData, Is.Not.Null);
             Assert.That(defaultRouteData.Values.Count(), Is.EqualTo(2));
-            Assert.That(defaultRouteData.GetRequiredString("controller"), Is.EqualTo("Alpha"));
-            Assert.That(defaultRouteData.GetRequiredString("action"), Is.EqualTo("Beta"));
+            Assert.That(GetRequiredString(defaultRouteData, "controller"), Is.EqualTo("Alpha"));
+            Assert.That(GetRequiredString(defaultRouteData, "action"), Is.EqualTo("Beta"));
 
-            var defaultRouteData2 = routes.GetRouteData(new StubHttpContext("~/Foo/Alpha"));
+            var defaultRouteData2 = GetRouteData(routes, TenantRequest("/Foo", "~/Foo/Alpha"));
             Assert.That(defaultRouteData2, Is.Not.Null);
             Assert.That(defaultRouteData2.Values.Count(), Is.EqualTo(2));
-            Assert.That(defaultRouteData2.GetRequiredString("controller"), Is.EqualTo("Alpha"));
-            Assert.That(defaultRouteData2.GetRequiredString("action"), Is.EqualTo("index"));
+            Assert.That(GetRequiredString(defaultRouteData2, "controller"), Is.EqualTo("Alpha"));
+            Assert.That(GetRequiredString(defaultRouteData2, "action"), Is.EqualTo("index"));
 
-            var defaultRouteData3 = routes.GetRouteData(new StubHttpContext("~/Foo/"));
+            var defaultRouteData3 = GetRouteData(routes, TenantRequest("/Foo", "~/Foo/"));
             Assert.That(defaultRouteData3, Is.Not.Null);
             Assert.That(defaultRouteData3.Values.Count(), Is.EqualTo(2));
-            Assert.That(defaultRouteData3.GetRequiredString("controller"), Is.EqualTo("home"));
-            Assert.That(defaultRouteData3.GetRequiredString("action"), Is.EqualTo("index"));
+            Assert.That(GetRequiredString(defaultRouteData3, "controller"), Is.EqualTo("home"));
+            Assert.That(GetRequiredString(defaultRouteData3, "action"), Is.EqualTo("index"));
 
-            var defaultRouteData4 = routes.GetRouteData(new StubHttpContext("~/Foo"));
+            var defaultRouteData4 = GetRouteData(routes, TenantRequest("/Foo", "~/Foo"));
             Assert.That(defaultRouteData4, Is.Not.Null);
             Assert.That(defaultRouteData4.Values.Count(), Is.EqualTo(2));
-            Assert.That(defaultRouteData4.GetRequiredString("controller"), Is.EqualTo("home"));
-            Assert.That(defaultRouteData4.GetRequiredString("action"), Is.EqualTo("index"));
+            Assert.That(GetRequiredString(defaultRouteData4, "controller"), Is.EqualTo("home"));
+            Assert.That(GetRequiredString(defaultRouteData4, "action"), Is.EqualTo("index"));
 
-            var requestContext = new RequestContext(new StubHttpContext("~/Foo/Alpha/Beta"), defaultRouteData);
-            var helloVirtualPath = routes.GetVirtualPath(requestContext, helloRouteData.Values);
+            // the generated paths are relative to the path base (the tenant prefix), which is added by the url helper
+            var requestContext = TenantRequest("/Foo", "~/Foo/Alpha/Beta");
+            var helloVirtualPath = routes.GetVirtualPath(new VirtualPathContext(requestContext, defaultRouteData.Values, helloRouteData.Values));
             Assert.That(helloVirtualPath, Is.Not.Null);
-            Assert.That(helloVirtualPath.VirtualPath, Is.EqualTo("~/foo/hello"));
+            Assert.That(helloVirtualPath.VirtualPath, Is.EqualTo("/hello"));
 
-            var defaultVirtualPath4 = routes.GetVirtualPath(requestContext, defaultRouteData4.Values);
+            var defaultVirtualPath4 = routes.GetVirtualPath(new VirtualPathContext(requestContext, defaultRouteData.Values, defaultRouteData4.Values));
             Assert.That(defaultVirtualPath4, Is.Not.Null);
-            Assert.That(defaultVirtualPath4.VirtualPath, Is.EqualTo("~/foo/"));
+            Assert.That(defaultVirtualPath4.VirtualPath, Is.Empty);
         }
     }
 }

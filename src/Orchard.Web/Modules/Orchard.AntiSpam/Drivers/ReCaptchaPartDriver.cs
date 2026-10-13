@@ -12,6 +12,7 @@ using Orchard.Logging;
 using Orchard.Services;
 using Orchard.UI.Admin;
 using Orchard.UI.Notify;
+using Orchard.Mvc.Extensions;
 
 namespace Orchard.AntiSpam.Drivers
 {
@@ -45,7 +46,7 @@ namespace Orchard.AntiSpam.Drivers
             {
                 var workContext = _workContextAccessor.GetContext();
                 // don't display the part in the admin
-                if (AdminFilter.IsApplied(workContext.HttpContext.Request.RequestContext))
+                if (AdminFilter.IsApplied(workContext.HttpContext.GetActionContext()))
                 {
                     return null;
                 }
@@ -72,7 +73,7 @@ namespace Orchard.AntiSpam.Drivers
             var settings = workContext.CurrentSite.As<ReCaptchaSettingsPart>();
 
             // don't display the part in the admin
-            if (AdminFilter.IsApplied(workContext.HttpContext.Request.RequestContext))
+            if (AdminFilter.IsApplied(workContext.HttpContext.GetActionContext()))
             {
                 return null;
             }
@@ -88,7 +89,7 @@ namespace Orchard.AntiSpam.Drivers
             {
                 var result = ValidateRequest(//ExecuteValidateRequest(
                     settings.PrivateKey,
-                    context.Request.ServerVariables["REMOTE_ADDR"],
+                    context.Connection.RemoteIpAddress?.ToString(),
                     context.Request.Form["g-recaptcha-response"]
                     );
 

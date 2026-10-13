@@ -1,11 +1,13 @@
 using System;
-using System.Web.Mvc;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Orchard.ContentManagement;
 using Orchard.Core.Common.Models;
 using Orchard.Core.Feeds.Models;
 using Orchard.Core.Feeds.StandardBuilders;
 using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
 using Orchard.Services;
 
 namespace Orchard.Core.Feeds.StandardQueries
@@ -24,10 +26,10 @@ namespace Orchard.Core.Feeds.StandardQueries
         public FeedQueryMatch Match(FeedContext context)
         {
             var containerIdValue = context.ValueProvider.GetValue("containerid");
-            if (containerIdValue == null)
+            if (containerIdValue == ValueProviderResult.None)
                 return null;
 
-            var containerId = (int)containerIdValue.ConvertTo(typeof(int));
+            var containerId = Convert.ToInt32(containerIdValue.FirstValue, System.Globalization.CultureInfo.InvariantCulture);
             var container = _contentManager.Get(containerId);
 
             if (container == null)
@@ -41,19 +43,19 @@ namespace Orchard.Core.Feeds.StandardQueries
         public void Execute(FeedContext context)
         {
             var containerIdValue = context.ValueProvider.GetValue("containerid");
-            if (containerIdValue == null)
+            if (containerIdValue == ValueProviderResult.None)
                 return;
 
             var limitValue = context.ValueProvider.GetValue("limit");
             var limit = 20;
-            if (limitValue != null)
+            if (limitValue != ValueProviderResult.None)
             {
                 int.TryParse(Convert.ToString(limitValue), out limit);
             }
 
             limit = Math.Min(limit, 100);
 
-            var containerId = (int)containerIdValue.ConvertTo(typeof(int));
+            var containerId = Convert.ToInt32(containerIdValue.FirstValue, System.Globalization.CultureInfo.InvariantCulture);
             var container = _contentManager.Get(containerId);
 
             if (container == null)
@@ -71,7 +73,7 @@ namespace Orchard.Core.Feeds.StandardQueries
 
                 context.Response.Contextualize(requestContext =>
                 {
-                    var urlHelper = new UrlHelper(requestContext);
+                    var urlHelper = HtmlHelperFactory.CreateUrlHelper(requestContext);
                     var uriBuilder = new UriBuilder(urlHelper.MakeAbsolute("/")) { Path = urlHelper.RouteUrl(inspector.Link) };
                     link.Add(uriBuilder.Uri.OriginalString);
                 });
@@ -82,7 +84,7 @@ namespace Orchard.Core.Feeds.StandardQueries
                 context.Builder.AddProperty(context, null, "description", inspector.Description);
                 context.Response.Contextualize(requestContext =>
                 {
-                    var urlHelper = new UrlHelper(requestContext);
+                    var urlHelper = HtmlHelperFactory.CreateUrlHelper(requestContext);
                     context.Builder.AddProperty(context, null, "link", urlHelper.MakeAbsolute(urlHelper.RouteUrl(inspector.Link)));
                 });
             }

@@ -1,4 +1,4 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.DisplayManagement;
 using Orchard.Environment.Extensions;
 using Orchard.Localization.Services;
@@ -8,7 +8,7 @@ using Orchard.UI.Admin;
 namespace Orchard.Localization.Controllers
 {
     [OrchardFeature("Orchard.Localization.Transliteration")]
-    [Admin, ValidateInput(false)]
+    [Admin]
     public class TransliterationAdminController : Controller
     {
         private readonly ITransliterationService _transliterationService;

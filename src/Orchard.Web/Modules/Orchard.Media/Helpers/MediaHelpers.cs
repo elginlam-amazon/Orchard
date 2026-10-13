@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.Media.Models;
 
 namespace Orchard.Media.Helpers
@@ -33,7 +33,7 @@ namespace Orchard.Media.Helpers
             return navigations;
         }
 
-        public static bool IsPicture(this HtmlHelper htmlHelper, string path)
+        public static bool IsPicture(this IHtmlHelper htmlHelper, string path)
         {
             return new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico" }
                 .Contains((Path.GetExtension(path) ?? "").ToLowerInvariant());

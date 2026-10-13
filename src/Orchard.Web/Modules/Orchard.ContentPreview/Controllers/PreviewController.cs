@@ -1,9 +1,10 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Records;
 using Orchard.Core.Common.Models;
 using Orchard.Localization;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.Security;
 using Orchard.Services;
 using Orchard.Themes;
@@ -41,12 +42,11 @@ namespace Orchard.ContentPreview.Controllers
         public ActionResult Index() => View();
 
         [HttpPost]
-        [ValidateInput(false)]
         public ActionResult Render()
         {
             if (!_authorizer.Authorize(Permissions.ContentPreview))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var contentItemType = _hca.Current().Request.Form["ContentItemType"];
@@ -76,7 +76,7 @@ namespace Orchard.ContentPreview.Controllers
         }
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties) =>
-            TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage) =>
             ModelState.AddModelError(key, errorMessage.ToString());

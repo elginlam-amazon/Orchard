@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using System.Web;
-using System.Web.Hosting;
 using Orchard.Commands;
+using Orchard.Environment;
 using Orchard.Environment.Extensions;
 using Orchard.Packaging.Services;
 using Orchard.UI.Notify;

@@ -1,15 +1,14 @@
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.UI;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.OutputCache.Helpers
 {
     public static class OutputCacheAttributeExtensions
     {
         /// <summary>
-        /// Returns true if the Location of the specified output cache attribute matches any of the specified list of locations.
+        /// Returns true if the Location of the specified response cache attribute matches any of the specified list of locations.
         /// </summary>
-        public static bool LocationIsIn(this OutputCacheAttribute attribute, params OutputCacheLocation[] locations)
+        public static bool LocationIsIn(this ResponseCacheAttribute attribute, params ResponseCacheLocation[] locations)
         {
             return locations.Contains(attribute.Location);
         }

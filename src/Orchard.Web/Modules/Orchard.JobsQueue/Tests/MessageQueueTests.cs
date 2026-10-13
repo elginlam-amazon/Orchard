@@ -4,7 +4,6 @@ using Autofac;
 using NUnit.Framework;
 using Orchard.JobsQueue.Models;
 using Orchard.JobsQueue.Services;
-using Orchard.Messaging.Models;
 using Orchard.Messaging.Services;
 using Orchard.Tests;
 

@@ -1,5 +1,6 @@
 using System;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Orchard.Mvc.ModelBinders
 {

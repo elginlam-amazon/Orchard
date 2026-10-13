@@ -1,6 +1,5 @@
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Aspects;
 using Orchard.ContentManagement.Drivers;
@@ -15,11 +14,11 @@ namespace Orchard.Core.Common.Drivers
     public class BodyPartDriver : ContentPartDriver<BodyPart>
     {
         private readonly IHtmlFilterProcessor _htmlFilterProcessor;
-        private readonly RequestContext _requestContext;
+        private readonly ActionContext _requestContext;
 
         private const string TemplateName = "Parts.Common.Body";
 
-        public BodyPartDriver(IOrchardServices services, IHtmlFilterProcessor htmlFilterProcessor, RequestContext requestContext)
+        public BodyPartDriver(IOrchardServices services, IHtmlFilterProcessor htmlFilterProcessor, ActionContext requestContext)
         {
             _htmlFilterProcessor = htmlFilterProcessor;
             Services = services;
@@ -83,7 +82,7 @@ namespace Orchard.Core.Common.Drivers
             clonePart.Text = originalPart.Text;
         }
 
-        private static BodyEditorViewModel BuildEditorViewModel(BodyPart part, RequestContext requestContext)
+        private static BodyEditorViewModel BuildEditorViewModel(BodyPart part, ActionContext requestContext)
         {
             return new BodyEditorViewModel
             {
@@ -97,9 +96,9 @@ namespace Orchard.Core.Common.Drivers
         {
             private readonly IContent _content;
             private string _path;
-            private readonly RequestContext _requestContext;
+            private readonly ActionContext _requestContext;
 
-            public PathBuilder(IContent content, RequestContext requestContext)
+            public PathBuilder(IContent content, ActionContext requestContext)
             {
                 _content = content;
                 _path = "";
@@ -122,7 +121,7 @@ namespace Orchard.Core.Common.Drivers
                 var common = _content.As<ICommonPart>();
                 if (common == null || common.Container == null)
                     return this;
-                var helper = new UrlHelper(_requestContext);
+                var helper = HtmlHelperFactory.CreateUrlHelper(_requestContext);
                 Add(helper.ItemDisplayUrl(common.Container));
                 return this;
             }

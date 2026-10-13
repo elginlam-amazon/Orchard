@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Mvc.Html;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement;
 using Orchard.DisplayManagement.Descriptors;
@@ -14,6 +15,8 @@ using Orchard.DisplayManagement.Descriptors.ResourceBindingStrategy;
 using Orchard.Environment;
 using Orchard.Localization;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
 using Orchard.Settings;
 using Orchard.UI;
 using Orchard.UI.Resources;
@@ -301,7 +304,7 @@ namespace Orchard.Core.Shapes
             foreach (var cssClass in classes ?? Enumerable.Empty<string>())
                 tagBuilder.AddCssClass(cssClass);
             if (!string.IsNullOrWhiteSpace(id))
-                tagBuilder.GenerateId(id);
+                tagBuilder.GenerateId(id, "_");
             return tagBuilder;
         }
 
@@ -468,14 +471,14 @@ namespace Orchard.Core.Shapes
         }
 
         [Shape]
-        public void Style(dynamic Display, HtmlHelper Html, TextWriter Output, ResourceDefinition Resource, string Url, string Condition, Dictionary<string, string> TagAttributes)
+        public void Style(dynamic Display, IHtmlHelper Html, TextWriter Output, ResourceDefinition Resource, string Url, string Condition, Dictionary<string, string> TagAttributes)
         {
             // do not write to Output directly as Styles are rendered in Zones
             ResourceManager.WriteResource(Html.ViewContext.Writer, Resource, Url, Condition, TagAttributes);
         }
 
         [Shape]
-        public void Script(HtmlHelper Html, TextWriter Output, ResourceDefinition Resource, string Url, string Condition, Dictionary<string, string> TagAttributes)
+        public void Script(IHtmlHelper Html, TextWriter Output, ResourceDefinition Resource, string Url, string Condition, Dictionary<string, string> TagAttributes)
         {
             // do not write to Output directly as Styles are rendered in Zones
             ResourceManager.WriteResource(Html.ViewContext.Writer, Resource, Url, Condition, TagAttributes);
@@ -514,7 +517,7 @@ namespace Orchard.Core.Shapes
                 default:
                     Debug.Assert(site.ResourceDebugMode == ResourceDebugMode.FromAppSetting, "Unknown ResourceDebugMode value.");
                     var context = _httpContextAccessor.Value.Current();
-                    debugMode = context != null && context.IsDebuggingEnabled;
+                    debugMode = context != null && context.IsDebuggingEnabled();
                     break;
             }
             var defaultSettings = new RequireSettings
@@ -528,7 +531,7 @@ namespace Orchard.Core.Shapes
             var httpContext = _httpContextAccessor.Value.Current();
             var appPath = httpContext == null || httpContext.Request == null
                 ? null
-                : httpContext.Request.ApplicationPath;
+                : httpContext.Request.GetApplicationPath();
             foreach (var context in requiredResources.Where(r =>
                 (includeLocation.HasValue ? r.Settings.Location == includeLocation.Value : true) &&
                 (excludeLocation.HasValue ? r.Settings.Location != excludeLocation.Value : true)))
@@ -537,7 +540,7 @@ namespace Orchard.Core.Shapes
                 var url = context.GetResourceUrl(defaultSettings, appPath, _resourceFileHashProvider);
                 var condition = context.Settings.Condition;
                 var attributes = context.Settings.HasAttributes ? context.Settings.Attributes : null;
-                IHtmlString result;
+                IHtmlContent result;
                 if (resourceType == "stylesheet")
                 {
                     result = Display.Style(Url: url, Condition: condition, Resource: context.Resource, TagAttributes: attributes);
@@ -555,8 +558,8 @@ namespace Orchard.Core.Shapes
         }
 
         [Shape]
-        public IHtmlString Pager_Links(dynamic Shape, dynamic Display,
-            HtmlHelper Html,
+        public IHtmlContent Pager_Links(dynamic Shape, dynamic Display,
+            IHtmlHelper Html,
             int Page,
             int PageSize,
             double TotalItemCount,
@@ -591,12 +594,12 @@ namespace Orchard.Core.Shapes
             var gapText = GapText ?? T("...");
 
             var routeData = new RouteValueDictionary(Html.ViewContext.RouteData.Values);
-            var queryString = _workContext.Value.HttpContext.Request.QueryString;
+            var queryString = _workContext.Value.HttpContext.Request.Query;
             if (queryString != null)
             {
-                foreach (var key in from string key in queryString.Keys where key != null && !routeData.ContainsKey(key) let value = queryString[key] select key)
+                foreach (var key in from string key in queryString.Keys where key != null && !routeData.ContainsKey(key) select key)
                 {
-                    routeData[key] = queryString[key];
+                    routeData[key] = queryString[key].ToString();
                 }
             }
 
@@ -622,15 +625,6 @@ namespace Orchard.Core.Shapes
                         routeData[rd.Key] = rd.Value;
                     }
                 }
-            }
-
-            // HACK: MVC 3 is adding a specific value in System.Web.Mvc.Html.ChildActionExtensions.ActionHelper
-            // when a content item is set as home page, it is rendered by using Html.RenderAction, and the routeData is altered
-            // This code removes this extra route value
-            var removedKeys = routeData.Keys.Where(key => routeData[key] is DictionaryValueProvider<object>).ToList();
-            foreach (var key in removedKeys)
-            {
-                routeData.Remove(key);
             }
 
             int firstPage = Math.Max(1, Page - (numberOfPagesToShow / 2));
@@ -707,7 +701,7 @@ namespace Orchard.Core.Shapes
         }
 
         [Shape]
-        public IHtmlString Pager(dynamic Shape, dynamic Display)
+        public IHtmlContent Pager(dynamic Shape, dynamic Display)
         {
             Shape.Metadata.Alternates.Clear();
             Shape.Metadata.Type = "Pager_Links";
@@ -715,7 +709,7 @@ namespace Orchard.Core.Shapes
         }
 
         [Shape]
-        public IHtmlString Pager_First(dynamic Shape, dynamic Display)
+        public IHtmlContent Pager_First(dynamic Shape, dynamic Display)
         {
             Shape.Metadata.Alternates.Clear();
             Shape.Metadata.Type = "Pager_Link";
@@ -723,7 +717,7 @@ namespace Orchard.Core.Shapes
         }
 
         [Shape]
-        public IHtmlString Pager_Previous(dynamic Shape, dynamic Display)
+        public IHtmlContent Pager_Previous(dynamic Shape, dynamic Display)
         {
             Shape.Metadata.Alternates.Clear();
             Shape.Metadata.Type = "Pager_Link";
@@ -731,18 +725,16 @@ namespace Orchard.Core.Shapes
         }
 
         [Shape]
-        public IHtmlString Pager_CurrentPage(HtmlHelper Html, dynamic Display, object Value)
+        public IHtmlContent Pager_CurrentPage(IHtmlHelper Html, dynamic Display, object Value)
         {
-            var tagBuilder = new TagBuilder("span")
-            {
-                InnerHtml = EncodeOrDisplay(Value, Display, Html).ToString()
-            };
+            var tagBuilder = new TagBuilder("span");
+            tagBuilder.InnerHtml.AppendHtml(EncodeOrDisplay(Value, Display, Html));
 
-            return MvcHtmlString.Create(tagBuilder.ToString());
+            return tagBuilder;
         }
 
         [Shape]
-        public IHtmlString Pager_Next(dynamic Shape, dynamic Display)
+        public IHtmlContent Pager_Next(dynamic Shape, dynamic Display)
         {
             Shape.Metadata.Alternates.Clear();
             Shape.Metadata.Type = "Pager_Link";
@@ -750,7 +742,7 @@ namespace Orchard.Core.Shapes
         }
 
         [Shape]
-        public IHtmlString Pager_Last(dynamic Shape, dynamic Display)
+        public IHtmlContent Pager_Last(dynamic Shape, dynamic Display)
         {
             Shape.Metadata.Alternates.Clear();
             Shape.Metadata.Type = "Pager_Link";
@@ -758,7 +750,7 @@ namespace Orchard.Core.Shapes
         }
 
         [Shape]
-        public IHtmlString Pager_Link(HtmlHelper Html, dynamic Shape, dynamic Display, object Value)
+        public IHtmlContent Pager_Link(IHtmlHelper Html, dynamic Shape, dynamic Display, object Value)
         {
             Shape.Metadata.Alternates.Clear();
             Shape.Metadata.Type = "ActionLink";
@@ -766,7 +758,7 @@ namespace Orchard.Core.Shapes
         }
 
         [Shape]
-        public IHtmlString ActionLink(HtmlHelper Html, UrlHelper Url, dynamic Shape, dynamic Display, object Value)
+        public IHtmlContent ActionLink(IHtmlHelper Html, IUrlHelper Url, dynamic Shape, dynamic Display, object Value)
         {
             var RouteValues = (object)Shape.RouteValues;
             RouteValueDictionary rvd;
@@ -786,20 +778,18 @@ namespace Orchard.Core.Shapes
             attributes["href"] = action;
             string id = Shape.Id;
             var tag = GetTagBuilder("a", id, classes, attributes);
-            tag.InnerHtml = EncodeOrDisplay(Value, Display, Html).ToString();
+            tag.InnerHtml.AppendHtml(EncodeOrDisplay(Value, Display, Html));
 
-            return Html.Raw(tag.ToString());
+            return tag;
         }
 
         [Shape]
-        public IHtmlString Pager_Gap(HtmlHelper Html, dynamic Display, object Value)
+        public IHtmlContent Pager_Gap(IHtmlHelper Html, dynamic Display, object Value)
         {
-            var tagBuilder = new TagBuilder("span")
-            {
-                InnerHtml = EncodeOrDisplay(Value, Display, Html).ToString()
-            };
+            var tagBuilder = new TagBuilder("span");
+            tagBuilder.InnerHtml.AppendHtml(EncodeOrDisplay(Value, Display, Html));
 
-            return MvcHtmlString.Create(tagBuilder.ToString());
+            return tagBuilder;
         }
 
         [Shape]
@@ -908,31 +898,31 @@ namespace Orchard.Core.Shapes
         }
 
         [Shape]
-        public IHtmlString PlaceChildContent(dynamic Source)
+        public IHtmlContent PlaceChildContent(dynamic Source)
         {
             return Source.Metadata.ChildContent;
         }
 
         [Shape]
-        public void Partial(HtmlHelper Html, TextWriter Output, string TemplateName, object Model, string Prefix)
+        public void Partial(IHtmlHelper Html, TextWriter Output, string TemplateName, object Model, string Prefix)
         {
             RenderInternal(Html, Output, TemplateName, Model, Prefix);
         }
 
         [Shape]
-        public void DisplayTemplate(HtmlHelper Html, TextWriter Output, string TemplateName, object Model, string Prefix)
+        public void DisplayTemplate(IHtmlHelper Html, TextWriter Output, string TemplateName, object Model, string Prefix)
         {
             RenderInternal(Html, Output, "DisplayTemplates/" + TemplateName, Model, Prefix);
         }
 
         [Shape]
-        public void EditorTemplate(HtmlHelper Html, TextWriter Output, string TemplateName, object Model, string Prefix)
+        public void EditorTemplate(IHtmlHelper Html, TextWriter Output, string TemplateName, object Model, string Prefix)
         {
             RenderInternal(Html, Output, "EditorTemplates/" + TemplateName, Model, Prefix);
         }
 
         [Shape]
-        public void DefinitionTemplate(HtmlHelper Html, TextWriter Output, string TemplateName, object Model, string Prefix)
+        public void DefinitionTemplate(IHtmlHelper Html, TextWriter Output, string TemplateName, object Model, string Prefix)
         {
             RenderInternal(Html, Output, "DefinitionTemplates/" + TemplateName, Model, Prefix);
         }
@@ -979,7 +969,7 @@ namespace Orchard.Core.Shapes
                 if (!string.IsNullOrWhiteSpace(Card.Key))
                 {
                     cardHeaderTag.Attributes["class"] = "card-header";
-                    cardHeaderTag.SetInnerText(Card.Key);
+                    cardHeaderTag.InnerHtml.Append(Card.Key);
                     Output.Write(cardHeaderTag.ToString());
                 }
                 Output.Write(cardBodyTag.ToString(TagRenderMode.StartTag));
@@ -993,39 +983,30 @@ namespace Orchard.Core.Shapes
         }
 
 
-        static void RenderInternal(HtmlHelper Html, TextWriter Output, string TemplateName, object Model, string Prefix)
+        static void RenderInternal(IHtmlHelper Html, TextWriter Output, string TemplateName, object Model, string Prefix)
         {
-            var adjustedViewData = new ViewDataDictionary(Html.ViewDataContainer.ViewData)
+            var adjustedViewData = new ViewDataDictionary(Html.ViewData)
             {
-                Model = DetermineModel(Html, Model),
-                TemplateInfo = new TemplateInfo
-                {
-                    HtmlFieldPrefix = DeterminePrefix(Html, Prefix)
-                }
+                Model = DetermineModel(Html, Model)
             };
-            var adjustedViewContext = new ViewContext(Html.ViewContext, Html.ViewContext.View, adjustedViewData, Html.ViewContext.TempData, Output);
-            var adjustedHtml = new HtmlHelper(adjustedViewContext, new ViewDataContainer(adjustedViewData));
-            adjustedHtml.RenderPartial(TemplateName);
+            adjustedViewData.TemplateInfo.HtmlFieldPrefix = DeterminePrefix(Html, Prefix);
+            var adjustedViewContext = new ViewContext(Html.ViewContext, Html.ViewContext.View, adjustedViewData, Output);
+            var adjustedHtml = HtmlHelperFactory.CreateHtmlHelper(adjustedViewContext, adjustedViewData);
+            adjustedHtml.RenderPartialAsync(TemplateName).GetAwaiter().GetResult();
         }
 
-        static object DetermineModel(HtmlHelper Html, object Model)
+        static object DetermineModel(IHtmlHelper Html, object Model)
         {
             bool isNull = ((dynamic)Model) == null;
             return isNull ? Html.ViewData.Model : Model;
         }
 
-        static string DeterminePrefix(HtmlHelper Html, string Prefix)
+        static string DeterminePrefix(IHtmlHelper Html, string Prefix)
         {
             var actualPrefix = string.IsNullOrEmpty(Prefix)
                                    ? Html.ViewContext.ViewData.TemplateInfo.HtmlFieldPrefix
                                    : Html.ViewContext.ViewData.TemplateInfo.GetFullHtmlFieldName(Prefix);
             return actualPrefix;
-        }
-
-        private class ViewDataContainer : IViewDataContainer
-        {
-            public ViewDataContainer(ViewDataDictionary viewData) { ViewData = viewData; }
-            public ViewDataDictionary ViewData { get; set; }
         }
 
         /// <summary>
@@ -1041,11 +1022,11 @@ namespace Orchard.Core.Shapes
         /// <summary>
         /// Encode a value if it's a string, or render it if it's a Shape
         /// </summary>
-        private IHtmlString EncodeOrDisplay(dynamic Value, dynamic Display, HtmlHelper Html)
+        private IHtmlContent EncodeOrDisplay(dynamic Value, dynamic Display, IHtmlHelper Html)
         {
-            return Value is IHtmlString
-                ? (IHtmlString)Value
-                : Value is IShape ? (IHtmlString)Display(Value).ToString() : (IHtmlString)Html.Raw(Html.Encode(Value.ToString()));
+            return Value is IHtmlContent
+                ? (IHtmlContent)Value
+                : Value is IShape ? (IHtmlContent)Display(Value).ToString() : (IHtmlContent)Html.Raw(Html.Encode(Value.ToString()));
         }
     }
 }

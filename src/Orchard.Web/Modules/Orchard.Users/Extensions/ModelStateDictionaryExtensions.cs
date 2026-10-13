@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using Orchard.Localization;
 using Orchard.Mvc.Extensions;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace System.Web.Mvc
+namespace Orchard.Users.Extensions
 {
     public static class ModelStateDictionaryExtensions
     {

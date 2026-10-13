@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using Orchard.DisplayManagement.Implementation;
 using Orchard.Environment.Extensions;
 using Orchard.Mvc;
+using Orchard.Utility;
 
 namespace Orchard.DesignerTools.Services
 {
@@ -35,7 +35,7 @@ namespace Orchard.DesignerTools.Services
                 }
 
                 // extract each segment of the url
-                var urlSegments = VirtualPathUtility.ToAppRelative(request.Path.ToLower())
+                var urlSegments = VirtualPathUtility.ToAppRelative((request.PathBase + request.Path).Value.ToLower())
                     .Split('/')
                     .Skip(1) // ignore the heading ~ segment 
                     .Select(url => url.Replace("-", "__").Replace(".", "_")) // format the alternate

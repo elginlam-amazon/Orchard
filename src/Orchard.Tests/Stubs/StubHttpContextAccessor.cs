@@ -1,27 +1,28 @@
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Mvc;
+using IHttpContextAccessor = Orchard.Mvc.IHttpContextAccessor;
 
 namespace Orchard.Tests.Stubs
 {
     public class StubHttpContextAccessor : IHttpContextAccessor
     {
-        private HttpContextBase _httpContext;
+        private HttpContext _httpContext;
 
         public StubHttpContextAccessor()
         {
         }
 
-        public StubHttpContextAccessor(HttpContextBase httpContext)
+        public StubHttpContextAccessor(HttpContext httpContext)
         {
             _httpContext = httpContext;
         }
 
-        public HttpContextBase Current()
+        public HttpContext Current()
         {
             return _httpContext;
         }
 
-        public void Set(HttpContextBase httpContext)
+        public void Set(HttpContext httpContext)
         {
             _httpContext = httpContext;
         }

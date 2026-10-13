@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Routing;
 using Autofac;
+using Microsoft.AspNetCore.Routing;
 using Moq;
 using NUnit.Framework;
 using Orchard.DisplayManagement;
@@ -41,7 +41,7 @@ namespace Orchard.Tests.DisplayManagement.Descriptors
             };
             builder.RegisterType<ShapeAttributeBindingStrategy>().As<IShapeTableProvider>();
             builder.RegisterInstance(new TestProvider()).WithMetadata("Feature", _testFeature);
-            builder.RegisterInstance(new RouteCollection());
+            builder.RegisterInstance(new Orchard.Mvc.Routes.OrchardRouteCollection());
             builder.RegisterModule(new ShapeAttributeBindingModule());
         }
 

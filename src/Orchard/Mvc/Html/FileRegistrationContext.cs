@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Web.Mvc;
-using System.Web.Routing;
-using System.Web.UI;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Orchard.Mvc.Html
 {
-    public class FileRegistrationContext : RequestContext
+    public class FileRegistrationContext : ActionContext
     {
         private readonly TagRenderMode _fileTagRenderMode;
         private readonly TagBuilder _tagBuilder;
@@ -19,20 +19,16 @@ namespace Orchard.Mvc.Html
         }
 
         public FileRegistrationContext(ControllerContext viewContext, IViewDataContainer viewDataContainer, string tagName, string fileName, string position, string filePathAttributeName, TagRenderMode fileTagRenderMode)
-            : base(viewContext.HttpContext, viewContext.RouteData)
+            : base(viewContext.HttpContext, viewContext.RouteData, viewContext.ActionDescriptor)
         {
             _fileTagRenderMode = fileTagRenderMode;
-            Container = viewDataContainer as TemplateControl;
+            Container = viewDataContainer as IRazorPage;
 
-            if (Container != null)
+            if (Container != null && Container.Path != null)
             {
-                ContainerVirtualPath = Container.AppRelativeVirtualPath.Substring(
-                    0,
-                    Container.AppRelativeVirtualPath.IndexOf(
-                        "/Views",
-                        StringComparison.InvariantCultureIgnoreCase
-                        )
-                    );
+                var containerPath = Container.Path.StartsWith("/") ? "~" + Container.Path : Container.Path;
+                var viewsIndex = containerPath.IndexOf("/Views", StringComparison.InvariantCultureIgnoreCase);
+                ContainerVirtualPath = viewsIndex >= 0 ? containerPath.Substring(0, viewsIndex) : containerPath;
             }
 
             FileName = fileName;
@@ -41,7 +37,7 @@ namespace Orchard.Mvc.Html
             _tagBuilder = new TagBuilder(tagName);
         }
 
-        public TemplateControl Container { get; set; }
+        public IRazorPage Container { get; set; }
         public string ContainerVirtualPath { get; set; }
         public string FileName { get; set; }
         public string FilePathAttributeName { get; private set; }
@@ -61,9 +57,10 @@ namespace Orchard.Mvc.Html
         internal string GetFilePath(string containerRelativePath)
         {
             //todo: (heskew) maybe not here but file paths for non-app locations need to be taken into account
-            return Container != null
-                       ? Container.ResolveUrl(ContainerVirtualPath + containerRelativePath + FileName)
-                       : (ContainerVirtualPath + containerRelativePath + FileName);
+            var path = ContainerVirtualPath + containerRelativePath + FileName;
+            return Container != null && path.StartsWith("~/")
+                       ? HttpContext.Request.PathBase + path.Substring(1)
+                       : path;
         }
 
         internal string GetTag()

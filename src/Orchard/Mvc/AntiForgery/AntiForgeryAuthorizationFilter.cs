@@ -1,17 +1,24 @@
 using System;
-using System.Collections.Specialized;
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Orchard.Environment.Extensions;
+using Orchard.Mvc.Extensions;
 using Orchard.Mvc.Filters;
 using Orchard.Security;
 
 namespace Orchard.Mvc.AntiForgery
 {
-    public class AntiForgeryAuthorizationFilter : FilterProvider, IAuthorizationFilter
+    public class AntiForgeryAuthorizationFilter : FilterProvider, IAsyncAuthorizationFilter
     {
+        private const string TokenFieldName = "__RequestVerificationToken";
+
         private readonly IAuthenticationService _authenticationService;
         private readonly IExtensionManager _extensionManager;
 
@@ -21,10 +28,10 @@ namespace Orchard.Mvc.AntiForgery
             _extensionManager = extensionManager;
         }
 
-        public void OnAuthorization(AuthorizationContext filterContext)
+        public async Task OnAuthorizationAsync(AuthorizationFilterContext filterContext)
         {
             // If the request is not a POST or is anonymous, and the request doesn't have validation forced, return.
-            if ((filterContext.HttpContext.Request.HttpMethod != "POST" ||
+            if ((!HttpMethods.IsPost(filterContext.HttpContext.Request.Method) ||
                  _authenticationService.GetAuthenticatedUser() == null) && !ShouldValidateGet(filterContext))
             {
                 return;
@@ -35,14 +42,18 @@ namespace Orchard.Mvc.AntiForgery
                 return;
             }
 
-            var validator = new ValidateAntiForgeryTokenAttribute();
-            validator.OnAuthorization(filterContext);
-
-            if (filterContext.HttpContext is HackHttpContext)
-                filterContext.HttpContext = ((HackHttpContext)filterContext.HttpContext).OriginalHttpContextBase;
+            var antiforgery = filterContext.HttpContext.RequestServices.GetRequiredService<IAntiforgery>();
+            try
+            {
+                await antiforgery.ValidateRequestAsync(filterContext.HttpContext);
+            }
+            catch (AntiforgeryValidationException)
+            {
+                filterContext.Result = new AntiforgeryValidationFailedResult();
+            }
         }
 
-        private bool IsAntiForgeryProtectionEnabled(AuthorizationContext context)
+        private bool IsAntiForgeryProtectionEnabled(AuthorizationFilterContext context)
         {
             // POST is opt-out
             var attributes =
@@ -63,10 +74,8 @@ namespace Orchard.Mvc.AntiForgery
             return routeData.Values.ContainsKey("area") ? routeData.Values["area"] as string : routeData.DataTokens["area"] as string ?? "";
         }
 
-        private static bool ShouldValidateGet(AuthorizationContext context)
+        private static bool ShouldValidateGet(AuthorizationFilterContext context)
         {
-            const string tokenFieldName = "__RequestVerificationToken";
-
             var attributes =
                 (ValidateAntiForgeryTokenOrchardAttribute[])
                 context.ActionDescriptor.GetCustomAttributes(typeof(ValidateAntiForgeryTokenOrchardAttribute), false);
@@ -75,11 +84,13 @@ namespace Orchard.Mvc.AntiForgery
             {
                 var request = context.HttpContext.Request;
 
-                //HAACK: (erikpo) If the token is in the querystring, put it in the form so MVC can validate it
-                if (!string.IsNullOrEmpty(request.QueryString[tokenFieldName]))
+                // If the token is in the querystring, pass it through the antiforgery request header so it can be validated.
+                string token = request.Query[TokenFieldName];
+                if (!string.IsNullOrEmpty(token))
                 {
-                    context.HttpContext = new HackHttpContext(context.HttpContext, (HttpContext)context.HttpContext.Items["originalHttpContext"]);
-                    ((HackHttpRequest)context.HttpContext.Request).AddFormValue(tokenFieldName, context.HttpContext.Request.QueryString[tokenFieldName]);
+                    var options = context.HttpContext.RequestServices.GetService<IOptions<AntiforgeryOptions>>();
+                    var headerName = options?.Value.HeaderName ?? "RequestVerificationToken";
+                    request.Headers[headerName] = token;
                 }
 
                 return true;
@@ -87,67 +98,5 @@ namespace Orchard.Mvc.AntiForgery
 
             return false;
         }
-
-        #region HackHttpContext
-
-        private class HackHttpContext : HttpContextWrapper
-        {
-            private readonly HttpContext _originalHttpContext;
-            private HttpRequestWrapper _request;
-
-            public HackHttpContext(HttpContextBase httpContextBase, HttpContext httpContext)
-                : base(httpContext)
-            {
-                OriginalHttpContextBase = httpContextBase;
-                _originalHttpContext = httpContext;
-            }
-
-            public HttpContextBase OriginalHttpContextBase { get; }
-
-            public override HttpRequestBase Request
-            {
-                get
-                {
-                    if (_request == null)
-                        _request = new HackHttpRequest(_originalHttpContext.Request);
-
-                    return _request;
-                }
-            }
-        }
-
-        #endregion
-
-        #region HackHttpRequest
-
-        private class HackHttpRequest : HttpRequestWrapper
-        {
-            private readonly HttpRequest _originalHttpRequest;
-            private NameValueCollection _form;
-
-            public HackHttpRequest(HttpRequest httpRequest)
-                : base(httpRequest)
-            {
-                _originalHttpRequest = httpRequest;
-            }
-
-            public override NameValueCollection Form
-            {
-                get
-                {
-                    if (_form == null)
-                        _form = new NameValueCollection(_originalHttpRequest.Form);
-
-                    return _form;
-                }
-            }
-
-            public void AddFormValue(string key, string value)
-            {
-                Form.Add(key, value);
-            }
-        }
-
-        #endregion
     }
 }

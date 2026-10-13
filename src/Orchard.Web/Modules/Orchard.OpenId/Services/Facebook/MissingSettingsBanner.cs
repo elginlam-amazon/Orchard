@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Environment.Extensions;
 using Orchard.Localization;
@@ -13,9 +13,9 @@ namespace Orchard.Azure.Authentication.Services.Facebook
     public class MissingSettingsBanner : INotificationProvider
     {
         private readonly IOrchardServices _orchardServices;
-        private readonly UrlHelper _urlHelper;
+        private readonly IUrlHelper _urlHelper;
 
-        public MissingSettingsBanner(IOrchardServices orchardServices, UrlHelper urlHelper)
+        public MissingSettingsBanner(IOrchardServices orchardServices, IUrlHelper urlHelper)
         {
             _orchardServices = orchardServices;
             _urlHelper = urlHelper;

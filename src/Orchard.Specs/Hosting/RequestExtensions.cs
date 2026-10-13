@@ -5,7 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
-using System.Web.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Orchard.Specs.Util;
 
 namespace Orchard.Specs.Hosting
@@ -56,21 +57,14 @@ namespace Orchard.Specs.Hosting
                     .Aggregate("", (a, x) => a + (x.n == 0 ? "" : "&") + x.p);
 
                 if (requestMethod == "POST")
-                    details.PostData = Encoding.Default.GetBytes(requestBodyText);
+                    details.PostData = Encoding.UTF8.GetBytes(requestBodyText);
                 else
                     details.Query = requestBodyText;
             }
 
-            webHost.Execute(() =>
-            {
-                var output = new StringWriter();
-                var worker = new Worker(details, output);
-                HttpRuntime.ProcessRequest(worker);
-                details.ResponseText = output.ToString();
-            });
+            var setCookies = ProcessRequest(webHost, details);
 
-            string setCookie;
-            if (details.ResponseHeaders.TryGetValue("Set-Cookie", out setCookie))
+            foreach (var setCookie in setCookies)
             {
                 // Trace.WriteLine(string.Format("Set-Cookie: {0}", setCookie));
                 var cookieName = setCookie.Split(';')[0].Split('=')[0];
@@ -118,108 +112,53 @@ namespace Orchard.Specs.Hosting
             return webHost.SendRequest(urlPath, null);
         }
 
-        class Worker : SimpleWorkerRequest
+        /// <summary>
+        /// Sends the request to the site test server (formerly an ASP.NET SimpleWorkerRequest), and returns the cookies set by the response.
+        /// </summary>
+        private static IList<string> ProcessRequest(WebHost webHost, RequestDetails details)
         {
-            private readonly RequestDetails _details;
-            private readonly TextWriter _output;
+            var virtualDirectory = webHost.VirtualDirectory ?? "/";
 
-            public Worker(RequestDetails details, TextWriter output)
-                : base(details.Page, details.Query, output)
+            var context = webHost.Server.SendAsync(httpContext =>
             {
-                _details = details;
-                _output = output;
-                PostContentType = "application/x-www-form-urlencoded; charset=utf-8";
-            }
-
-            public string PostContentType { get; set; }
-
-
-            public override string GetHttpVerbName()
-            {
-                if (_details.PostData == null)
-                    return base.GetHttpVerbName();
-
-                return "POST";
-            }
-
-            public override string GetKnownRequestHeader(int index)
-            {
-                if (index == HeaderContentLength)
+                var request = httpContext.Request;
+                request.Method = details.PostData == null ? "GET" : "POST";
+                request.Host = new HostString(details.HostName);
+                request.PathBase = virtualDirectory == "/" ? PathString.Empty : new PathString("/" + virtualDirectory.Trim('/'));
+                request.Path = new PathString("/" + details.UrlPath.TrimStart('/'));
+                if (!string.IsNullOrEmpty(details.Query))
                 {
-                    if (_details.PostData != null)
-                        return _details.PostData.Length.ToString();
+                    request.QueryString = new QueryString("?" + details.Query);
                 }
-                else if (index == HeaderContentType)
+
+                foreach (var header in details.RequestHeaders)
                 {
-                    if (_details.PostData != null)
-                        return PostContentType;
+                    request.Headers[header.Key] = header.Value;
                 }
-                else if (index == HeaderCookie)
+
+                if (details.PostData != null)
                 {
-                    string value;
-                    if (_details.RequestHeaders.TryGetValue("Cookie", out value))
-                        return value;
+                    request.ContentType = "application/x-www-form-urlencoded; charset=utf-8";
+                    request.ContentLength = details.PostData.Length;
+                    request.Body = new MemoryStream(details.PostData);
                 }
-                else if (index == HeaderHost)
-                {
-                    return _details.HostName;
-                }
-                return base.GetKnownRequestHeader(index);
+            }).GetAwaiter().GetResult();
 
-            }
+            var response = context.Response;
+            details.StatusCode = response.StatusCode;
+            details.StatusDescription = ReasonPhrases.GetReasonPhrase(response.StatusCode);
 
-            public override byte[] GetPreloadedEntityBody()
+            foreach (var header in response.Headers)
             {
-                if (_details.PostData != null)
-                    return _details.PostData;
-
-                return base.GetPreloadedEntityBody();
+                details.ResponseHeaders[header.Key] = header.Value.ToString();
             }
 
-            public override void SendStatus(int statusCode, string statusDescription)
+            using (var reader = new StreamReader(response.Body, Encoding.UTF8))
             {
-                _details.StatusCode = statusCode;
-                _details.StatusDescription = statusDescription;
-
-                base.SendStatus(statusCode, statusDescription);
+                details.ResponseText = reader.ReadToEnd();
             }
 
-            public override void SendKnownResponseHeader(int index, string value)
-            {
-                switch (index)
-                {
-                    case HeaderSetCookie:
-                        _details.ResponseHeaders.Add("Set-Cookie", value);
-                        break;
-                    case HeaderLocation:
-                        _details.ResponseHeaders.Add("Location", value);
-                        break;
-                    case HeaderContentType:
-                        _details.ResponseHeaders.Add("Content-Type", value);
-                        break;
-                    default:
-                        _details.ResponseHeaders.Add("known header #" + index, value);
-                        break;
-                }
-                base.SendKnownResponseHeader(index, value);
-            }
-
-            public override void SendUnknownResponseHeader(string name, string value)
-            {
-                _details.ResponseHeaders[name] = value;
-
-                base.SendUnknownResponseHeader(name, value);
-            }
-
-            public override void SendResponseFromFile(string filename, long offset, long length)
-            {
-                _output.Write(System.Text.Encoding.UTF8.GetString(File.ReadAllBytes(filename)));
-            }
-
-            public override void SendResponseFromMemory(byte[] data, int length)
-            {
-                _output.Write(System.Text.Encoding.UTF8.GetString(data));
-            }
+            return response.Headers.SetCookie.ToArray();
         }
     }
 }

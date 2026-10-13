@@ -14,12 +14,10 @@ namespace Orchard.DynamicForms.Handlers
             var key = element.Name;
             var valueProviderResult = context.ValueProvider.GetValue(key);
 
-            if (string.IsNullOrWhiteSpace(key) || valueProviderResult == null)
+            if (string.IsNullOrWhiteSpace(key) || valueProviderResult == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
                 return;
 
-            var items = valueProviderResult.RawValue as string[];
-            if (items == null)
-                return;
+            var items = valueProviderResult.Values.ToArray();
 
             var combinedValues = string.Join(",", items);
             context.Output[key] = combinedValues;

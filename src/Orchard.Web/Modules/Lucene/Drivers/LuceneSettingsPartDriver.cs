@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
 using Lucene.Models;
 using Lucene.Services;
 using Lucene.ViewModels;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Drivers;
 using Orchard.Indexing;

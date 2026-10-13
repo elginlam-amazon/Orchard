@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Collections.Specialized;
+using Microsoft.AspNetCore.Http;
 using Orchard.ContentManagement;
 
 namespace Orchard.AuditTrail.Services.Models
@@ -14,15 +14,15 @@ namespace Orchard.AuditTrail.Services.Models
 
         public IUpdateModel UpdateModel { get; set; }
 
-        public static Filters From(NameValueCollection nameValues, IUpdateModel updateModel)
+        public static Filters From(IQueryCollection nameValues, IUpdateModel updateModel)
         {
             var filters = new Filters(updateModel);
 
-            foreach (string nameValue in nameValues)
+            foreach (var nameValue in nameValues)
             {
-                if (!string.IsNullOrEmpty(nameValue))
+                if (!string.IsNullOrEmpty(nameValue.Key))
                 {
-                    filters.Add(nameValue, nameValues[nameValue]);
+                    filters.Add(nameValue.Key, nameValue.Value.ToString());
                 }
             }
 

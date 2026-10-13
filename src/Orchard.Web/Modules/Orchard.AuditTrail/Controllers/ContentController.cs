@@ -1,4 +1,4 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.AuditTrail.Helpers;
 using Orchard.AuditTrail.Models;
 using Orchard.ContentManagement;
@@ -34,7 +34,7 @@ namespace Orchard.AuditTrail.Controllers
         {
             var contentItem = _contentManager.Get(id, VersionOptions.Number(version));
             if (!_authorizer.Authorize(Core.Contents.Permissions.ViewContent, contentItem))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var auditTrailPart = contentItem.As<AuditTrailPart>();
 
@@ -52,7 +52,7 @@ namespace Orchard.AuditTrail.Controllers
         {
             var contentItem = _contentManager.Get(id, VersionOptions.Number(version));
             if (!_authorizer.Authorize(Core.Contents.Permissions.PublishContent, contentItem))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var contentType = _contentDefinitionManager.GetTypeDefinition(contentItem.ContentType);
             var draftable = contentType.Settings.GetModel<ContentTypeSettings>().Draftable;

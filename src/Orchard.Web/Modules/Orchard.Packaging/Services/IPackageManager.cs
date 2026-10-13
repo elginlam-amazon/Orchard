@@ -1,5 +1,5 @@
-using NuGet;
 using Orchard.Packaging.Models;
+using Orchard.Packaging.Packages;
 
 namespace Orchard.Packaging.Services
 {

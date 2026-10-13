@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.FileSystems.Media;
 using Orchard.Localization;
@@ -10,6 +10,7 @@ using Orchard.MediaLibrary.Models;
 using Orchard.MediaLibrary.Services;
 using Orchard.MediaLibrary.ViewModels;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.UI.Admin;
 using Orchard.UI.Notify;
 
@@ -66,16 +67,16 @@ namespace Orchard.MediaLibrary.Controllers
             if (!Services.Authorizer.Authorize(Permissions.ManageOwnMedia))
             {
                 Services.Notifier.Error(T("Couldn't create media folder"));
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var viewModel = new MediaManagerFolderCreateViewModel();
-            UpdateModel(viewModel);
+            this.UpdateModel(viewModel);
 
             if (!(_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, viewModel.FolderPath)
                 || _mediaLibraryService.CheckMediaFolderPermission(Permissions.EditMediaContent, viewModel.FolderPath)))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var failed = false;
@@ -114,19 +115,19 @@ namespace Orchard.MediaLibrary.Controllers
 
             if (!_mediaLibraryService.CanManageMediaFolder(folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             // Shouldn't be able to rename the root folder
             if (IsRootFolder(folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             // Shouldn't be able to rename Users folder
             if (folderPath == "Users")
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var viewModel = new MediaManagerFolderEditViewModel
@@ -145,22 +146,22 @@ namespace Orchard.MediaLibrary.Controllers
             if (!Services.Authorizer.Authorize(Permissions.ManageOwnMedia))
             {
                 Services.Notifier.Error(T("Couldn't edit media folder"));
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var viewModel = new MediaManagerFolderEditViewModel();
-            UpdateModel(viewModel);
+            this.UpdateModel(viewModel);
 
             if (!(_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, viewModel.FolderPath)
                 || _mediaLibraryService.CheckMediaFolderPermission(Permissions.EditMediaContent, viewModel.FolderPath)))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             // Shouldn't be able to rename the root folder
             if (IsRootFolder(viewModel.FolderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             try
@@ -189,15 +190,15 @@ namespace Orchard.MediaLibrary.Controllers
             if (!Services.Authorizer.Authorize(Permissions.ManageOwnMedia))
             {
                 Services.Notifier.Error(T("Couldn't delete media folder"));
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var viewModel = new MediaManagerFolderEditViewModel();
-            UpdateModel(viewModel);
+            this.UpdateModel(viewModel);
 
             if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.DeleteMediaContent, viewModel.FolderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             try
@@ -222,12 +223,12 @@ namespace Orchard.MediaLibrary.Controllers
             if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, folderPath))
             {
                 Services.Notifier.Error(T("Couldn't move media items"));
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             if (!_mediaLibraryService.CanManageMediaFolder(folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             foreach (var media in Services.ContentManager.Query().ForPart<MediaPart>().ForContentItems(mediaItemIds).List())
@@ -239,7 +240,7 @@ namespace Orchard.MediaLibrary.Controllers
                     // check permission on source folder
                     if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.DeleteMediaContent, media.FolderPath))
                     {
-                        return new HttpUnauthorizedResult();
+                        return new UnauthorizedResult();
                     }
 
                     var settings = Services.WorkContext.CurrentSite.As<MediaLibrarySettingsPart>();

@@ -1,6 +1,7 @@
-using System.Web.Mvc;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.Core.Feeds.Rss
 {
@@ -13,15 +14,18 @@ namespace Orchard.Core.Feeds.Rss
             Document = document;
         }
 
-        public override void ExecuteResult(ControllerContext context)
+        public override async Task ExecuteResultAsync(ActionContext context)
         {
 
             // not returning application/rss+xml because of
             // https://bugzilla.mozilla.org/show_bug.cgi?id=256379
             context.HttpContext.Response.ContentType = "text/xml";
 
-            using (var writer = XmlWriter.Create(context.HttpContext.Response.Output))
-                Document.WriteTo(writer);
+            using (var writer = XmlWriter.Create(context.HttpContext.Response.Body, new XmlWriterSettings { Async = true }))
+            {
+                await Document.WriteToAsync(writer, context.HttpContext.RequestAborted);
+                await writer.FlushAsync();
+            }
         }
     }
 }

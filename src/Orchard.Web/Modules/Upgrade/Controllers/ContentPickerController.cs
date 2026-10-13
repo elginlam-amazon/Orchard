@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard;
 using Orchard.Environment.Features;
 using Orchard.Localization;
@@ -46,7 +46,7 @@ namespace Upgrade.Controllers
         public ActionResult IndexPOST()
         {
             if (!_orchardServices.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to migrate Orchard.ContentPicker.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             try
             {

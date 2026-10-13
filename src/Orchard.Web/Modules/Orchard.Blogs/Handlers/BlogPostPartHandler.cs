@@ -1,5 +1,6 @@
 using System.Linq;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Blogs.Models;
 using Orchard.Blogs.Services;
 using Orchard.ContentManagement;
@@ -15,7 +16,7 @@ namespace Orchard.Blogs.Handlers
         private readonly IBlogService _blogService;
         private readonly IWorkContextAccessor _workContextAccessor;
 
-        public BlogPostPartHandler(IAuthorizationService authorizationService, IBlogService blogService, IBlogPostService blogPostService, RequestContext requestContext, IWorkContextAccessor workContextAccessor)
+        public BlogPostPartHandler(IAuthorizationService authorizationService, IBlogService blogService, IBlogPostService blogPostService, ActionContext requestContext, IWorkContextAccessor workContextAccessor)
         {
             _authorizationService = authorizationService;
             _blogService = blogService;

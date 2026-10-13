@@ -1,5 +1,6 @@
-using System.Web.Mvc;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Localization;
 using Orchard.MediaLibrary.Models;
@@ -35,12 +36,12 @@ namespace Orchard.MediaLibrary.Controllers
         public ActionResult Index(string folderPath, string type, int? replaceId)
         {
             if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.SelectMediaContent, folderPath))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             // Check permission
             if (!_mediaLibraryService.CanManageMediaFolder(folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var viewModel = new OEmbedViewModel
@@ -52,7 +53,7 @@ namespace Orchard.MediaLibrary.Controllers
             {
                 var replaceMedia = Services.ContentManager.Get<MediaPart>(replaceId.Value);
                 if (replaceMedia == null)
-                    return HttpNotFound();
+                    return NotFound();
 
                 viewModel.Replace = replaceMedia;
 
@@ -65,7 +66,6 @@ namespace Orchard.MediaLibrary.Controllers
 
         [HttpPost]
         [ActionName("Index")]
-        [ValidateInput(false)]
         public ActionResult IndexPOST(string folderPath, string url, string type, string title, string html, string thumbnail, string width, string height, string description, int? replaceId)
         {
             var viewModel = new OEmbedViewModel
@@ -78,7 +78,7 @@ namespace Orchard.MediaLibrary.Controllers
             {
                 var replaceMedia = Services.ContentManager.Get<MediaPart>(replaceId.Value);
                 if (replaceMedia == null)
-                    return HttpNotFound();
+                    return NotFound();
 
                 viewModel.Replace = replaceMedia;
 
@@ -126,7 +126,7 @@ namespace Orchard.MediaLibrary.Controllers
                 {
                     root.El("description", description);
                 }
-                Response.AddHeader("X-XSS-Protection", "0"); // Prevents Chrome from freaking out over embedded preview
+                Response.Headers.Append("X-XSS-Protection", "0"); // Prevents Chrome from freaking out over embedded preview
             }
             catch
             {
@@ -136,18 +136,18 @@ namespace Orchard.MediaLibrary.Controllers
             return View(viewModel);
         }
 
-        [HttpPost, ValidateInput(false)]
+        [HttpPost]
         public ActionResult Import(string folderPath, string url, string document)
         {
             if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             // Check permission
             if (!_mediaLibraryService.CanManageMediaFolder(folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var content = XDocument.Parse(document);
@@ -191,23 +191,23 @@ namespace Orchard.MediaLibrary.Controllers
             return RedirectToAction("Index", new { folderPath = folderPath });
         }
 
-        [HttpPost, ValidateInput(false)]
+        [HttpPost]
         public ActionResult Replace(int replaceId, string url, string document)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageOwnMedia))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var replaceMedia = Services.ContentManager.Get<MediaPart>(replaceId);
             if (replaceMedia == null)
-                return HttpNotFound();
+                return NotFound();
 
             // Check permission
             if (!(_mediaLibraryService.CheckMediaFolderPermission(Permissions.EditMediaContent, replaceMedia.FolderPath) && _mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, replaceMedia.FolderPath))
                 && !_mediaLibraryService.CanManageMediaFolder(replaceMedia.FolderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var content = XDocument.Parse(document);

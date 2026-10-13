@@ -10,6 +10,7 @@ using Orchard.ContentManagement.Handlers;
 using Orchard.Localization;
 using Orchard.Services;
 using Orchard.UI.Notify;
+using Orchard.Mvc.Extensions;
 
 namespace Orchard.Comments.Drivers
 {
@@ -52,7 +53,7 @@ namespace Orchard.Comments.Drivers
         // GET
         protected override DriverResult Editor(CommentPart part, dynamic shapeHelper)
         {
-            if (UI.Admin.AdminFilter.IsApplied(_workContextAccessor.GetContext().HttpContext.Request.RequestContext))
+            if (UI.Admin.AdminFilter.IsApplied(_workContextAccessor.GetContext().HttpContext.GetActionContext()))
             {
                 return ContentShape("Parts_Comment_AdminEdit",
                     () => shapeHelper.EditorTemplate(TemplateName: "Parts.Comment.AdminEdit", Model: part, Prefix: Prefix));
@@ -73,7 +74,7 @@ namespace Orchard.Comments.Drivers
 
             // applying moderate/approve actions
             var httpContext = workContext.HttpContext;
-            var name = httpContext.Request.Form["submit.Save"];
+            var name = httpContext.Request.Form["submit.Save"].ToString();
             if (!string.IsNullOrEmpty(name) && string.Equals(name, "moderate", StringComparison.OrdinalIgnoreCase))
             {
                 if (_orchardServices.Authorizer.Authorize(Permissions.ManageComments, T("Couldn't moderate comment")))

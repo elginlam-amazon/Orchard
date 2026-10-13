@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
+using Microsoft.AspNetCore.Html;
 using Orchard.DisplayManagement.Implementation;
 
 namespace Orchard.DisplayManagement.Shapes
@@ -28,7 +28,7 @@ namespace Orchard.DisplayManagement.Shapes
         public IList<string> Alternates { get; set; }
 
         public bool WasExecuted { get; set; }
-        public IHtmlString ChildContent { get; set; }
+        public IHtmlContent ChildContent { get; set; }
 
         public IEnumerable<Action<ShapeDisplayingContext>> Displaying { get; private set; }
         public IEnumerable<Action<ShapeDisplayedContext>> Displayed { get; private set; }

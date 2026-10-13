@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Net;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Environment.Extensions;
 using Orchard.FileSystems.Media;
@@ -18,6 +18,9 @@ namespace Orchard.MediaLibrary.Controllers
     [OrchardFeature("Orchard.MediaLibrary.WebSearch")]
     public class WebSearchController : Controller
     {
+        // WebClient is obsolete: the shared HttpClient downloads the remote media
+        private static readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient();
+
         private readonly IMediaLibraryService _mediaLibraryService;
         private readonly IContentManager _contentManager;
         private readonly IMimeTypeProvider _mimeTypeProvider;
@@ -42,13 +45,13 @@ namespace Orchard.MediaLibrary.Controllers
         {
             if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.SelectMediaContent, folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             // Check permission
             if (!_mediaLibraryService.CanManageMediaFolder(folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var viewModel = new ImportMediaViewModel
@@ -61,7 +64,7 @@ namespace Orchard.MediaLibrary.Controllers
             {
                 var replaceMedia = Services.ContentManager.Get<MediaPart>(replaceId.Value);
                 if (replaceMedia == null)
-                    return HttpNotFound();
+                    return NotFound();
 
                 viewModel.Replace = replaceMedia;
             }
@@ -73,12 +76,12 @@ namespace Orchard.MediaLibrary.Controllers
         public ActionResult Import(string folderPath, string type, string url)
         {
             if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, folderPath))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             // Check permission
             if (!_mediaLibraryService.CanManageMediaFolder(folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var settings = Services.WorkContext.CurrentSite.As<MediaLibrarySettingsPart>();
@@ -93,18 +96,18 @@ namespace Orchard.MediaLibrary.Controllers
                     throw new Exception(T("This file is not allowed: {0}", filename).Text);
                 }
 
-                var buffer = new WebClient().DownloadData(url);
+                var buffer = _httpClient.GetByteArrayAsync(url).GetAwaiter().GetResult();
                 var stream = new MemoryStream(buffer);
 
                 var mediaPart = _mediaLibraryService.ImportMedia(stream, folderPath, filename, type);
                 _contentManager.Create(mediaPart);
 
-                return new JsonResult { Data = new { folderPath, MediaPath = mediaPart.FileName } };
+                return new JsonResult(new { folderPath, MediaPath = mediaPart.FileName });
 
             }
             catch (Exception e)
             {
-                return new JsonResult { Data = new { error = e.Message } };
+                return new JsonResult(new { error = e.Message });
             }
         }
 
@@ -112,17 +115,17 @@ namespace Orchard.MediaLibrary.Controllers
         public ActionResult Replace(int replaceId, string type, string url)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageOwnMedia))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var replaceMedia = Services.ContentManager.Get<MediaPart>(replaceId);
             if (replaceMedia == null)
-                return HttpNotFound();
+                return NotFound();
 
             // Check permission
             if (!(_mediaLibraryService.CheckMediaFolderPermission(Permissions.EditMediaContent, replaceMedia.FolderPath) && _mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, replaceMedia.FolderPath))
                 && !_mediaLibraryService.CanManageMediaFolder(replaceMedia.FolderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var settings = Services.WorkContext.CurrentSite.As<MediaLibrarySettingsPart>();
@@ -137,7 +140,7 @@ namespace Orchard.MediaLibrary.Controllers
                     throw new Exception(T("This file is not allowed: {0}", filename).Text);
                 }
 
-                var buffer = new WebClient().DownloadData(url);
+                var buffer = _httpClient.GetByteArrayAsync(url).GetAwaiter().GetResult();
                 var stream = new MemoryStream(buffer);
 
                 var mimeType = _mimeTypeProvider.GetMimeType(filename);
@@ -154,11 +157,11 @@ namespace Orchard.MediaLibrary.Controllers
                 replaceMedia.ContentItem.VersionRecord.Published = false;
                 Services.ContentManager.Publish(replaceMedia.ContentItem);
 
-                return new JsonResult { Data = new { replaceMedia.FolderPath, MediaPath = replaceMedia.FileName } };
+                return new JsonResult(new { replaceMedia.FolderPath, MediaPath = replaceMedia.FileName });
             }
             catch (Exception e)
             {
-                return new JsonResult { Data = new { Success = false, error = e.Message } };
+                return new JsonResult(new { Success = false, error = e.Message });
             }
         }
     }

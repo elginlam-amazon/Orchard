@@ -1,5 +1,5 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard;
 using Orchard.ContentManagement;
 using Orchard.Core.Navigation.Models;
@@ -47,7 +47,7 @@ namespace Upgrade.Controllers
         public ActionResult IndexPOST()
         {
             if (!_orchardServices.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to migrate the navigation.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var menus = _menuService.GetMenus();
 

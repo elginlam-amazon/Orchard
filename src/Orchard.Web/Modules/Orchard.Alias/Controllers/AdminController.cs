@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Alias.Implementation.Holder;
 using Orchard.Alias.ViewModels;
 using Orchard.Environment.Extensions;
@@ -12,11 +13,11 @@ using Orchard.Mvc.Extensions;
 using Orchard.Security;
 using Orchard.UI.Navigation;
 using Orchard.UI.Notify;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Alias.Controllers
 {
     [OrchardFeature("Orchard.Alias.UI")]
-    [ValidateInput(false)]
     public class AdminController : Controller
     {
         private readonly IAliasService _aliasService;
@@ -41,7 +42,7 @@ namespace Orchard.Alias.Controllers
         public ActionResult IndexUnmanaged(AdminIndexOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage aliases")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(Services.WorkContext.CurrentSite, pagerParameters);
 
@@ -83,13 +84,13 @@ namespace Orchard.Alias.Controllers
 
         [HttpPost]
         [FormValueRequired("submit.BulkEdit")]
-        public ActionResult IndexUnmanaged(FormCollection input)
+        public ActionResult IndexUnmanaged(IFormCollection input)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage aliases")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new AdminIndexViewModel { AliasEntries = new List<AliasEntry>(), Options = new AdminIndexOptions() };
-            UpdateModel(viewModel);
+            this.UpdateModel(viewModel);
 
             var checkedItems = viewModel.AliasEntries.Where(c => c.IsChecked);
 
@@ -113,7 +114,7 @@ namespace Orchard.Alias.Controllers
         public ActionResult IndexManaged(AdminIndexOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage aliases")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(Services.WorkContext.CurrentSite, pagerParameters);
 
@@ -156,7 +157,7 @@ namespace Orchard.Alias.Controllers
         public ActionResult Add()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage aliases")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return View();
         }
@@ -165,7 +166,7 @@ namespace Orchard.Alias.Controllers
         public ActionResult Add(string aliasPath, string routePath)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage aliases")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             aliasPath = aliasPath.TrimStart('/', '\\');
             if (string.IsNullOrWhiteSpace(aliasPath))
@@ -213,7 +214,7 @@ namespace Orchard.Alias.Controllers
         public ActionResult Edit(string path)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage aliases")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (path == "/")
             {
@@ -223,7 +224,7 @@ namespace Orchard.Alias.Controllers
             var routeValues = _aliasService.Get(path);
 
             if (routeValues == null)
-                return HttpNotFound();
+                return NotFound();
 
             var virtualPaths = _aliasService.LookupVirtualPaths(routeValues, HttpContext)
                 .Select(vpd => vpd.VirtualPath);
@@ -238,7 +239,7 @@ namespace Orchard.Alias.Controllers
         public ActionResult Edit(string path, string aliasPath, string routePath)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage aliases")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             aliasPath = aliasPath.TrimStart('/', '\\');
             if (string.IsNullOrWhiteSpace(aliasPath))
@@ -294,7 +295,7 @@ namespace Orchard.Alias.Controllers
         public ActionResult Delete(string path, string returnUrl)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage aliases")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (path == "/")
             {
@@ -324,7 +325,7 @@ namespace Orchard.Alias.Controllers
             if (routePath == null) return false;
 
             var editUrl = Url.Action("Edit", new { path = aliasPath == string.Empty ? "/" : aliasPath });
-            var deleteUrl = Url.Action("Delete", new { path = aliasPath == string.Empty ? "/" : aliasPath, returnUrl = HttpContext.Request.RawUrl });
+            var deleteUrl = Url.Action("Delete", new { path = aliasPath == string.Empty ? "/" : aliasPath, returnUrl = HttpContext.Request.GetRawUrl() });
 
             var routePathLink = T("<a href=\"{0}\">{0}</a>", routePath == string.Empty ? "/" : "/" + routePath.TrimStart('/'));
             var changeLink = T("<a href=\"{0}\">change</a>", editUrl);

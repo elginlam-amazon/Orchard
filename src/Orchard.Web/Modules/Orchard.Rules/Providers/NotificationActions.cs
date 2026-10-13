@@ -35,7 +35,7 @@ namespace Orchard.Rules.Providers
 
                         message = _tokenizer.Replace(message, context.Tokens);
 
-                        var notificationType = (NotifyType)Enum.Parse(typeof(NotifyType), notification);
+                        var notificationType = Enum.Parse<NotifyType>(notification);
                         _notifier.Add(notificationType, T(message));
 
                         return true;

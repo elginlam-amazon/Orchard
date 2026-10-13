@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Alias.Implementation.Holder;
 
 namespace Orchard.Alias.Implementation.Map

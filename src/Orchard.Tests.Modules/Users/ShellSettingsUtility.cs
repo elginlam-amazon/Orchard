@@ -18,9 +18,9 @@ namespace Orchard.Tests.Modules.Users
                 RequestUrlHost = "wiki.example.com",
                 RequestUrlPrefix = "~/foo",
                 EncryptionAlgorithm = encryptionAlgorithm,
-                EncryptionKey = SymmetricAlgorithm.Create(encryptionAlgorithm).Key.ToHexString(),
+                EncryptionKey = Orchard.Security.CryptographyAlgorithms.CreateSymmetricAlgorithm(encryptionAlgorithm).Key.ToHexString(),
                 HashAlgorithm = hashAlgorithm,
-                HashKey = HMAC.Create(hashAlgorithm).Key.ToHexString()
+                HashKey = Orchard.Security.CryptographyAlgorithms.CreateHmac(hashAlgorithm).Key.ToHexString()
             };
 
         }

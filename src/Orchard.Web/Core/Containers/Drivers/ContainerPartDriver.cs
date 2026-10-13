@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Routing;
 using System.Xml;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Drivers;
 using Orchard.ContentManagement.Handlers;
@@ -66,18 +66,18 @@ namespace Orchard.Core.Containers.Drivers
                 }
 
                 // Retrieving pager parameters.
-                var queryString = _orchardServices.WorkContext.HttpContext.Request.QueryString;
+                var queryString = _orchardServices.WorkContext.HttpContext.Request.Query;
 
                 var page = 0;
                 // Don't try to page if not necessary.
-                if (part.Paginated && queryString["page"] != null)
+                if (part.Paginated && !string.IsNullOrEmpty(queryString["page"]))
                 {
                     int.TryParse(queryString["page"], out page);
                 }
 
                 var pageSize = part.PageSize;
                 // If the container is paginated and pageSize is provided in the query string then retrieve it.
-                if (part.Paginated && queryString["pageSize"] != null)
+                if (part.Paginated && !string.IsNullOrEmpty(queryString["pageSize"]))
                 {
                     int.TryParse(queryString["pageSize"], out pageSize);
                 }

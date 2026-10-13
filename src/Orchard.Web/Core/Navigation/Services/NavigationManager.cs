@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.Environment.Configuration;
 using Orchard.Exceptions;
@@ -12,6 +12,7 @@ using Orchard.Security.Permissions;
 using Orchard.UI;
 using Orchard.UI.Navigation;
 using Orchard.Utility;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Core.Navigation.Services
 {
@@ -21,7 +22,7 @@ namespace Orchard.Core.Navigation.Services
         private readonly IEnumerable<IMenuProvider> _menuProviders;
         private readonly IAuthorizationService _authorizationService;
         private readonly IEnumerable<INavigationFilter> _navigationFilters;
-        private readonly UrlHelper _urlHelper;
+        private readonly IUrlHelper _urlHelper;
         private readonly IOrchardServices _orchardServices;
         private readonly ShellSettings _shellSettings;
 
@@ -30,7 +31,7 @@ namespace Orchard.Core.Navigation.Services
             IEnumerable<IMenuProvider> menuProviders,
             IAuthorizationService authorizationService,
             IEnumerable<INavigationFilter> navigationFilters,
-            UrlHelper urlHelper,
+            IUrlHelper urlHelper,
             IOrchardServices orchardServices,
             ShellSettings shellSettings)
         {
@@ -103,7 +104,7 @@ namespace Orchard.Core.Navigation.Services
                                 : _urlHelper.RouteUrl(routeValueDictionary);
 
             var schemes = new[] { "http", "https", "tel", "mailto" };
-            if (!string.IsNullOrEmpty(url) && _urlHelper.RequestContext.HttpContext != null &&
+            if (!string.IsNullOrEmpty(url) && _urlHelper.ActionContext.HttpContext != null &&
                 !(url.StartsWith("/") || schemes.Any(scheme => url.StartsWith(scheme + ":"))))
             {
                 if (!url.StartsWith("#"))
@@ -119,7 +120,7 @@ namespace Orchard.Core.Navigation.Services
                             url = url.Substring(2);
                         }
                     }
-                    var appPath = _urlHelper.RequestContext.HttpContext.Request.ApplicationPath;
+                    var appPath = _urlHelper.ActionContext.HttpContext.Request.GetApplicationPath();
                     if (appPath == "/")
                         appPath = "";
                     url = string.Format("{0}/{1}", appPath, url);

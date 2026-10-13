@@ -1,4 +1,4 @@
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.Themes.Services
 {
@@ -11,7 +11,7 @@ namespace Orchard.Themes.Services
             _siteThemeService = siteThemeService;
         }
 
-        public ThemeSelectorResult GetTheme(RequestContext context)
+        public ThemeSelectorResult GetTheme(ActionContext context)
         {
             string currentThemeName = _siteThemeService.GetCurrentThemeName();
             return string.IsNullOrEmpty(currentThemeName) ? null : new ThemeSelectorResult { Priority = -5, ThemeName = currentThemeName };

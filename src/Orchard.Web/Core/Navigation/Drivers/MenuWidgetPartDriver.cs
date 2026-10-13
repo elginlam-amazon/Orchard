@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Drivers;
 using Orchard.ContentManagement.Handlers;
@@ -77,7 +78,7 @@ namespace Orchard.Core.Navigation.Drivers
                 menuItems = localized;
 
                 var request = _workContextAccessor.GetContext().HttpContext.Request;
-                var routeData = request.RequestContext.RouteData;
+                var routeData = request.HttpContext.GetRouteData();
                 var selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, routeData);
                 var menuShape = shapeHelper.Menu();
 

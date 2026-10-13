@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Web;
-using System.Web.Hosting;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Orchard.Utility;
+using Orchard.Environment;
 
 namespace Orchard.UI.Resources
 {

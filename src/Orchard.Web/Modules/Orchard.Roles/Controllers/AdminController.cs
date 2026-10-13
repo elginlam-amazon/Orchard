@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Data;
 using Orchard.DisplayManagement;
@@ -15,10 +17,10 @@ using Orchard.Roles.Services;
 using Orchard.Roles.ViewModels;
 using Orchard.Security;
 using Orchard.UI.Notify;
+using IAuthorizationService = Orchard.Security.IAuthorizationService;
 
 namespace Orchard.Roles.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller
     {
         private readonly IRoleService _roleService;
@@ -63,7 +65,7 @@ namespace Orchard.Roles.Controllers
         public ActionResult Index()
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageRoles, T("Not authorized to manage roles")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var securityCriticalPermissions = _roleService.GetSecurityCriticalPermissions().ToHashSet();
             var roles = _roleService.GetRoles().OrderBy(r => r.Name).ToList();
@@ -83,7 +85,7 @@ namespace Orchard.Roles.Controllers
         public ActionResult IndexPOST()
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageRoles, T("Not authorized to manage roles")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             foreach (string key in Request.Form.Keys)
             {
@@ -99,7 +101,7 @@ namespace Orchard.Roles.Controllers
         public ActionResult Create()
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageRoles, T("Not authorized to manage roles")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var model = new RoleCreateViewModel { FeaturePermissions = _roleService.GetInstalledPermissions() };
             return View(model);
@@ -109,10 +111,10 @@ namespace Orchard.Roles.Controllers
         public ActionResult CreatePOST()
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageRoles, T("Not authorized to manage roles")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new RoleCreateViewModel();
-            TryUpdateModel(viewModel);
+            this.TryUpdateModel(viewModel);
 
             if (string.IsNullOrEmpty(viewModel.Name))
             {
@@ -147,12 +149,12 @@ namespace Orchard.Roles.Controllers
         public ActionResult Edit(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageRoles, T("Not authorized to manage roles")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var role = _roleService.GetRole(id);
             if (role == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var model = new RoleEditViewModel
@@ -179,10 +181,10 @@ namespace Orchard.Roles.Controllers
         public ActionResult EditSavePOST(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageRoles, T("Not authorized to manage roles")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new RoleEditViewModel();
-            TryUpdateModel(viewModel);
+            this.TryUpdateModel(viewModel);
 
             if (string.IsNullOrEmpty(viewModel.Name))
             {
@@ -227,7 +229,7 @@ namespace Orchard.Roles.Controllers
         public ActionResult Delete(int id, string returnUrl)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageRoles, T("Not authorized to manage roles")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             _roleService.DeleteRole(id);
             Services.Notifier.Success(T("Role was successfully deleted."));
@@ -245,7 +247,7 @@ namespace Orchard.Roles.Controllers
             var userRolesPart = _contentManager.Get<UserRolesPart>(id);
             if (userRolesPart == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
             // Check whether the current user has any of the required permissions
             var allRoles = _roleService.GetRoles();
@@ -257,7 +259,7 @@ namespace Orchard.Roles.Controllers
                 .Select(rr => rr.Id).ToList();
             if (!authorizedRoleIds.Any())
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var securityCriticalPermissions = _roleService.GetSecurityCriticalPermissions().ToHashSet();
@@ -289,7 +291,7 @@ namespace Orchard.Roles.Controllers
             var userRolesPart = _contentManager.Get<UserRolesPart>(id);
             if (userRolesPart == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
             // Check whether the current user has any of the required permissions
             var allRoles = _roleService.GetRoles();
@@ -301,7 +303,7 @@ namespace Orchard.Roles.Controllers
                 .Select(rr => rr.Id).ToList();
             if (!authorizedRoleIds.Any())
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
             // Start trying to update
             var editModel = new UserRolesViewModel
@@ -309,7 +311,7 @@ namespace Orchard.Roles.Controllers
                 User = userRolesPart.As<IUser>(),
                 UserRoles = userRolesPart
             };
-            if (TryUpdateModel(editModel))
+            if (this.TryUpdateModel(editModel))
             {
                 // same logic that is used in the UserRolesPartDriver:
                 var currentUserRoleRecords = _userRolesRepository.Fetch(x => x.UserId == editModel.User.Id).ToArray();

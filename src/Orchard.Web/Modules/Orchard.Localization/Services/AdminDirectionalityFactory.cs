@@ -1,4 +1,5 @@
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement.Implementation;
 using Orchard.Environment.Extensions;
@@ -21,7 +22,7 @@ namespace Orchard.Localization.Services
         private bool IsActivable()
         {
             // activate on admin screen only
-            if (AdminFilter.IsApplied(new RequestContext(_workContext.HttpContext, new RouteData())))
+            if (AdminFilter.IsApplied(new ActionContext(_workContext.HttpContext, new RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor())))
                 return true;
 
             return false;

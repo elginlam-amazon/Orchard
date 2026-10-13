@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
-using System.Web.Hosting;
 using Orchard.Environment;
 using Orchard.Environment.Descriptor.Models;
 using Orchard.Environment.Extensions;
@@ -12,6 +11,7 @@ using Orchard.Environment.Extensions.Models;
 using Orchard.FileSystems.VirtualPath;
 using Orchard.UI.Resources;
 using Orchard.Utility.Extensions;
+using Orchard.Utility;
 
 namespace Orchard.DisplayManagement.Descriptors.ResourceBindingStrategy
 {
@@ -183,7 +183,7 @@ namespace Orchard.DisplayManagement.Descriptors.ResourceBindingStrategy
         {
             // normalize urls that could be like ~/ or /OrchardLocal/ or /OrchardLocal/tenant-prefix
             // driving them to a ~/ format
-            var appRelativeUrl = System.Web.VirtualPathUtility.ToAppRelative(url);
+            var appRelativeUrl = Orchard.Utility.VirtualPathUtility.ToAppRelative(url);
             var path = appRelativeUrl.TrimStart('~');
             var indexOfQueryString = path.IndexOf('?');
 

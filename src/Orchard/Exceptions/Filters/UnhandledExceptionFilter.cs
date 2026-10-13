@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.Logging;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
+using Orchard.Utility.Extensions;
 using Orchard.Mvc.Filters;
 using IFilterProvider = Orchard.Mvc.Filters.IFilterProvider;
 
@@ -47,7 +51,7 @@ namespace Orchard.Exceptions.Filters
                         filterContext.ExceptionHandled = true;
 
                         // inform exception filters of the exception that was suppressed
-                        var exceptionContext = new ExceptionContext(filterContext.Controller.ControllerContext, filterContext.Exception);
+                        var exceptionContext = new ExceptionContext(filterContext, new List<IFilterMetadata>()) { Exception = filterContext.Exception };
                         foreach (var exceptionFilter in _filterProviders.Value.OfType<IExceptionFilter>())
                         {
                             exceptionFilter.OnException(exceptionContext);
@@ -64,37 +68,35 @@ namespace Orchard.Exceptions.Filters
                             shape.Exception = filterContext.Exception;
 
                             filterContext.Result = new ShapeResult(filterContext.Controller, shape);
-                            filterContext.RequestContext.HttpContext.Response.StatusCode = 500;
+                            filterContext.HttpContext.Response.StatusCode = 500;
 
-                            // prevent IIS 7.0 classic mode from handling the 404/500 itself
-                            filterContext.RequestContext.HttpContext.Response.TrySkipIisCustomErrors = true;
                         }
                     }
                 }
             }
 
-            if (filterContext.Result is HttpNotFoundResult)
+            if (filterContext.Result is NotFoundResult)
             {
                 var model = _orchardServices.New.NotFound();
-                var request = filterContext.RequestContext.HttpContext.Request;
-                var url = request.RawUrl;
+                var request = filterContext.HttpContext.Request;
+                var url = request.GetRawUrl();
+                var displayUrl = request.GetDisplayUrl();
 
                 // If the url is relative then replace with Requested path
-                model.RequestedUrl = request.Url.OriginalString.Contains(url) & request.Url.OriginalString != url ?
-                    request.Url.OriginalString : url;
+                model.RequestedUrl = displayUrl.Contains(url) & displayUrl != url ?
+                    displayUrl : url;
 
                 // Dont get the user stuck in a 'retry loop' by
                 // allowing the Referrer to be the same as the Request
-                model.ReferrerUrl = request.UrlReferrer != null &&
-                                    request.UrlReferrer.OriginalString != model.RequestedUrl ?
-                    request.UrlReferrer.OriginalString : null;
+                var urlReferrer = request.GetUrlReferrer();
+                model.ReferrerUrl = urlReferrer != null &&
+                                    urlReferrer.OriginalString != model.RequestedUrl ?
+                    urlReferrer.OriginalString : null;
 
                 filterContext.Result = new ShapeResult(filterContext.Controller, model);
-                filterContext.RequestContext.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                filterContext.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
                 filterContext.ExceptionHandled = true;
 
-                // prevent IIS 7.0 classic mode from handling the 404/500 itself
-                filterContext.RequestContext.HttpContext.Response.TrySkipIisCustomErrors = true;
             }
         }
 
@@ -113,7 +115,7 @@ namespace Orchard.Exceptions.Filters
                 if (_exceptionPolicy.HandleException(this, filterContext.Exception))
                 {
                     // inform exception filters of the exception that was suppressed
-                    var exceptionContext = new ExceptionContext(filterContext.Controller.ControllerContext, filterContext.Exception);
+                    var exceptionContext = new ExceptionContext(filterContext, new List<IFilterMetadata>()) { Exception = filterContext.Exception };
                     foreach (var exceptionFilter in _filterProviders.Value.OfType<IExceptionFilter>())
                     {
                         exceptionFilter.OnException(exceptionContext);

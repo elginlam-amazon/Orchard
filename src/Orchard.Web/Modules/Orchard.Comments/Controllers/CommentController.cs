@@ -1,5 +1,5 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Comments.Models;
 using Orchard.Comments.Services;
 using Orchard.ContentManagement;
@@ -24,7 +24,7 @@ namespace Orchard.Comments.Controllers
             T = NullLocalizer.Instance;
         }
 
-        [HttpPost, ValidateInput(false)]
+        [HttpPost]
         public ActionResult Create(string returnUrl)
         {
             if (!Services.Authorizer.Authorize(Permissions.AddComment, T("Couldn't add comment")))
@@ -33,22 +33,22 @@ namespace Orchard.Comments.Controllers
             var comment = Services.ContentManager.New<CommentPart>("Comment");
             var editorShape = Services.ContentManager.UpdateEditor(comment, this);
 
-            if (!ModelState.IsValidField("Comments.Author"))
+            if (!(ModelState.GetFieldValidationState("Comments.Author") != Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid))
             {
                 Services.Notifier.Error(T("Name is mandatory and must have less than 255 chars"));
             }
 
-            if (!ModelState.IsValidField("Comments.Email"))
+            if (!(ModelState.GetFieldValidationState("Comments.Email") != Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid))
             {
                 Services.Notifier.Error(T("Email is invalid or is longer than 255 chars"));
             }
 
-            if (!ModelState.IsValidField("Comments.SiteName"))
+            if (!(ModelState.GetFieldValidationState("Comments.SiteName") != Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid))
             {
                 Services.Notifier.Error(T("Site url is invalid or is longer than 255 chars"));
             }
 
-            if (!ModelState.IsValidField("Comments.CommentText"))
+            if (!(ModelState.GetFieldValidationState("Comments.CommentText") != Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid))
             {
                 Services.Notifier.Error(T("Comment is mandatory"));
             }
@@ -200,7 +200,7 @@ namespace Orchard.Comments.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

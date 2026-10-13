@@ -1,25 +1,27 @@
 using System;
-using System.Threading.Tasks;
-using Owin;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Orchard.Mvc.Routes;
 
 namespace Orchard.Owin
 {
     /// <summary>
-    /// A special Owin middleware that is executed last in the Owin pipeline and runs the non-Owin part of the request.
+    /// A special middleware that is executed last in the tenant pipeline and runs the routed (MVC) part of the request.
     /// </summary>
     public static class OrchardMiddleware
     {
-        public static IAppBuilder UseOrchard(this IAppBuilder app)
+        public static IApplicationBuilder UseOrchard(this IApplicationBuilder app)
         {
-            app.Use(async (context, next) =>
+            app.Run(async context =>
             {
-                var handler = context.Environment["orchard.Handler"] as Func<Task>;
+                var handler = context.Items[ShellRoute.OrchardHandlerKey] as RequestDelegate;
 
                 if (handler == null)
                 {
                     throw new ArgumentException("orchard.Handler can't be null");
                 }
-                await handler();
+
+                await handler(context);
             });
 
             return app;

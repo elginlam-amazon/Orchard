@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Autofac;
-using NuGet;
+using Orchard.Packaging.Packages;
 using NUnit.Framework;
 using Orchard.Caching;
 using Orchard.Core.Settings.Descriptor;

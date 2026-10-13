@@ -1,11 +1,13 @@
 using System;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Orchard.Environment;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions.Models;
 using Orchard.Environment.Features;
 using Orchard.Localization;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.Mvc.Filters;
 using Orchard.UI.Notify;
 
@@ -51,7 +53,7 @@ namespace Orchard.MessageBus.Services
 
             if (httpContext == null) return;
 
-            httpContext.Items[TempDataKey] = filterContext.Controller.TempData;
+            httpContext.Items[TempDataKey] = filterContext.GetTempData();
         }
 
         public void Installing(Feature feature) { }

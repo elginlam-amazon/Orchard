@@ -1,5 +1,5 @@
 using System.Linq;
-using System.Web.Script.Serialization;
+using Newtonsoft.Json;
 using Orchard.ContentManagement.MetaData.Builders;
 using Orchard.ContentManagement.MetaData.Models;
 using Orchard.ContentTypes.Settings;
@@ -19,12 +19,11 @@ namespace Orchard.ContentTypes.Extensions
         /// </summary>
         public static ContentTypeDefinitionBuilder ResetPlacement(this ContentTypeDefinitionBuilder builder, PlacementType placementType, string shapeType, string differentiator)
         {
-            var serializer = new JavaScriptSerializer();
             var placementSettings = GetPlacement(builder.Build(), placementType).ToList();
 
             placementSettings = placementSettings.Where(x => x.ShapeType != shapeType && x.Differentiator != differentiator).ToList();
 
-            var placement = serializer.Serialize(placementSettings.ToArray());
+            var placement = JsonConvert.SerializeObject(placementSettings.ToArray());
 
             return builder.WithSetting("ContentTypeSettings.Placement." + placementType, placement);
         }
@@ -58,7 +57,6 @@ namespace Orchard.ContentTypes.Extensions
 
         private static string AddPlacement(ContentTypeDefinition builder, PlacementType placementType, string shapeType, string differentiator, string zone, string position)
         {
-            var serializer = new JavaScriptSerializer();
             var placementSettings = GetPlacement(builder, placementType).ToList();
 
             placementSettings = placementSettings.Where(x => !x.IsSameAs(new PlacementSettings { ShapeType = shapeType, Differentiator = differentiator })).ToList();
@@ -71,7 +69,7 @@ namespace Orchard.ContentTypes.Extensions
                 Position = position
             });
 
-            var placement = serializer.Serialize(placementSettings.ToArray());
+            var placement = JsonConvert.SerializeObject(placementSettings.ToArray());
             return placement;
         }
         /// <summary>
@@ -87,11 +85,10 @@ namespace Orchard.ContentTypes.Extensions
         {
             var currentSettings = contentTypeDefinition.Settings;
             string placement;
-            var serializer = new JavaScriptSerializer();
 
             currentSettings.TryGetValue("ContentTypeSettings.Placement." + placementType, out placement);
 
-            return string.IsNullOrEmpty(placement) ? new PlacementSettings[0] : serializer.Deserialize<PlacementSettings[]>(placement);
+            return string.IsNullOrEmpty(placement) ? new PlacementSettings[0] : JsonConvert.DeserializeObject<PlacementSettings[]>(placement);
         }
     }
 }

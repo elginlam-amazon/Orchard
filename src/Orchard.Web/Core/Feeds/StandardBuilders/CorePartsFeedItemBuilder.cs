@@ -1,11 +1,12 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Core.Feeds.Models;
 using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
+using Orchard.Mvc.Routes;
 using Orchard.Services;
 
 namespace Orchard.Core.Feeds.StandardBuilders
@@ -13,12 +14,12 @@ namespace Orchard.Core.Feeds.StandardBuilders
     public class CorePartsFeedItemBuilder : IFeedItemBuilder
     {
         private readonly IContentManager _contentManager;
-        private readonly RouteCollection _routes;
+        private readonly OrchardRouteCollection _routes;
         private readonly IHtmlFilterProcessor _htmlFilterProcessor;
 
         public CorePartsFeedItemBuilder(
             IContentManager contentManager,
-            RouteCollection routes,
+            OrchardRouteCollection routes,
             IHtmlFilterProcessor htmlFilterProcessor)
         {
             _contentManager = contentManager;
@@ -46,7 +47,7 @@ namespace Orchard.Core.Feeds.StandardBuilders
 
                     context.Response.Contextualize(requestContext =>
                     {
-                        var urlHelper = new UrlHelper(requestContext, _routes);
+                        var urlHelper = HtmlHelperFactory.CreateUrlHelper(requestContext);
                         var uriBuilder = new UriBuilder(urlHelper.MakeAbsolute("/")) { Path = urlHelper.RouteUrl(inspector.Link) };
                         link.Add(uriBuilder.Uri.OriginalString);
                         guid.Add(uriBuilder.Uri.OriginalString);
@@ -74,7 +75,7 @@ namespace Orchard.Core.Feeds.StandardBuilders
                     var feedItem1 = feedItem;
                     context.Response.Contextualize(requestContext =>
                     {
-                        var urlHelper = new UrlHelper(requestContext, _routes);
+                        var urlHelper = HtmlHelperFactory.CreateUrlHelper(requestContext);
                         context.Builder.AddProperty(context, feedItem1, "link", urlHelper.RouteUrl(inspector.Link));
                     });
                     context.Builder.AddProperty(context, feedItem, "title", inspector.Title);

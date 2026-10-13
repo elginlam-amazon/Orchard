@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Caching;
 using Orchard.Data;
 using Orchard.Localization.Records;
@@ -69,7 +69,7 @@ namespace Orchard.Localization.Services
             }
         }
 
-        public string GetCurrentCulture(HttpContextBase requestContext)
+        public string GetCurrentCulture(HttpContext requestContext)
         {
             return _workContextAccessor.GetContext().CurrentCulture;
         }

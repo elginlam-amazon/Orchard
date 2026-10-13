@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Web.Security;
 using Autofac;
 using Moq;
 using NHibernate;

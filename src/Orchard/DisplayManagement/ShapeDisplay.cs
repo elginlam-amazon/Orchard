@@ -1,10 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Orchard.DisplayManagement.Implementation;
 using Orchard.DisplayManagement.Shapes;
+using Orchard.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Orchard.Mvc.Html;
 
 namespace Orchard.DisplayManagement
 {
@@ -12,14 +16,14 @@ namespace Orchard.DisplayManagement
     {
         private readonly IDisplayHelperFactory _displayHelperFactory;
         private readonly IWorkContextAccessor _workContextAccessor;
-        private readonly HttpContextBase _httpContextBase;
-        private readonly RequestContext _requestContext;
+        private readonly HttpContext _httpContextBase;
+        private readonly ActionContext _requestContext;
 
         public ShapeDisplay(
             IDisplayHelperFactory displayHelperFactory,
             IWorkContextAccessor workContextAccessor,
-            HttpContextBase httpContextBase,
-            RequestContext requestContext)
+            HttpContext httpContextBase,
+            ActionContext requestContext)
         {
             _displayHelperFactory = displayHelperFactory;
             _workContextAccessor = workContextAccessor;
@@ -37,12 +41,13 @@ namespace Orchard.DisplayManagement
             var viewContext = new ViewContext
             {
                 HttpContext = _httpContextBase,
-                RequestContext = _requestContext
+                RouteData = _requestContext.RouteData,
+                ActionDescriptor = _requestContext.ActionDescriptor
             };
             viewContext.RouteData.DataTokens["IWorkContextAccessor"] = _workContextAccessor;
             var display = _displayHelperFactory.CreateHelper(viewContext, new ViewDataContainer());
 
-            return ((DisplayHelper)display).ShapeExecute(shape).ToString();
+            return ((DisplayHelper)display).ShapeExecute(shape).ToHtmlString();
         }
 
         public IEnumerable<string> Display(IEnumerable<object> shapes)
@@ -56,7 +61,7 @@ namespace Orchard.DisplayManagement
 
             public ViewDataContainer()
             {
-                ViewData = new ViewDataDictionary();
+                ViewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), new ModelStateDictionary());
             }
         }
     }

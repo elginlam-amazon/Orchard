@@ -1,5 +1,6 @@
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
 using Orchard.SecureSocketsLayer.Models;
 
 namespace Orchard.SecureSocketsLayer.Services
@@ -7,7 +8,7 @@ namespace Orchard.SecureSocketsLayer.Services
     public interface ISecureSocketsLayerService : IDependency
     {
         bool ShouldBeSecure(string actionName, string controllerName, RouteValueDictionary routeValues);
-        bool ShouldBeSecure(RequestContext requestContext);
+        bool ShouldBeSecure(ActionContext requestContext);
         bool ShouldBeSecure(ActionExecutingContext actionContext);
         string InsecureActionUrl(string actionName, string controllerName);
         string InsecureActionUrl(string actionName, string controllerName, object routeValues);

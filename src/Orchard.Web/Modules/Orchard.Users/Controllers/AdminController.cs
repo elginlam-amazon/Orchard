@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.Core.Settings.Models;
 using Orchard.DisplayManagement;
@@ -21,10 +22,10 @@ using Orchard.Users.Models;
 using Orchard.Users.Services;
 using Orchard.Users.ViewModels;
 using Orchard.Utility.Extensions;
+using Orchard.Users.Extensions;
 
 namespace Orchard.Users.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller, IUpdateModel
     {
         private readonly IMembershipService _membershipService;
@@ -32,7 +33,7 @@ namespace Orchard.Users.Controllers
         private readonly IUserEventHandler _userEventHandlers;
         private readonly ISiteService _siteService;
         private readonly IEnumerable<IUserManagementActionsProvider> _userManagementActionsProviders;
-        private readonly UrlHelper _urlHelper;
+        private readonly IUrlHelper _urlHelper;
 
         public AdminController(
             IOrchardServices services,
@@ -42,7 +43,7 @@ namespace Orchard.Users.Controllers
             IUserEventHandler userEventHandlers,
             ISiteService siteService,
             IEnumerable<IUserManagementActionsProvider> userManagementActionsProviders,
-            UrlHelper urlHelper)
+            IUrlHelper urlHelper)
         {
 
             Services = services;
@@ -64,7 +65,7 @@ namespace Orchard.Users.Controllers
         public ActionResult Index(UserIndexOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(Permissions.ViewUsers, T("Not authorized to list users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(_siteService.GetSiteSettings(), pagerParameters);
 
@@ -143,13 +144,13 @@ namespace Orchard.Users.Controllers
 
         [HttpPost]
         [FormValueRequired("submit.BulkEdit")]
-        public ActionResult Index(FormCollection input)
+        public ActionResult Index(IFormCollection input)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new UsersIndexViewModel { Users = new List<UserEntry>(), Options = new UserIndexOptions() };
-            UpdateModel(viewModel);
+            this.UpdateModel(viewModel);
 
             var checkedEntries = viewModel.Users.Where(c => c.IsChecked);
             switch (viewModel.Options.BulkAction)
@@ -188,7 +189,7 @@ namespace Orchard.Users.Controllers
         public ActionResult Create()
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var user = Services.ContentManager.New<IUser>("User");
             var editor = Shape.EditorTemplate(TemplateName: "Parts/User.Create", Model: new UserCreateViewModel(), Prefix: null);
@@ -203,7 +204,7 @@ namespace Orchard.Users.Controllers
         public ActionResult CreatePOST(UserCreateViewModel createModel)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             IDictionary<string, LocalizedString> validationErrors;
             List<UsernameValidationError> usernameValidationErrors = new List<UsernameValidationError>();
@@ -296,17 +297,17 @@ namespace Orchard.Users.Controllers
         {
             // check manage permission on any user
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var user = Services.ContentManager.Get<UserPart>(id);
 
             if (user == null)
-                return HttpNotFound();
+                return NotFound();
 
             // check manage permission on specific user
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers,
                 user, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var editor = Shape.EditorTemplate(TemplateName: "Parts/User.Edit", Model: new UserEditViewModel { User = user }, Prefix: null);
             editor.Metadata.Position = "2";
@@ -342,24 +343,24 @@ namespace Orchard.Users.Controllers
         public ActionResult EditPOST(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var user = Services.ContentManager.Get<UserPart>(id, VersionOptions.DraftRequired);
 
             if (user == null)
-                return HttpNotFound();
+                return NotFound();
 
             // check manage permission on specific user
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers,
                 user, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             string previousName = user.UserName;
 
             var model = Services.ContentManager.UpdateEditor(user, this);
 
             var editModel = new UserEditViewModel { User = user };
-            if (TryUpdateModel(editModel))
+            if (this.TryUpdateModel(editModel))
             {
                 List<UsernameValidationError> validationErrors;
                 bool usernameMeetsPolicies = _userService.UsernameMeetsPolicies(editModel.UserName, editModel.Email, out validationErrors);
@@ -438,17 +439,17 @@ namespace Orchard.Users.Controllers
         public ActionResult Delete(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var user = Services.ContentManager.Get<IUser>(id);
 
             if (user == null)
-                return HttpNotFound();
+                return NotFound();
 
             // check manage permission on specific user
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers,
                 user, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (string.Equals(Services.WorkContext.CurrentSite.SuperUser, user.UserName, StringComparison.Ordinal))
             {
@@ -471,17 +472,17 @@ namespace Orchard.Users.Controllers
         public ActionResult SendChallengeEmail(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var user = Services.ContentManager.Get<IUser>(id);
 
             if (user == null)
-                return HttpNotFound();
+                return NotFound();
 
             // check manage permission on specific user
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers,
                 user, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var siteUrl = Services.WorkContext.CurrentSite.BaseUrl;
 
@@ -500,17 +501,17 @@ namespace Orchard.Users.Controllers
         public ActionResult Approve(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var user = Services.ContentManager.Get<IUser>(id);
 
             if (user == null)
-                return HttpNotFound();
+                return NotFound();
 
             // check manage permission on specific user
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers,
                 user, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             user.As<UserPart>().RegistrationStatus = UserStatus.Approved;
             Services.Notifier.Success(T("User {0} approved", user.UserName));
@@ -523,17 +524,17 @@ namespace Orchard.Users.Controllers
         public ActionResult Moderate(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var user = Services.ContentManager.Get<IUser>(id);
 
             if (user == null)
-                return HttpNotFound();
+                return NotFound();
 
             // check manage permission on specific user
             if (!Services.Authorizer.Authorize(Permissions.ManageUsers,
                 user, T("Not authorized to manage users")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (string.Equals(Services.WorkContext.CurrentUser.UserName, user.UserName, StringComparison.Ordinal))
             {
@@ -551,7 +552,7 @@ namespace Orchard.Users.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         public void AddModelError(string key, LocalizedString errorMessage)

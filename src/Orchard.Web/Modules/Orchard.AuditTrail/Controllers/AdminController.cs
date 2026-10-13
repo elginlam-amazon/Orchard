@@ -1,5 +1,5 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.AuditTrail.Models;
 using Orchard.AuditTrail.Services;
 using Orchard.AuditTrail.Services.Models;
@@ -7,6 +7,7 @@ using Orchard.AuditTrail.ViewModels;
 using Orchard.Collections;
 using Orchard.ContentManagement;
 using Orchard.Localization;
+using Orchard.Mvc.Extensions;
 using Orchard.Security;
 using Orchard.UI.Navigation;
 
@@ -33,10 +34,10 @@ namespace Orchard.AuditTrail.Controllers
         public ActionResult Index(PagerParameters pagerParameters, AuditTrailOrderBy? orderBy = null)
         {
             if (!_authorizer.Authorize(Permissions.ViewAuditTrail))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(_services.WorkContext.CurrentSite, pagerParameters);
-            var filters = Filters.From(Request.QueryString, this);
+            var filters = Filters.From(Request.Query, this);
             var pageOfData = _auditTrailManager.GetRecords(pager.Page, pager.PageSize, filters, orderBy ?? AuditTrailOrderBy.DateDescending);
 
             // If there's a filter validation error, clear the results.
@@ -78,7 +79,7 @@ namespace Orchard.AuditTrail.Controllers
         public ActionResult Detail(int id)
         {
             if (!_authorizer.Authorize(Permissions.ViewAuditTrail))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var record = _auditTrailManager.GetRecord(id);
             var descriptor = _auditTrailManager.DescribeEvent(record);
@@ -94,7 +95,7 @@ namespace Orchard.AuditTrail.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

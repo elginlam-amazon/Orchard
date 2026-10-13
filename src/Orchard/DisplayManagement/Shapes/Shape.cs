@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
-using System.Web;
+using Microsoft.AspNetCore.Html;
 
 namespace Orchard.DisplayManagement.Shapes
 {
@@ -41,9 +41,9 @@ namespace Orchard.DisplayManagement.Shapes
 
             try
             {
-                if (position != null && item is IHtmlString)
+                if (position != null && item is IHtmlContent)
                 {
-                    item = new PositionWrapper((IHtmlString)item, position);
+                    item = new PositionWrapper((IHtmlContent)item, position);
                 }
                 else if (position != null && item is string)
                 {

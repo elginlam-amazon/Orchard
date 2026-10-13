@@ -1,14 +1,15 @@
 using System;
 using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Glimpse
 {
     public static class GlimpseHelpers
     {
-        public static string AppendReturnUrl(string path, UrlHelper urlHelper)
+        public static string AppendReturnUrl(string path, IUrlHelper urlHelper)
         {
-            var requestUrl = urlHelper.RequestContext.HttpContext.Request.Url;
+            var requestUrl = urlHelper.ActionContext.HttpContext.Request.GetUrl();
 
             if (requestUrl == null)
             {

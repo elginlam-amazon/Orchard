@@ -1,5 +1,5 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Core.Reports.ViewModels;
 using Orchard.Localization;
 using Orchard.Reports.Services;
@@ -26,7 +26,7 @@ namespace Orchard.Core.Reports.Controllers
         public ActionResult Index()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list reports")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var model = new ReportsAdminIndexViewModel { Reports = _reportsManager.GetReports().ToList() };
 
@@ -36,7 +36,7 @@ namespace Orchard.Core.Reports.Controllers
         public ActionResult Display(int id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to display report")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var model = new DisplayReportViewModel { Report = _reportsManager.Get(id) };
 

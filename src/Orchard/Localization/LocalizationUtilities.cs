@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
 using Autofac;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.Localization
 {
@@ -11,7 +11,7 @@ namespace Orchard.Localization
             return workContext == null ? NullLocalizer.Instance : Resolve(workContext.Resolve<ILifetimeScope>(), new List<string> { scope });
         }
 
-        public static Localizer Resolve(ControllerContext controllerContext, string scope)
+        public static Localizer Resolve(ActionContext controllerContext, string scope)
         {
             var workContext = controllerContext.GetWorkContext();
             return Resolve(workContext, scope);

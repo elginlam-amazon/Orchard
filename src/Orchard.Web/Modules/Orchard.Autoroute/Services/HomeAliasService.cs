@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Alias;
 using Orchard.Alias.Implementation.Holder;
 using Orchard.Autoroute.Models;

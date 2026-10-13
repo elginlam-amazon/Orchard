@@ -1,16 +1,18 @@
 using System;
 using System.Collections.Generic;
-using System.Web;
-using System.Web.Mvc;
 using Autofac;
-using Autofac.Integration.Web;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using NUnit.Framework;
 using Orchard.DisplayManagement.Descriptors;
 using Orchard.DisplayManagement.Implementation;
 using Orchard.DisplayManagement.Shapes;
 using Orchard.Environment.Extensions.Models;
 using Orchard.Mvc;
+using Orchard.Mvc.Html;
 using Orchard.Tests.Stubs;
+using IHttpContextAccessor = Orchard.Mvc.IHttpContextAccessor;
 
 namespace Orchard.Tests.DisplayManagement
 {
@@ -79,12 +81,12 @@ namespace Orchard.Tests.DisplayManagement
                 _workContext = workContext;
             }
 
-            public WorkContext GetContext(HttpContextBase httpContext)
+            public WorkContext GetContext(HttpContext httpContext)
             {
                 return _workContext;
             }
 
-            public IWorkContextScope CreateWorkContextScope(HttpContextBase httpContext)
+            public IWorkContextScope CreateWorkContextScope(HttpContext httpContext)
             {
                 throw new NotImplementedException();
             }
@@ -103,13 +105,13 @@ namespace Orchard.Tests.DisplayManagement
         public class TestWorkContext : WorkContext
         {
             readonly IDictionary<string, object> _state = new Dictionary<string, object>();
-            public IContainerProvider ContainerProvider { get; set; }
+            public ILifetimeScope LifetimeScope { get; set; }
 
             public override T Resolve<T>()
             {
                 if (typeof(T) == typeof(ILifetimeScope))
                 {
-                    return (T)ContainerProvider.RequestLifetime;
+                    return (T)LifetimeScope;
                 }
 
                 throw new NotImplementedException();
@@ -314,7 +316,7 @@ namespace Orchard.Tests.DisplayManagement
             Assert.That(result.ToString(), Is.EqualTo("Hello (2)!"));
         }
 
-        private static void AddBinding(ShapeDescriptor descriptor, string bindingName, Func<DisplayContext, IHtmlString> binding)
+        private static void AddBinding(ShapeDescriptor descriptor, string bindingName, Func<DisplayContext, IHtmlContent> binding)
         {
             descriptor.Bindings[bindingName] = new ShapeBinding
             {

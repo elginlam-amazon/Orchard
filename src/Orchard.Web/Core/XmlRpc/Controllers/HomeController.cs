@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Web;
-using System.Web.Mvc;
 using System.Xml;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Core.XmlRpc.Models;
 using Orchard.Core.XmlRpc.Services;
 using Orchard.Logging;
@@ -36,7 +36,7 @@ namespace Orchard.Core.XmlRpc.Controllers
             var methodResponse = Dispatch(methodCall);
 
             if (methodResponse == null)
-                throw new HttpException(500, "TODO: xmlrpc fault");
+                return StatusCode(500, "TODO: xmlrpc fault");
 
 
             var settings = new XmlWriterSettings

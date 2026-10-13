@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
 using Orchard.ContentManagement.MetaData.Models;
@@ -68,7 +68,7 @@ namespace Orchard.Lists.Controllers
             {
                 var contentTypeDefinition = _contentDefinitionManager.GetTypeDefinition(model.TypeName);
                 if (contentTypeDefinition == null)
-                    return HttpNotFound();
+                    return NotFound();
 
                 model.TypeDisplayName = !string.IsNullOrWhiteSpace(contentTypeDefinition.DisplayName)
                                             ? contentTypeDefinition.DisplayName
@@ -145,7 +145,7 @@ namespace Orchard.Lists.Controllers
                             if (!_services.Authorizer.Authorize(Orchard.Core.Contents.Permissions.PublishContent, item, T("Couldn't publish selected lists.")))
                             {
                                 _transactionManager.Cancel();
-                                return new HttpUnauthorizedResult();
+                                return new UnauthorizedResult();
                             }
                             _contentManager.Publish(item);
                         }
@@ -157,7 +157,7 @@ namespace Orchard.Lists.Controllers
                             if (!_services.Authorizer.Authorize(Orchard.Core.Contents.Permissions.PublishContent, item, T("Couldn't unpublish selected lists.")))
                             {
                                 _transactionManager.Cancel();
-                                return new HttpUnauthorizedResult();
+                                return new UnauthorizedResult();
                             }
                             _contentManager.Unpublish(item);
                         }
@@ -169,7 +169,7 @@ namespace Orchard.Lists.Controllers
                             if (!_services.Authorizer.Authorize(Orchard.Core.Contents.Permissions.DeleteContent, item, T("Couldn't remove selected lists.")))
                             {
                                 _transactionManager.Cancel();
-                                return new HttpUnauthorizedResult();
+                                return new UnauthorizedResult();
                             }
                             _contentManager.Remove(item);
                         }
@@ -210,7 +210,7 @@ namespace Orchard.Lists.Controllers
             var container = _contentManager.GetLatest(model.ContainerId);
             if (container == null || !container.Has<ContainerPart>())
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             model.ContainerDisplayName = container.ContentManager.GetItemMetadata(container).DisplayText;
@@ -222,7 +222,7 @@ namespace Orchard.Lists.Controllers
             var query = GetListContentItemQuery(model.ContainerId);
             if (query == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var containerPart = container.As<ContainerPart>();
@@ -305,31 +305,31 @@ namespace Orchard.Lists.Controllers
                     case ContentsBulkAction.PublishNow:
                         if (!BulkPublishNow(itemIds))
                         {
-                            return new HttpUnauthorizedResult();
+                            return new UnauthorizedResult();
                         }
                         break;
                     case ContentsBulkAction.Unpublish:
                         if (!BulkUnpublish(itemIds))
                         {
-                            return new HttpUnauthorizedResult();
+                            return new UnauthorizedResult();
                         }
                         break;
                     case ContentsBulkAction.Remove:
                         if (!BulkRemove(itemIds))
                         {
-                            return new HttpUnauthorizedResult();
+                            return new UnauthorizedResult();
                         }
                         break;
                     case ContentsBulkAction.RemoveFromList:
                         if (!BulkRemoveFromList(itemIds))
                         {
-                            return new HttpUnauthorizedResult();
+                            return new UnauthorizedResult();
                         }
                         break;
                     case ContentsBulkAction.MoveToList:
                         if (!BulkMoveToList(itemIds, targetContainerId))
                         {
-                            return new HttpUnauthorizedResult();
+                            return new UnauthorizedResult();
                         }
                         break;
 
@@ -397,7 +397,7 @@ namespace Orchard.Lists.Controllers
             var query = OrderByPosition(GetListContentItemQuery(containerId));
             if (query == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
             var pageOfContentItems = query.Slice(pager.GetStartIndex(), pager.PageSize).ToList();
             var contentItem = pageOfContentItems[oldIndex];
@@ -447,7 +447,7 @@ namespace Orchard.Lists.Controllers
             var container = _containerService.Get(containerId, VersionOptions.Latest);
             if (container == null || !container.Has<ContainerPart>())
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             container.Record.AdminListViewName = listViewName;

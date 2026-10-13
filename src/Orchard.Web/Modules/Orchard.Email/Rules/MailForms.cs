@@ -93,23 +93,23 @@ namespace Orchard.Email.Rules
         {
             if (context.FormName == "ActionEmail")
             {
-                if (context.ValueProvider.GetValue("Recipient").AttemptedValue == string.Empty)
+                if (context.ValueProvider.GetValue("Recipient").FirstValue == string.Empty)
                 {
                     context.ModelState.AddModelError("Recipient", T("You must select at least one recipient").Text);
                 }
 
-                if (context.ValueProvider.GetValue("Subject").AttemptedValue == string.Empty)
+                if (context.ValueProvider.GetValue("Subject").FirstValue == string.Empty)
                 {
                     context.ModelState.AddModelError("Subject", T("You must provide a Subject").Text);
                 }
 
-                if (context.ValueProvider.GetValue("Body").AttemptedValue == string.Empty)
+                if (context.ValueProvider.GetValue("Body").FirstValue == string.Empty)
                 {
                     context.ModelState.AddModelError("Body", T("You must provide a Body").Text);
                 }
 
-                if (context.ValueProvider.GetValue("RecipientOther").AttemptedValue == string.Empty &&
-                    context.ValueProvider.GetValue("Recipient").AttemptedValue == "other")
+                if (context.ValueProvider.GetValue("RecipientOther").FirstValue == string.Empty &&
+                    context.ValueProvider.GetValue("Recipient").FirstValue == "other")
                 {
                     context.ModelState.AddModelError("Recipient", T("You must provide an e-mail address").Text);
                 }

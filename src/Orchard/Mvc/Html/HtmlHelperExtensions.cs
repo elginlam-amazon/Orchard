@@ -4,84 +4,90 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Web;
-using System.Web.Mvc;
-using System.Web.Mvc.Html;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Orchard.Localization;
 using Orchard.Utility;
 using Orchard.Utility.Extensions;
+using Orchard.Mvc.Extensions;
 
 namespace Orchard.Mvc.Html
 {
     public static class HtmlHelperExtensions
     {
 
-        public static string NameOf<T>(this HtmlHelper<T> html, Expression<Action<T>> expression)
+        public static string NameOf<T>(this IHtmlHelper<T> html, Expression<Action<T>> expression)
         {
             return Reflect.NameOf(html.ViewData.Model, expression);
         }
 
-        public static string NameOf<T, TResult>(this HtmlHelper<T> html, Expression<Func<T, TResult>> expression)
+        public static string NameOf<T, TResult>(this IHtmlHelper<T> html, Expression<Func<T, TResult>> expression)
         {
             return Reflect.NameOf(html.ViewData.Model, expression);
         }
 
-        public static string FieldNameFor<T, TResult>(this HtmlHelper<T> html, Expression<Func<T, TResult>> expression)
+        public static string FieldNameFor<T, TResult>(this IHtmlHelper<T> html, Expression<Func<T, TResult>> expression)
         {
-            return html.ViewData.TemplateInfo.GetFullHtmlFieldName(ExpressionHelper.GetExpressionText(expression));
+            return html.ViewData.TemplateInfo.GetFullHtmlFieldName(GetExpressionText(html, expression));
         }
 
-        public static string FieldIdFor<T, TResult>(this HtmlHelper<T> html, Expression<Func<T, TResult>> expression)
+        public static string FieldIdFor<T, TResult>(this IHtmlHelper<T> html, Expression<Func<T, TResult>> expression)
         {
-            var id = html.ViewData.TemplateInfo.GetFullHtmlFieldId(ExpressionHelper.GetExpressionText(expression));
+            var id = html.GenerateIdFromName(html.ViewData.TemplateInfo.GetFullHtmlFieldName(GetExpressionText(html, expression)));
             // because "[" and "]" aren't replaced with "_" in GetFullHtmlFieldId
             return id.Replace('[', '_').Replace(']', '_');
         }
 
-        public static IHtmlString LabelFor<TModel, TValue>(this HtmlHelper<TModel> html, Expression<Func<TModel, TValue>> expression, LocalizedString labelText)
+        public static IHtmlContent LabelFor<TModel, TValue>(this IHtmlHelper<TModel> html, Expression<Func<TModel, TValue>> expression, LocalizedString labelText)
         {
             return LabelFor(html, expression, labelText.ToString());
         }
 
-        public static IHtmlString LabelFor<TModel, TValue>(this HtmlHelper<TModel> html, Expression<Func<TModel, TValue>> expression, string labelText)
+        public static IHtmlContent LabelFor<TModel, TValue>(this IHtmlHelper<TModel> html, Expression<Func<TModel, TValue>> expression, string labelText)
         {
             if (string.IsNullOrEmpty(labelText))
             {
-                return MvcHtmlString.Empty;
+                return HtmlString.Empty;
             }
-            var htmlFieldName = ExpressionHelper.GetExpressionText(expression);
+            var htmlFieldName = GetExpressionText(html, expression);
             var tag = new TagBuilder("label");
-            tag.Attributes.Add("for", html.ViewContext.ViewData.TemplateInfo.GetFullHtmlFieldId(htmlFieldName));
-            tag.SetInnerText(labelText);
-            return MvcHtmlString.Create(tag.ToString(TagRenderMode.Normal));
+            tag.Attributes.Add("for", html.GenerateIdFromName(html.ViewContext.ViewData.TemplateInfo.GetFullHtmlFieldName(htmlFieldName)));
+            tag.InnerHtml.Append(labelText);
+            return new HtmlString(tag.ToString(TagRenderMode.Normal));
         }
 
-        public static MvcHtmlString SelectOption<T>(this HtmlHelper html, T currentValue, T optionValue, string text)
+        public static IHtmlContent SelectOption<T>(this IHtmlHelper html, T currentValue, T optionValue, string text)
         {
             return SelectOption(html, optionValue, object.Equals(optionValue, currentValue), text);
         }
 
-        public static MvcHtmlString SelectOption<T>(this HtmlHelper html, T currentValue, T optionValue, string text, object htmlAttributes)
+        public static IHtmlContent SelectOption<T>(this IHtmlHelper html, T currentValue, T optionValue, string text, object htmlAttributes)
         {
-            return SelectOption(html, optionValue, object.Equals(optionValue, currentValue), text, HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes));
+            return SelectOption(html, optionValue, object.Equals(optionValue, currentValue), text, new RouteValueDictionary(HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes)));
         }
 
-        public static MvcHtmlString SelectOption<T>(this HtmlHelper html, T currentValue, T optionValue, string text, RouteValueDictionary htmlAttributes)
+        public static IHtmlContent SelectOption<T>(this IHtmlHelper html, T currentValue, T optionValue, string text, RouteValueDictionary htmlAttributes)
         {
             return SelectOption(html, optionValue, object.Equals(optionValue, currentValue), text, htmlAttributes);
         }
 
-        public static MvcHtmlString SelectOption(this HtmlHelper html, object optionValue, bool selected, string text)
+        public static IHtmlContent SelectOption(this IHtmlHelper html, object optionValue, bool selected, string text)
         {
             return SelectOption(html, optionValue, selected, text, null);
         }
 
-        public static MvcHtmlString SelectOption(this HtmlHelper html, object optionValue, bool selected, string text, object htmlAttributes)
+        public static IHtmlContent SelectOption(this IHtmlHelper html, object optionValue, bool selected, string text, object htmlAttributes)
         {
-            return SelectOption(html, optionValue, selected, text, HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes));
+            return SelectOption(html, optionValue, selected, text, new RouteValueDictionary(HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes)));
         }
 
-        public static MvcHtmlString SelectOption(this HtmlHelper html, object optionValue, bool selected, string text, RouteValueDictionary htmlAttributes)
+        public static IHtmlContent SelectOption(this IHtmlHelper html, object optionValue, bool selected, string text, RouteValueDictionary htmlAttributes)
         {
             var builder = new TagBuilder("option");
 
@@ -91,19 +97,19 @@ namespace Orchard.Mvc.Html
             if (selected)
                 builder.MergeAttribute("selected", "selected");
 
-            builder.SetInnerText(text);
+            builder.InnerHtml.Append(text ?? string.Empty);
 
             if (htmlAttributes != null)
             {
                 builder.MergeAttributes(htmlAttributes);
             }
 
-            return MvcHtmlString.Create(builder.ToString(TagRenderMode.Normal));
+            return new HtmlString(builder.ToString(TagRenderMode.Normal));
         }
 
-        public static WorkContext GetWorkContext(this HtmlHelper html)
+        public static WorkContext GetWorkContext(this IHtmlHelper html)
         {
-            var workContext = html.ViewContext.RequestContext.GetWorkContext();
+            var workContext = html.ViewContext.GetWorkContext();
 
             if (workContext == null)
                 throw new ApplicationException("The WorkContext cannot be found for the request");
@@ -113,27 +119,17 @@ namespace Orchard.Mvc.Html
 
         #region UnorderedList
 
-        public static IHtmlString UnorderedList<T>(this HtmlHelper htmlHelper, IEnumerable<T> items, Func<T, int, MvcHtmlString> generateContent, string cssClass)
+        public static IHtmlContent UnorderedList<T>(this IHtmlHelper htmlHelper, IEnumerable<T> items, Func<T, int, IHtmlContent> generateContent, string cssClass)
         {
             return htmlHelper.UnorderedList(items, generateContent, cssClass, null, null);
         }
 
-        public static IHtmlString UnorderedList<T>(this HtmlHelper htmlHelper, IEnumerable<T> items, Func<T, int, MvcHtmlString> generateContent, string cssClass, string itemCssClass, string alternatingItemCssClass)
-        {
-            return UnorderedList(items, (t, i) => generateContent(t, i) as IHtmlString, cssClass, t => itemCssClass, t => alternatingItemCssClass);
-        }
-
-        public static IHtmlString UnorderedList<T>(this HtmlHelper htmlHelper, IEnumerable<T> items, Func<T, int, IHtmlString> generateContent, string cssClass)
-        {
-            return htmlHelper.UnorderedList(items, generateContent, cssClass, null, null);
-        }
-
-        public static IHtmlString UnorderedList<T>(this HtmlHelper htmlHelper, IEnumerable<T> items, Func<T, int, IHtmlString> generateContent, string cssClass, string itemCssClass, string alternatingItemCssClass)
+        public static IHtmlContent UnorderedList<T>(this IHtmlHelper htmlHelper, IEnumerable<T> items, Func<T, int, IHtmlContent> generateContent, string cssClass, string itemCssClass, string alternatingItemCssClass)
         {
             return UnorderedList(items, generateContent, cssClass, t => itemCssClass, t => alternatingItemCssClass);
         }
 
-        private static IHtmlString UnorderedList<T>(IEnumerable<T> items, Func<T, int, IHtmlString> generateContent, string cssClass, Func<T, string> generateItemCssClass, Func<T, string> generateAlternatingItemCssClass)
+        private static IHtmlContent UnorderedList<T>(IEnumerable<T> items, Func<T, int, IHtmlContent> generateContent, string cssClass, Func<T, string> generateItemCssClass, Func<T, string> generateAlternatingItemCssClass)
         {
             if (items == null)
             {
@@ -215,12 +211,12 @@ namespace Orchard.Mvc.Html
 
         #region Ellipsize
 
-        public static IHtmlString Ellipsize(this HtmlHelper htmlHelper, string text, int characterCount)
+        public static IHtmlContent Ellipsize(this IHtmlHelper htmlHelper, string text, int characterCount)
         {
             return new HtmlString(htmlHelper.Encode(text.Ellipsize(characterCount)));
         }
 
-        public static IHtmlString Ellipsize(this HtmlHelper htmlHelper, string text, int characterCount, string ellipsis)
+        public static IHtmlContent Ellipsize(this IHtmlHelper htmlHelper, string text, int characterCount, string ellipsis)
         {
             return new HtmlString(htmlHelper.Encode(text.Ellipsize(characterCount, ellipsis)));
         }
@@ -229,23 +225,23 @@ namespace Orchard.Mvc.Html
 
         #region Excerpt
 
-        public static MvcHtmlString Excerpt(this HtmlHelper html, string markup, int length)
+        public static IHtmlContent Excerpt(this IHtmlHelper html, string markup, int length)
         {
-            return MvcHtmlString.Create(html.Encode(HttpUtility.HtmlDecode(markup.RemoveTags()).Ellipsize(length)));
+            return new HtmlString(html.Encode(HttpUtility.HtmlDecode(markup.RemoveTags()).Ellipsize(length)));
         }
 
         #endregion
 
         #region Image
 
-        public static MvcHtmlString Image(this HtmlHelper htmlHelper, string src, string alt, object htmlAttributes)
+        public static IHtmlContent Image(this IHtmlHelper htmlHelper, string src, string alt, object htmlAttributes)
         {
-            return htmlHelper.Image(src, alt, HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes));
+            return htmlHelper.Image(src, alt, new RouteValueDictionary(HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes)));
         }
 
-        public static MvcHtmlString Image(this HtmlHelper htmlHelper, string src, string alt, IDictionary<string, object> htmlAttributes)
+        public static IHtmlContent Image(this IHtmlHelper htmlHelper, string src, string alt, IDictionary<string, object> htmlAttributes)
         {
-            UrlHelper url = new UrlHelper(htmlHelper.ViewContext.RequestContext);
+            IUrlHelper url = htmlHelper.ViewContext.HttpContext.RequestServices.GetRequiredService<IUrlHelperFactory>().GetUrlHelper(htmlHelper.ViewContext);
             string imageUrl = url.Content(src);
             TagBuilder imageTag = new TagBuilder("img");
 
@@ -260,39 +256,41 @@ namespace Orchard.Mvc.Html
             if (imageTag.Attributes.ContainsKey("alt") && !imageTag.Attributes.ContainsKey("title"))
                 imageTag.MergeAttribute("title", imageTag.Attributes["alt"] ?? "");
 
-            return MvcHtmlString.Create(imageTag.ToString(TagRenderMode.SelfClosing));
+            return new HtmlString(imageTag.ToString(TagRenderMode.SelfClosing));
         }
 
         #endregion
 
         #region Link
 
-        public static IHtmlString Link(this HtmlHelper htmlHelper, string linkContents, string href)
+        public static IHtmlContent Link(this IHtmlHelper htmlHelper, string linkContents, string href)
         {
             return htmlHelper.Link(linkContents, href, null);
         }
 
-        public static IHtmlString Link(this HtmlHelper htmlHelper, IHtmlString linkContents, string href)
+        public static IHtmlContent Link(this IHtmlHelper htmlHelper, IHtmlContent linkContents, string href)
         {
             return htmlHelper.Link(linkContents, href, null);
         }
 
-        public static IHtmlString Link(this HtmlHelper htmlHelper, string linkContents, string href, object htmlAttributes)
+        public static IHtmlContent Link(this IHtmlHelper htmlHelper, string linkContents, string href, object htmlAttributes)
         {
-            return htmlHelper.Link(linkContents, href, HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes));
+            return htmlHelper.Link(linkContents, href, new RouteValueDictionary(HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes)));
         }
 
-        public static IHtmlString Link(this HtmlHelper htmlHelper, string linkContents, string href, IDictionary<string, object> htmlAttributes)
+        public static IHtmlContent Link(this IHtmlHelper htmlHelper, string linkContents, string href, IDictionary<string, object> htmlAttributes)
         {
-            var tagBuilder = new TagBuilder("a") { InnerHtml = htmlHelper.Encode(linkContents) };
+            var tagBuilder = new TagBuilder("a");
+            tagBuilder.InnerHtml.Append(linkContents ?? string.Empty);
             tagBuilder.MergeAttributes(htmlAttributes);
             tagBuilder.MergeAttribute("href", href);
             return new HtmlString(tagBuilder.ToString(TagRenderMode.Normal));
         }
 
-        public static IHtmlString Link(this HtmlHelper htmlHelper, IHtmlString linkContents, string href, IDictionary<string, object> htmlAttributes)
+        public static IHtmlContent Link(this IHtmlHelper htmlHelper, IHtmlContent linkContents, string href, IDictionary<string, object> htmlAttributes)
         {
-            var tagBuilder = new TagBuilder("a") { InnerHtml = linkContents.ToHtmlString() };
+            var tagBuilder = new TagBuilder("a");
+            tagBuilder.InnerHtml.AppendHtml(linkContents);
             tagBuilder.MergeAttributes(htmlAttributes);
             tagBuilder.MergeAttribute("href", href);
             return new HtmlString(tagBuilder.ToString(TagRenderMode.Normal));
@@ -302,17 +300,17 @@ namespace Orchard.Mvc.Html
 
         #region LinkOrDefault
 
-        public static IHtmlString LinkOrDefault(this HtmlHelper htmlHelper, string linkContents, string href)
+        public static IHtmlContent LinkOrDefault(this IHtmlHelper htmlHelper, string linkContents, string href)
         {
             return htmlHelper.LinkOrDefault(linkContents, href, null);
         }
 
-        public static IHtmlString LinkOrDefault(this HtmlHelper htmlHelper, string linkContents, string href, object htmlAttributes)
+        public static IHtmlContent LinkOrDefault(this IHtmlHelper htmlHelper, string linkContents, string href, object htmlAttributes)
         {
-            return htmlHelper.LinkOrDefault(linkContents, href, HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes));
+            return htmlHelper.LinkOrDefault(linkContents, href, new RouteValueDictionary(HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes)));
         }
 
-        public static IHtmlString LinkOrDefault(this HtmlHelper htmlHelper, string linkContents, string href, IDictionary<string, object> htmlAttributes)
+        public static IHtmlContent LinkOrDefault(this IHtmlHelper htmlHelper, string linkContents, string href, IDictionary<string, object> htmlAttributes)
         {
             string linkText = htmlHelper.Encode(linkContents);
 
@@ -321,10 +319,8 @@ namespace Orchard.Mvc.Html
                 return new HtmlString(linkText);
             }
 
-            TagBuilder tagBuilder = new TagBuilder("a")
-            {
-                InnerHtml = linkText
-            };
+            TagBuilder tagBuilder = new TagBuilder("a");
+            tagBuilder.InnerHtml.AppendHtml(linkText);
             tagBuilder.MergeAttributes(htmlAttributes);
             tagBuilder.MergeAttribute("href", href);
             return new HtmlString(tagBuilder.ToString(TagRenderMode.Normal));
@@ -333,19 +329,20 @@ namespace Orchard.Mvc.Html
         #endregion
 
         #region Hint
-        public static IHtmlString Hint(this HtmlHelper htmlHelper, LocalizedString text)
+        public static IHtmlContent Hint(this IHtmlHelper htmlHelper, LocalizedString text)
         {
             return Hint(htmlHelper, text, default(object));
         }
 
-        public static IHtmlString Hint(this HtmlHelper htmlHelper, LocalizedString text, object htmlAttributes)
+        public static IHtmlContent Hint(this IHtmlHelper htmlHelper, LocalizedString text, object htmlAttributes)
         {
-            return Hint(htmlHelper, text, htmlAttributes != null ? HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes) : null);
+            return Hint(htmlHelper, text, htmlAttributes != null ? new RouteValueDictionary(HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes)) : null);
         }
 
-        public static IHtmlString Hint(this HtmlHelper htmlHelper, LocalizedString text, IDictionary<string, object> htmlAttributes)
+        public static IHtmlContent Hint(this IHtmlHelper htmlHelper, LocalizedString text, IDictionary<string, object> htmlAttributes)
         {
-            var tagBuilder = new TagBuilder("span") { InnerHtml = text.Text };
+            var tagBuilder = new TagBuilder("span");
+            tagBuilder.InnerHtml.AppendHtml(text.Text);
 
             if (htmlAttributes != null)
             {
@@ -360,41 +357,37 @@ namespace Orchard.Mvc.Html
 
         #region BeginFormAntiForgeryPost
 
-        public static MvcForm BeginFormAntiForgeryPost(this HtmlHelper htmlHelper)
+        public static MvcForm BeginFormAntiForgeryPost(this IHtmlHelper htmlHelper)
         {
-            return htmlHelper.BeginFormAntiForgeryPost(htmlHelper.ViewContext.HttpContext.Request.Url.PathAndQuery, FormMethod.Post, new RouteValueDictionary());
+            return htmlHelper.BeginFormAntiForgeryPost(htmlHelper.ViewContext.HttpContext.Request.GetRawUrl(), FormMethod.Post, new RouteValueDictionary());
         }
 
-        public static MvcForm BeginFormAntiForgeryPost(this HtmlHelper htmlHelper, string formAction)
+        public static MvcForm BeginFormAntiForgeryPost(this IHtmlHelper htmlHelper, string formAction)
         {
             return htmlHelper.BeginFormAntiForgeryPost(formAction, FormMethod.Post, new RouteValueDictionary());
         }
 
-        public static MvcForm BeginFormAntiForgeryPost(this HtmlHelper htmlHelper, string formAction, FormMethod formMethod)
+        public static MvcForm BeginFormAntiForgeryPost(this IHtmlHelper htmlHelper, string formAction, FormMethod formMethod)
         {
             return htmlHelper.BeginFormAntiForgeryPost(formAction, formMethod, new RouteValueDictionary());
         }
 
-        public static MvcForm BeginFormAntiForgeryPost(this HtmlHelper htmlHelper, string formAction, FormMethod formMethod, object htmlAttributes)
+        public static MvcForm BeginFormAntiForgeryPost(this IHtmlHelper htmlHelper, string formAction, FormMethod formMethod, object htmlAttributes)
         {
-            return htmlHelper.BeginFormAntiForgeryPost(formAction, formMethod, HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes));
+            return htmlHelper.BeginFormAntiForgeryPost(formAction, formMethod, new RouteValueDictionary(HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes)));
         }
 
-        public static MvcForm BeginFormAntiForgeryPost(this HtmlHelper htmlHelper, string formAction, FormMethod formMethod, IDictionary<string, object> htmlAttributes)
+        public static MvcForm BeginFormAntiForgeryPost(this IHtmlHelper htmlHelper, string formAction, FormMethod formMethod, IDictionary<string, object> htmlAttributes)
         {
             // Force the browser not to cache protected forms, and to reload them if needed.
             var response = htmlHelper.ViewContext.HttpContext.Response;
-            response.Cache.SetExpires(System.DateTime.UtcNow.AddDays(-1));
-            response.Cache.SetValidUntilExpires(false);
-            response.Cache.SetRevalidation(HttpCacheRevalidation.AllCaches);
-            response.Cache.SetCacheability(HttpCacheability.NoCache);
-            response.Cache.SetNoStore();
+            response.DisableClientCaching();
 
             var tagBuilder = new TagBuilder("form");
 
             tagBuilder.MergeAttributes(htmlAttributes);
             tagBuilder.MergeAttribute("action", formAction);
-            tagBuilder.MergeAttribute("method", HtmlHelper.GetFormMethodString(formMethod), true);
+            tagBuilder.MergeAttribute("method", formMethod.ToString().ToLowerInvariant(), true);
 
             htmlHelper.ViewContext.Writer.Write(tagBuilder.ToString(TagRenderMode.StartTag));
 
@@ -404,63 +397,27 @@ namespace Orchard.Mvc.Html
 
         #region AntiForgeryTokenOrchard
 
-        public static MvcHtmlString AntiForgeryTokenOrchard(this HtmlHelper htmlHelper)
+        public static IHtmlContent AntiForgeryTokenOrchard(this IHtmlHelper htmlHelper)
         {
-
-            try
-            {
-                return htmlHelper.AntiForgeryToken();
-            }
-            catch (HttpAntiForgeryException)
-            {
-                // Work-around an issue in MVC 2:  If the browser sends a cookie that is not
-                // coming from this server (this can happen if the user didn't close their browser
-                // while the application server configuration changed), clear it up
-                // so that a new one is generated and sent to the browser. This is harmless
-                // from a security point of view, since we are _issuing_ an anti-forgery token,
-                // not validating input.
-
-                // Remove the token so that MVC will create a new one.
-                var antiForgeryTokenName = htmlHelper.GetAntiForgeryTokenName();
-                htmlHelper.ViewContext.HttpContext.Request.Cookies.Remove(antiForgeryTokenName);
-
-                // Try again
-                return htmlHelper.AntiForgeryToken();
-            }
-        }
-
-        private static string GetAntiForgeryTokenName(this HtmlHelper htmlHelper)
-        {
-            // Generate the same cookie name as MVC
-            var appPath = htmlHelper.ViewContext.HttpContext.Request.ApplicationPath;
-            const string antiForgeryTokenName = "__RequestVerificationToken";
-            if (string.IsNullOrEmpty(appPath))
-            {
-                return antiForgeryTokenName;
-            }
-            return antiForgeryTokenName + '_' + Base64EncodeForCookieName(appPath);
-        }
-
-        private static string Base64EncodeForCookieName(string s)
-        {
-            return Convert.ToBase64String(Encoding.UTF8.GetBytes(s)).Replace('+', '.').Replace('/', '-').Replace('=', '_');
+            // An invalid antiforgery cookie (e.g. sent after a configuration change) is replaced by a new one.
+            return htmlHelper.AntiForgeryToken();
         }
 
         #endregion
 
         #region AntiForgeryTokenValueOrchardLink
 
-        public static IHtmlString AntiForgeryTokenValueOrchardLink(this HtmlHelper htmlHelper, string linkContents, string href)
+        public static IHtmlContent AntiForgeryTokenValueOrchardLink(this IHtmlHelper htmlHelper, string linkContents, string href)
         {
             return htmlHelper.AntiForgeryTokenValueOrchardLink(linkContents, href, (object)null);
         }
 
-        public static IHtmlString AntiForgeryTokenValueOrchardLink(this HtmlHelper htmlHelper, string linkContents, string href, object htmlAttributes)
+        public static IHtmlContent AntiForgeryTokenValueOrchardLink(this IHtmlHelper htmlHelper, string linkContents, string href, object htmlAttributes)
         {
-            return htmlHelper.AntiForgeryTokenValueOrchardLink(linkContents, href, HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes));
+            return htmlHelper.AntiForgeryTokenValueOrchardLink(linkContents, href, new RouteValueDictionary(HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes)));
         }
 
-        public static IHtmlString AntiForgeryTokenValueOrchardLink(this HtmlHelper htmlHelper, string linkContents, string href, IDictionary<string, object> htmlAttributes)
+        public static IHtmlContent AntiForgeryTokenValueOrchardLink(this IHtmlHelper htmlHelper, string linkContents, string href, IDictionary<string, object> htmlAttributes)
         {
             return htmlHelper.Link(linkContents, htmlHelper.AntiForgeryTokenGetUrl(href).ToString(), htmlAttributes);
         }
@@ -469,82 +426,62 @@ namespace Orchard.Mvc.Html
 
         #region AntiForgeryTokenGetUrl
 
-        public static IHtmlString AntiForgeryTokenGetUrl(this HtmlHelper htmlHelper, string baseUrl)
+        public static IHtmlContent AntiForgeryTokenGetUrl(this IHtmlHelper htmlHelper, string baseUrl)
         {
-            return new HtmlString(string.Format("{0}{1}__RequestVerificationToken={2}", baseUrl, baseUrl.IndexOf('?') > -1 ? "&" : "?", htmlHelper.ViewContext.HttpContext.Server.UrlEncode(htmlHelper.AntiForgeryTokenValueOrchard().ToString())));
+            return new HtmlString(string.Format("{0}{1}__RequestVerificationToken={2}", baseUrl, baseUrl.IndexOf('?') > -1 ? "&" : "?", HttpUtility.UrlEncode(htmlHelper.AntiForgeryTokenValueOrchard().ToHtmlString())));
         }
 
         #endregion
 
         #region AntiForgeryTokenValueOrchard
 
-        public static IHtmlString AntiForgeryTokenValueOrchard(this HtmlHelper htmlHelper)
+        public static IHtmlContent AntiForgeryTokenValueOrchard(this IHtmlHelper htmlHelper)
         {
-            //HAACK: (erikpo) Since MVC doesn't expose any of its methods for generating the antiforgery token and setting the cookie, we'll just let it do its thing and parse out what we need
-            var field = htmlHelper.AntiForgeryTokenOrchard().ToHtmlString();
-            var beginIndex = field.IndexOf("value=\"") + 7;
-            var endIndex = field.IndexOf("\"", beginIndex);
+            var antiforgery = htmlHelper.ViewContext.HttpContext.RequestServices.GetRequiredService<IAntiforgery>();
+            var tokens = antiforgery.GetAndStoreTokens(htmlHelper.ViewContext.HttpContext);
 
-            return new HtmlString(field.Substring(beginIndex, endIndex - beginIndex));
+            return new HtmlString(tokens.RequestToken);
         }
 
         #endregion
 
         #region HtmlHelperFor
         // Credit: Max Toro http://maxtoroq.github.io/2012/07/patterns-for-aspnet-mvc-plugins-viewmodels.html
-        public static HtmlHelper<TModel> HtmlHelperFor<TModel>(this HtmlHelper htmlHelper)
+        public static IHtmlHelper<TModel> HtmlHelperFor<TModel>(this IHtmlHelper htmlHelper)
         {
             return HtmlHelperFor(htmlHelper, default(TModel));
         }
 
-        public static HtmlHelper<TModel> HtmlHelperFor<TModel>(this HtmlHelper htmlHelper, TModel model)
+        public static IHtmlHelper<TModel> HtmlHelperFor<TModel>(this IHtmlHelper htmlHelper, TModel model)
         {
             return HtmlHelperFor(htmlHelper, model, null);
         }
 
-        public static HtmlHelper<TModel> HtmlHelperFor<TModel>(this HtmlHelper htmlHelper, TModel model, string htmlFieldPrefix)
+        public static IHtmlHelper<TModel> HtmlHelperFor<TModel>(this IHtmlHelper htmlHelper, TModel model, string htmlFieldPrefix)
         {
+            var newViewData = new ViewDataDictionary<TModel>(htmlHelper.ViewData, model);
 
-            var viewDataContainer = CreateViewDataContainer(htmlHelper.ViewData, model);
-
-            var templateInfo = viewDataContainer.ViewData.TemplateInfo;
+            var templateInfo = newViewData.TemplateInfo;
 
             if (!string.IsNullOrEmpty(htmlFieldPrefix))
                 templateInfo.HtmlFieldPrefix = templateInfo.GetFullHtmlFieldName(htmlFieldPrefix);
 
             var viewContext = htmlHelper.ViewContext;
             var newViewContext = new ViewContext(
-                viewContext.Controller.ControllerContext,
+                viewContext,
                 viewContext.View,
-                viewDataContainer.ViewData,
-                viewContext.TempData,
+                newViewData,
                 viewContext.Writer);
 
-            return new HtmlHelper<TModel>(newViewContext, viewDataContainer, htmlHelper.RouteCollection);
+            var newHtmlHelper = viewContext.HttpContext.RequestServices.GetRequiredService<IHtmlHelper<TModel>>();
+            ((IViewContextAware)newHtmlHelper).Contextualize(newViewContext);
+            return newHtmlHelper;
         }
 
-        private static IViewDataContainer CreateViewDataContainer(ViewDataDictionary viewData, object model)
+        private static string GetExpressionText<TModel, TResult>(IHtmlHelper<TModel> html, Expression<Func<TModel, TResult>> expression)
         {
-
-            var newViewData = new ViewDataDictionary(viewData)
-            {
-                Model = model
-            };
-
-            newViewData.TemplateInfo = new TemplateInfo
-            {
-                HtmlFieldPrefix = newViewData.TemplateInfo.HtmlFieldPrefix
-            };
-
-            return new ViewDataContainer
-            {
-                ViewData = newViewData
-            };
-        }
-
-        private class ViewDataContainer : IViewDataContainer
-        {
-            public ViewDataDictionary ViewData { get; set; }
+            var expressionProvider = html.ViewContext.HttpContext.RequestServices.GetRequiredService<ModelExpressionProvider>();
+            return expressionProvider.GetExpressionText(expression);
         }
         #endregion
     }

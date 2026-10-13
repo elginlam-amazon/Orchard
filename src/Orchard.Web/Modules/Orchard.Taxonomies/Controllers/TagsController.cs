@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Core.Title.Models;
 using Orchard.Localization;
@@ -11,6 +11,7 @@ using Orchard.Taxonomies.Helpers;
 using Orchard.Taxonomies.Models;
 using Orchard.Taxonomies.Services;
 using Orchard.Taxonomies.ViewModels;
+using Orchard.WebApi;
 
 namespace Orchard.Taxonomies.Controllers
 {

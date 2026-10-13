@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Collections;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
@@ -11,6 +11,7 @@ using Orchard.Indexing;
 using Orchard.Localization;
 using Orchard.Localization.Services;
 using Orchard.Logging;
+using Orchard.Mvc.Extensions;
 using Orchard.Search.Helpers;
 using Orchard.Search.Models;
 using Orchard.Search.Services;
@@ -162,7 +163,7 @@ namespace Orchard.Search.Controllers
             var request = Services.WorkContext.HttpContext.Request;
 
             // Set the currently selected path
-            Stack<MenuItem> selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, request.RequestContext.RouteData);
+            Stack<MenuItem> selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, request.HttpContext.GetActionContext().RouteData);
 
             // Populate local nav
             dynamic localMenuShape = Shape.LocalMenu().MenuName("local-admin");

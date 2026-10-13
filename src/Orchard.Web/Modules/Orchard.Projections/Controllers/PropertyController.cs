@@ -2,20 +2,23 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Data;
 using Orchard.DisplayManagement;
 using Orchard.Forms.Services;
 using Orchard.Localization;
+using Orchard.Mvc.Extensions;
 using Orchard.Projections.Models;
 using Orchard.Projections.Services;
 using Orchard.Projections.ViewModels;
 using Orchard.UI.Admin;
 using Orchard.UI.Notify;
+using Orchard.Mvc.ModelBinders;
 
 namespace Orchard.Projections.Controllers
 {
-    [ValidateInput(false), Admin]
+    [Admin]
     public class PropertyController : Controller
     {
         public IOrchardServices Services { get; set; }
@@ -50,7 +53,7 @@ namespace Orchard.Projections.Controllers
         public ActionResult Add(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new PropertyAddViewModel { Id = id, Properties = _projectionManager.DescribeProperties() };
             return View(viewModel);
@@ -60,12 +63,12 @@ namespace Orchard.Projections.Controllers
         public ActionResult Delete(int id, int propertyId)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var property = _repository.Get(propertyId);
             if (property == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             property.LayoutRecord.Properties.Remove(property);
@@ -79,13 +82,13 @@ namespace Orchard.Projections.Controllers
         public ActionResult Edit(int id, string category, string type, int propertyId = -1)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var property = _projectionManager.DescribeProperties().SelectMany(x => x.Descriptors).Where(x => x.Category == category && x.Type == type).FirstOrDefault();
 
             if (property == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var viewModel = new PropertyEditViewModel
@@ -151,19 +154,19 @@ namespace Orchard.Projections.Controllers
         }
 
         [HttpPost, ActionName("Edit")]
-        public ActionResult EditPost(int id, string category, string type, [DefaultValue(-1)] int propertyId, FormCollection formCollection)
+        public ActionResult EditPost(int id, string category, string type, [DefaultValue(-1)] int propertyId, IFormCollection formCollection)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             var layout = _layoutRepository.Get(id);
 
             var property = _projectionManager.DescribeProperties().SelectMany(x => x.Descriptors).Where(x => x.Category == category && x.Type == type).FirstOrDefault();
 
             var model = new PropertyEditViewModel();
-            TryUpdateModel(model);
+            this.TryUpdateModel(model);
 
             // validating form values
-            _formManager.Validate(new ValidatingContext { FormName = property.Form, ModelState = ModelState, ValueProvider = ValueProvider });
+            _formManager.Validate(new ValidatingContext { FormName = property.Form, ModelState = ModelState, ValueProvider = this.GetValueProvider() });
 
             if (ModelState.IsValid)
             {
@@ -181,7 +184,7 @@ namespace Orchard.Projections.Controllers
                     layout.Properties.Add(propertyRecord);
                 }
 
-                var dictionary = formCollection.AllKeys.ToDictionary(key => key, formCollection.Get);
+                var dictionary = formCollection.Keys.ToDictionary(key => key, key => formCollection[key].ToString());
 
                 // save form parameters
                 propertyRecord.State = FormParametersHelper.ToString(dictionary);
@@ -222,7 +225,7 @@ namespace Orchard.Projections.Controllers
             // model is invalid, display it again
             var form = _formManager.Build(property.Form);
 
-            _formManager.Bind(form, formCollection);
+            _formManager.Bind(form, formCollection.ToValueProvider());
             var viewModel = new PropertyEditViewModel { Id = id, Description = model.Description, Property = property, Form = form };
 
             return View(viewModel);
@@ -231,7 +234,7 @@ namespace Orchard.Projections.Controllers
         public ActionResult Move(string direction, int id, int layoutId)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             switch (direction)
             {

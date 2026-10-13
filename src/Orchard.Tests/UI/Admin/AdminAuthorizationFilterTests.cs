@@ -1,5 +1,9 @@
-using System.Web.Mvc;
-using System.Web.Routing;
+using System.Collections.Generic;
+using System.Reflection;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
 using Moq;
 using NUnit.Framework;
 using Orchard.Localization;
@@ -13,13 +17,18 @@ namespace Orchard.Tests.UI.Admin
     public class AdminAuthorizationFilterTests
     {
 
-        private static AuthorizationContext GetAuthorizationContext<TController>() where TController : ControllerBase, new()
+        private static AuthorizationFilterContext GetAuthorizationContext<TController>() where TController : ControllerBase, new()
         {
-            var controllerDescriptor = new ReflectedControllerDescriptor(typeof(TController));
-            var controllerContext = new ControllerContext(new StubHttpContext(), new RouteData(), new TController());
-            return new AuthorizationContext(
-                controllerContext,
-                controllerDescriptor.FindAction(controllerContext, "Index"));
+            var controllerType = typeof(TController);
+            var actionDescriptor = new ControllerActionDescriptor
+            {
+                ControllerTypeInfo = controllerType.GetTypeInfo(),
+                ControllerName = controllerType.Name.Substring(0, controllerType.Name.Length - "Controller".Length),
+                MethodInfo = controllerType.GetMethod("Index"),
+                ActionName = "Index",
+            };
+            var actionContext = new ActionContext(new StubHttpContext(), new RouteData(), actionDescriptor);
+            return new AuthorizationFilterContext(actionContext, new List<IFilterMetadata>());
         }
 
         private static IAuthorizer GetAuthorizer(bool result)
@@ -47,14 +56,14 @@ namespace Orchard.Tests.UI.Admin
             var authorizationContext = GetAuthorizationContext<TController>();
             var filter = new AdminFilter(GetAuthorizer(false));
             filter.OnAuthorization(authorizationContext);
-            Assert.That(authorizationContext.Result, Is.InstanceOf<HttpUnauthorizedResult>());
-            Assert.That(AdminFilter.IsApplied(authorizationContext.RequestContext), Is.True);
+            Assert.That(authorizationContext.Result, Is.InstanceOf<UnauthorizedResult>());
+            Assert.That(AdminFilter.IsApplied(authorizationContext), Is.True);
 
             var authorizationContext2 = GetAuthorizationContext<TController>();
             var filter2 = new AdminFilter(GetAuthorizer(true));
             filter2.OnAuthorization(authorizationContext2);
             Assert.That(authorizationContext2.Result, Is.Null);
-            Assert.That(AdminFilter.IsApplied(authorizationContext2.RequestContext), Is.True);
+            Assert.That(AdminFilter.IsApplied(authorizationContext2), Is.True);
         }
 
 

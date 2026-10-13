@@ -1,7 +1,10 @@
-using System;
-using System.IO;
-using System.Web;
-using System.Web.Mvc;
+using System.Text.Encodings.Web;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Orchard.DisplayManagement;
 using Orchard.Logging;
 using Orchard.Mvc.Spooling;
@@ -32,26 +35,22 @@ namespace Orchard.Mvc.ViewEngines.ThemeAwareness
 
         public ILogger Logger { get; set; }
 
-        public ViewEngineResult FindPartialView(ControllerContext controllerContext, string partialViewName, bool useCache)
+        public ViewEngineResult FindView(ActionContext context, string viewName, bool isMainPage)
         {
-            return _themeAwareViewEngine.FindPartialView(controllerContext, partialViewName, useCache, true);
-        }
+            var viewResult = _themeAwareViewEngine.FindPartialView(context, viewName, true, true);
 
-        public ViewEngineResult FindView(ControllerContext controllerContext, string viewName, string masterName, bool useCache)
-        {
-            var viewResult = _themeAwareViewEngine.FindPartialView(controllerContext, viewName, useCache, true);
-
-            if (viewResult.View == null)
+            // Partial views are not rendered in the layout.
+            if (!isMainPage || !viewResult.Success)
             {
                 return viewResult;
             }
 
-            if (!ThemeFilter.IsApplied(controllerContext.RequestContext))
+            if (!ThemeFilter.IsApplied(context))
             {
                 return viewResult;
             }
 
-            var layoutView = new LayoutView((viewContext, writer, viewDataContainer) =>
+            var layoutView = new LayoutView(viewResult.View, async (viewContext, viewDataContainer) =>
             {
                 Logger.Information("Rendering layout view");
 
@@ -59,52 +58,48 @@ namespace Orchard.Mvc.ViewEngines.ThemeAwareness
 
                 var childContentViewContext = new ViewContext(
                     viewContext,
-                    viewContext.View,
+                    viewResult.View,
                     viewContext.ViewData,
-                    viewContext.TempData,
                     childContentWriter);
 
-                viewResult.View.Render(childContentViewContext, childContentWriter);
+                await viewResult.View.RenderAsync(childContentViewContext);
                 _workContext.Layout.Metadata.ChildContent = childContentWriter;
 
                 var display = _displayHelperFactory.CreateHelper(viewContext, viewDataContainer);
-                IHtmlString result = display(_workContext.Layout);
-                writer.Write(result.ToHtmlString());
+                IHtmlContent result = display(_workContext.Layout);
+                result.WriteTo(viewContext.Writer, HtmlEncoder.Default);
 
                 Logger.Information("Done rendering layout view");
-            }, (context, view) => viewResult.ViewEngine.ReleaseView(context, viewResult.View));
+            });
 
-            return new ViewEngineResult(layoutView, this);
+            return ViewEngineResult.Found(viewName, layoutView);
         }
 
-        public void ReleaseView(ControllerContext controllerContext, IView view)
+        public ViewEngineResult GetView(string executingFilePath, string viewPath, bool isMainPage)
         {
-            var layoutView = (LayoutView)view;
-            layoutView.ReleaseView(controllerContext, view);
+            // The views are resolved from the action context, see FindView.
+            return ViewEngineResult.NotFound(viewPath, new string[0]);
         }
 
         class LayoutView : IView, IViewDataContainer
         {
-            private readonly Action<ViewContext, TextWriter, IViewDataContainer> _render;
-            private readonly Action<ControllerContext, IView> _releaseView;
+            private readonly IView _view;
+            private readonly System.Func<ViewContext, IViewDataContainer, Task> _render;
 
-            public LayoutView(Action<ViewContext, TextWriter, IViewDataContainer> render, Action<ControllerContext, IView> releaseView)
+            public LayoutView(IView view, System.Func<ViewContext, IViewDataContainer, Task> render)
             {
+                _view = view;
                 _render = render;
-                _releaseView = releaseView;
             }
+
+            public string Path => _view.Path;
 
             public ViewDataDictionary ViewData { get; set; }
 
-            public void Render(ViewContext viewContext, TextWriter writer)
+            public Task RenderAsync(ViewContext viewContext)
             {
                 ViewData = viewContext.ViewData;
-                _render(viewContext, writer, this);
-            }
-
-            public void ReleaseView(ControllerContext context, IView view)
-            {
-                _releaseView(context, view);
+                return _render(viewContext, this);
             }
         }
     }

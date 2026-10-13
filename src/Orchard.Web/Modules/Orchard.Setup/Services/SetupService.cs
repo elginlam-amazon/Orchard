@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Web;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Http;
 using Orchard.ContentManagement;
 using Orchard.Core.Settings.Models;
 using Orchard.Data;
@@ -122,11 +122,17 @@ namespace Orchard.Setup.Services
             shellSettings.EncryptionAlgorithm = "AES";
 
             // Randomly generated key.
-            shellSettings.EncryptionKey = SymmetricAlgorithm.Create(shellSettings.EncryptionAlgorithm).Key.ToHexString();
+            using (var aes = Aes.Create())
+            {
+                shellSettings.EncryptionKey = aes.Key.ToHexString();
+            }
             shellSettings.HashAlgorithm = "HMACSHA256";
 
             // Randomly generated key.
-            shellSettings.HashKey = HMAC.Create(shellSettings.HashAlgorithm).Key.ToHexString();
+            using (var hmac = new HMACSHA256())
+            {
+                shellSettings.HashKey = hmac.Key.ToHexString();
+            }
 
             var shellDescriptor = new ShellDescriptor
             {
@@ -252,7 +258,7 @@ namespace Orchard.Setup.Services
             });
 
             // Null check: temporary fix for running setup in command line.
-            if (HttpContext.Current != null)
+            if (new Microsoft.AspNetCore.Http.HttpContextAccessor().HttpContext != null)
             {
                 authenticationService.SignIn(user, true);
             }

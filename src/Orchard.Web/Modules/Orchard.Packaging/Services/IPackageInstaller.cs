@@ -1,4 +1,4 @@
-using NuGet;
+using Orchard.Packaging.Packages;
 
 namespace Orchard.Packaging.Services
 {

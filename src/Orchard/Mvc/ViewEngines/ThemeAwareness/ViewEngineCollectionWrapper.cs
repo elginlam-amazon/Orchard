@@ -1,7 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 
 namespace Orchard.Mvc.ViewEngines.ThemeAwareness
 {
@@ -14,37 +14,30 @@ namespace Orchard.Mvc.ViewEngines.ThemeAwareness
             _engines = engines.ToArray();
         }
 
-        public ViewEngineResult FindPartialView(ControllerContext controllerContext, string partialViewName, bool useCache)
+        public ViewEngineResult FindView(ActionContext context, string viewName, bool isMainPage)
         {
             var searchedLocations = Enumerable.Empty<string>();
             foreach (var engine in _engines)
             {
-                var result = engine.FindPartialView(controllerContext, partialViewName, useCache);
-                if (result.View != null)
+                var result = engine.FindView(context, viewName, isMainPage);
+                if (result.Success)
                     return result;
-                if (!useCache)
-                    searchedLocations = searchedLocations.Concat(result.SearchedLocations);
+                searchedLocations = searchedLocations.Concat(result.SearchedLocations);
             }
-            return new ViewEngineResult(searchedLocations.Distinct());
+            return ViewEngineResult.NotFound(viewName, searchedLocations.Distinct());
         }
 
-        public ViewEngineResult FindView(ControllerContext controllerContext, string viewName, string masterName, bool useCache)
+        public ViewEngineResult GetView(string executingFilePath, string viewPath, bool isMainPage)
         {
             var searchedLocations = Enumerable.Empty<string>();
             foreach (var engine in _engines)
             {
-                var result = engine.FindView(controllerContext, viewName, masterName, useCache);
-                if (result.View != null)
+                var result = engine.GetView(executingFilePath, viewPath, isMainPage);
+                if (result.Success)
                     return result;
-                if (!useCache)
-                    searchedLocations = searchedLocations.Concat(result.SearchedLocations);
+                searchedLocations = searchedLocations.Concat(result.SearchedLocations);
             }
-            return new ViewEngineResult(searchedLocations.Distinct());
-        }
-
-        public void ReleaseView(ControllerContext controllerContext, IView view)
-        {
-            throw new NotImplementedException();
+            return ViewEngineResult.NotFound(viewPath, searchedLocations.Distinct());
         }
     }
 }

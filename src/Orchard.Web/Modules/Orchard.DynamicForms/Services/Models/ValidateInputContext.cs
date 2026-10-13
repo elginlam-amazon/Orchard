@@ -1,5 +1,5 @@
 using System.Collections.Specialized;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Orchard.ContentManagement;
 
 namespace Orchard.DynamicForms.Services.Models

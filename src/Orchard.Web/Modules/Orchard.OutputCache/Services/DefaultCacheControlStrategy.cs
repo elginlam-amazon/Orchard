@@ -1,6 +1,6 @@
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.OutputCache.Services
 {
@@ -11,10 +11,10 @@ namespace Orchard.OutputCache.Services
     {
         private static readonly string[] AuthorizedContentTypes = { "text/html", "text/xml", "text/json", "text/plain" };
 
-        public bool IsCacheable(ActionResult result, HttpResponseBase response)
+        public bool IsCacheable(ActionResult result, HttpResponse response)
         {
             // only cache view results
-            if (result is ViewResultBase)
+            if ((result is ViewResult || result is PartialViewResult))
             {
                 return true;
             }

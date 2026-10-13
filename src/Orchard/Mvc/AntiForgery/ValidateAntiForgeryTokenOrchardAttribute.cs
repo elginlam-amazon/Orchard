@@ -1,10 +1,9 @@
 using System;
-using System.Web.Mvc;
 
 namespace Orchard.Mvc.AntiForgery
 {
     [AttributeUsage(AttributeTargets.Method)]
-    public class ValidateAntiForgeryTokenOrchardAttribute : FilterAttribute
+    public class ValidateAntiForgeryTokenOrchardAttribute : Attribute
     {
         public ValidateAntiForgeryTokenOrchardAttribute() : this(true) { }
 

@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
 using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Aspects;
 using Orchard.ContentManagement.FieldStorage;
@@ -16,9 +17,9 @@ namespace Orchard.Tokens.Providers
     public class ContentTokens : ITokenProvider
     {
         private readonly IContentManager _contentManager;
-        private readonly UrlHelper _urlHelper;
+        private readonly IUrlHelper _urlHelper;
 
-        public ContentTokens(IContentManager contentManager, UrlHelper urlHelper)
+        public ContentTokens(IContentManager contentManager, IUrlHelper urlHelper)
         {
             _contentManager = contentManager;
             _urlHelper = urlHelper;
@@ -183,7 +184,7 @@ namespace Orchard.Tokens.Providers
                 .Token("Fields", def => string.Join(", ", def.Parts.SelectMany(x => x.PartDefinition.Fields.Select(x2 => x2.FieldDefinition.Name + " " + x.PartDefinition.Name + "." + x2.Name)).ToArray()));
         }
 
-        private IHtmlString AuthorName(IContent content)
+        private IHtmlContent AuthorName(IContent content)
         {
             if (content == null)
             {
@@ -194,7 +195,7 @@ namespace Orchard.Tokens.Providers
             var author = commonPart != null ? commonPart.Owner : null;
             // todo: encoding should be done at a higher level automatically and should be configurable via an options param
             // so it can be disabled
-            return author == null ? (IHtmlString)T("Anonymous") : new HtmlString(HttpUtility.HtmlEncode(author.UserName));
+            return author == null ? (IHtmlContent)T("Anonymous") : new HtmlString(HttpUtility.HtmlEncode(author.UserName));
         }
 
         private static ContentField LookupField(IContent content, string partName, string fieldName)

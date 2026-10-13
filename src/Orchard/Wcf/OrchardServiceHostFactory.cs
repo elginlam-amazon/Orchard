@@ -1,16 +1,24 @@
 using System;
 using System.Linq;
-using System.ServiceModel;
-using System.ServiceModel.Activation;
 using Autofac;
 using Autofac.Core;
+using CoreWCF.Description;
 using Orchard.Environment;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.ShellBuilders;
 
 namespace Orchard.Wcf
 {
-    public class OrchardServiceHostFactory : ServiceHostFactory, IShim
+    /// <summary>
+    /// Creates the service behavior resolving a WCF service implementation from the container of the tenant
+    /// matching the service base address.
+    /// </summary>
+    /// <remarks>
+    /// CoreWCF has no .svc activation (ServiceHostFactory): services are declared in the ASP.NET Core host
+    /// (AddServiceModelServices/UseServiceModel), and the behavior created here is added to the service host with
+    /// <c>ConfigureServiceHostBase&lt;TService&gt;(host =&gt; host.Description.Behaviors.Add(factory.CreateServiceBehavior(...)))</c>.
+    /// </remarks>
+    public class OrchardServiceHostFactory : IShim
     {
         public OrchardServiceHostFactory()
         {
@@ -19,7 +27,7 @@ namespace Orchard.Wcf
 
         public IOrchardHostContainer HostContainer { get; set; }
 
-        public override ServiceHostBase CreateServiceHost(string constructorString, Uri[] baseAddresses)
+        public IServiceBehavior CreateServiceBehavior(string constructorString, Uri baseAddress)
         {
             IComponentRegistration registration;
             if (constructorString == null)
@@ -39,7 +47,7 @@ namespace Orchard.Wcf
 
             // Create work context
             IRunningShellTable runningShellTable = HostContainer.Resolve<IRunningShellTable>();
-            ShellSettings shellSettings = runningShellTable.Match(baseAddresses.First().Host, baseAddresses.First().LocalPath);
+            ShellSettings shellSettings = runningShellTable.Match(baseAddress.Host, baseAddress.LocalPath);
 
             IOrchardHost orchardHost = HostContainer.Resolve<IOrchardHost>();
             ShellContext shellContext = orchardHost.GetShellContext(shellSettings);
@@ -69,19 +77,7 @@ namespace Orchard.Wcf
                 throw new InvalidOperationException();
             }
 
-            return CreateServiceHost(workContextAccessor, registration, registration.Activator.LimitType, baseAddresses);
-        }
-
-        private ServiceHost CreateServiceHost(IWorkContextAccessor workContextAccessor, IComponentRegistration registration, Type implementationType, Uri[] baseAddresses)
-        {
-            ServiceHost host = CreateServiceHost(implementationType, baseAddresses);
-
-            host.Opening += delegate
-            {
-                host.Description.Behaviors.Add(new OrchardDependencyInjectionServiceBehavior(workContextAccessor, implementationType, registration));
-            };
-
-            return host;
+            return new OrchardDependencyInjectionServiceBehavior(workContextAccessor, registration.Activator.LimitType, registration);
         }
 
         private IComponentRegistration GetRegistration(ILifetimeScope lifetimeScope, string constructorString)

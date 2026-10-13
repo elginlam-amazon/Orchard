@@ -1,4 +1,5 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.Logging;
 using Orchard.Mvc.Filters;
 using Orchard.Themes;
@@ -24,18 +25,26 @@ namespace Orchard.Mvc.ViewEngines.ThemeAwareness
 
         public void OnResultExecuting(ResultExecutingContext filterContext)
         {
-            var viewResultBase = filterContext.Result as ViewResultBase;
-            if (viewResultBase == null)
+            var viewResult = filterContext.Result as ViewResult;
+            var partialViewResult = filterContext.Result as PartialViewResult;
+            if (viewResult == null && partialViewResult == null)
             {
                 return;
             }
 
             if (_workContext.CurrentTheme == null)
             {
-                _workContext.CurrentTheme = _themeManager.GetRequestTheme(filterContext.RequestContext);
+                _workContext.CurrentTheme = _themeManager.GetRequestTheme(filterContext);
             }
 
-            viewResultBase.ViewEngineCollection = new ViewEngineCollection(new[] { _layoutAwareViewEngine });
+            if (viewResult != null)
+            {
+                viewResult.ViewEngine = _layoutAwareViewEngine;
+            }
+            else
+            {
+                partialViewResult.ViewEngine = _layoutAwareViewEngine;
+            }
         }
 
         public void OnResultExecuted(ResultExecutedContext filterContext)

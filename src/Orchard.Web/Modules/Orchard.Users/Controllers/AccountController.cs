@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Web.Mvc;
-using System.Web.Security;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Localization;
 using Orchard.Logging;
 using Orchard.Mvc;
 using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Filters;
 using Orchard.Security;
 using Orchard.Services;
 using Orchard.Themes;
@@ -58,7 +60,7 @@ namespace Orchard.Users.Controllers
         [AlwaysAccessible]
         public ActionResult AccessDenied()
         {
-            var returnUrl = Request.QueryString["ReturnUrl"];
+            var returnUrl = Request.Query["ReturnUrl"].ToString();
             var currentUser = _authenticationService.GetAuthenticatedUser();
 
             if (currentUser == null)
@@ -87,7 +89,6 @@ namespace Orchard.Users.Controllers
 
         [HttpPost]
         [AlwaysAccessible]
-        [ValidateInput(false)]
         [SuppressMessage("Microsoft.Design", "CA1054:UriParametersShouldNotBeStrings",
             Justification = "Needs to take same parameter type as Controller.Redirect()")]
         public ActionResult LogOn(string userNameOrEmail, string password, string returnUrl, bool rememberMe = false)
@@ -140,7 +141,7 @@ namespace Orchard.Users.Controllers
             var membershipSettings = _membershipService.GetSettings();
             if (!membershipSettings.UsersCanRegister)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             ViewData["PasswordLength"] = membershipSettings.GetMinimumPasswordLength();
@@ -155,14 +156,13 @@ namespace Orchard.Users.Controllers
 
         [HttpPost]
         [AlwaysAccessible]
-        [ValidateInput(false)]
         public ActionResult Register(string userName, string email, string password, string confirmPassword, string returnUrl = null)
         {
             // ensure users can register
             var membershipSettings = _membershipService.GetSettings();
             if (!membershipSettings.UsersCanRegister)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             ViewData["PasswordLength"] = membershipSettings.GetMinimumPasswordLength();
@@ -220,7 +220,7 @@ namespace Orchard.Users.Controllers
             var membershipSettings = _membershipService.GetSettings();
             if (!membershipSettings.EnableLostPassword)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             return View();
@@ -234,7 +234,7 @@ namespace Orchard.Users.Controllers
             var membershipSettings = _membershipService.GetSettings();
             if (!membershipSettings.EnableLostPassword)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             if (string.IsNullOrWhiteSpace(username))
@@ -264,7 +264,7 @@ namespace Orchard.Users.Controllers
             var membershipSettings = _membershipService.GetSettings();
             if (!membershipSettings.UsersMustValidateEmail)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             return View(model: email);
@@ -278,7 +278,7 @@ namespace Orchard.Users.Controllers
             var membershipSettings = _membershipService.GetSettings();
             if (!membershipSettings.UsersMustValidateEmail)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             if (string.IsNullOrWhiteSpace(username))
@@ -325,7 +325,6 @@ namespace Orchard.Users.Controllers
         [Authorize]
         [HttpPost]
         [AlwaysAccessible]
-        [ValidateInput(false)]
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes",
             Justification = "Exceptions result in password not being changed.")]
         public ActionResult ChangePassword(string currentPassword, string newPassword, string confirmPassword)
@@ -401,7 +400,7 @@ namespace Orchard.Users.Controllers
             return View(viewModel);
         }
 
-        [HttpPost, AlwaysAccessible, ValidateInput(false)]
+        [HttpPost, AlwaysAccessible]
         public ActionResult ChangeExpiredPassword(string currentPassword, string newPassword, string confirmPassword, string username)
         {
             var membershipSettings = _membershipService.GetSettings();
@@ -481,7 +480,6 @@ namespace Orchard.Users.Controllers
 
         [HttpPost]
         [AlwaysAccessible]
-        [ValidateInput(false)]
         public ActionResult LostPassword(string nonce, string newPassword, string confirmPassword)
         {
             IUser user;
@@ -657,7 +655,7 @@ namespace Orchard.Users.Controllers
                         // to provide the user with an option to ask for a new challenge email.
                         _orchardServices.Notifier.Warning(
                             T("User with that username and/or email already exists. Follow <a href=\"{0}\">this link</a> if you want to receive a new email to validate your address.",
-                                Url.Action(actionName: "RequestChallengeEmail", routeValues: new { email = email })));
+                                Url.Action(action: "RequestChallengeEmail", values: new { email = email })));
                         // In creating the link above we use the email that was written in the form
                         // rather than the actual user's email address to prevent exploiting this
                         // for information discovery.

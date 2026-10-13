@@ -1,5 +1,5 @@
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.OutputCache.Services
 {
@@ -8,6 +8,6 @@ namespace Orchard.OutputCache.Services
     /// </summary>
     public interface ICacheControlStrategy : IDependency
     {
-        bool IsCacheable(ActionResult result, HttpResponseBase response);
+        bool IsCacheable(ActionResult result, HttpResponse response);
     }
 }

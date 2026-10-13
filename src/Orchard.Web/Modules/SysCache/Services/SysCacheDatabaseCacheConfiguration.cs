@@ -17,7 +17,8 @@ namespace SysCache.Services
 
         public void Configure(CacheConfigurationProperties cache)
         {
-            cache.Provider<NHibernate.Caches.SysCache2.SysCacheProvider>();
+            // SysCache2 depends on the ASP.NET (System.Web) cache: the memory cache provider of NHibernate.Caches is used on .NET
+            cache.Provider<NHibernate.Caches.CoreMemoryCache.CoreMemoryCacheProvider>();
             cache.UseQueryCache = true;
             cache.RegionsPrefix = _shellSettings.Name;
         }

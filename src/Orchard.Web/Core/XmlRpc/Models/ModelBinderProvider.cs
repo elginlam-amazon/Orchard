@@ -1,7 +1,9 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Orchard.Core.XmlRpc.Services;
 using Orchard.Mvc.ModelBinders;
 using IModelBinderProvider = Orchard.Mvc.ModelBinders.IModelBinderProvider;
@@ -27,14 +29,14 @@ namespace Orchard.Core.XmlRpc.Models
                          };
         }
 
-        public object BindModel(ControllerContext controllerContext, ModelBindingContext bindingContext)
+        public async Task BindModelAsync(ModelBindingContext bindingContext)
         {
             // Ah! xmlrpc is a value provider!!!
             // TODO: refactor this? 
-            using (var xmlReader = XmlReader.Create(controllerContext.HttpContext.Request.InputStream))
+            using (var xmlReader = XmlReader.Create(bindingContext.HttpContext.Request.Body, new XmlReaderSettings { Async = true }))
             {
-                var element = XElement.Load(xmlReader);
-                return _mapper.MapToMethodCall(element);
+                var element = await XElement.LoadAsync(xmlReader, LoadOptions.None, bindingContext.HttpContext.RequestAborted);
+                bindingContext.Result = ModelBindingResult.Success(_mapper.MapToMethodCall(element));
             }
         }
     }

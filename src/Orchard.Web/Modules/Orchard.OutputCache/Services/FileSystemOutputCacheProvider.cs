@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using Orchard.Environment.Configuration;
@@ -241,9 +240,8 @@ namespace Orchard.OutputCache.Services
 
             try
             {
-                BinaryFormatter binaryFormatter = new BinaryFormatter();
-                var memoryStream = new MemoryStream();
-                binaryFormatter.Serialize(memoryStream, item);
+                // the metadata is serialized as JSON (BinaryFormatter isn't supported anymore)
+                var memoryStream = new MemoryStream(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(item));
                 memoryStream.Seek(0, SeekOrigin.Begin);
                 return memoryStream;
             }
@@ -255,9 +253,7 @@ namespace Orchard.OutputCache.Services
 
         internal static CacheItem DeserializeMetadata(Stream stream)
         {
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
-            var result = (CacheItem)binaryFormatter.Deserialize(stream);
-            return result;
+            return System.Text.Json.JsonSerializer.Deserialize<CacheItem>(stream);
         }
 
         private T Retry<T>(Func<T> action)

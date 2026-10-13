@@ -1,5 +1,5 @@
 using System.Data;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using NHibernate;
 using Orchard.Mvc.Filters;
 
@@ -30,7 +30,7 @@ namespace Orchard.Data
         }
     }
 
-    public class WebApiTransactionFilter : System.Web.Http.Filters.ExceptionFilterAttribute, WebApi.Filters.IApiFilterProvider
+    public class WebApiTransactionFilter : WebApi.Filters.IApiFilterProvider, IExceptionFilter
     {
         private readonly ITransactionManager _transactionManager;
 
@@ -39,7 +39,7 @@ namespace Orchard.Data
             _transactionManager = transactionManager;
         }
 
-        public override void OnException(System.Web.Http.Filters.HttpActionExecutedContext actionExecutedContext)
+        public void OnException(ExceptionContext actionExecutedContext)
         {
             _transactionManager.Cancel();
         }

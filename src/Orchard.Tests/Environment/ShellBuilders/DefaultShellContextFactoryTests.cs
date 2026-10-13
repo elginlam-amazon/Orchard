@@ -1,5 +1,5 @@
-using System.Web;
 using Autofac;
+using Microsoft.AspNetCore.Http;
 using Moq;
 using NUnit.Framework;
 using Orchard.Environment;
@@ -11,6 +11,7 @@ using Orchard.Environment.ShellBuilders.Models;
 using Orchard.Mvc;
 using Orchard.Tests.Stubs;
 using Orchard.Tests.Utility;
+using IHttpContextAccessor = Orchard.Mvc.IHttpContextAccessor;
 
 namespace Orchard.Tests.Environment.ShellBuilders
 {
@@ -61,7 +62,7 @@ namespace Orchard.Tests.Environment.ShellBuilders
 
             _container.Mock<IHttpContextAccessor>()
                 .Setup(x => x.Current())
-                .Returns(default(HttpContextBase));
+                .Returns(default(HttpContext));
 
             var factory = _container.Resolve<IShellContextFactory>();
 

@@ -1,10 +1,11 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac.Features.Metadata;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Caching;
 using Orchard.ContentManagement;
 using Orchard.Localization;
+using Orchard.Mvc.Extensions;
 using Orchard.Mvc.Routes;
 using Orchard.OutputCache.Models;
 using Orchard.OutputCache.Services;
@@ -40,7 +41,7 @@ namespace Orchard.OutputCache.Controllers
         public ActionResult Index()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You do not have permission to manage output cache.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var routeConfigs = new List<CacheRouteConfig>();
             var settings = Services.WorkContext.CurrentSite.As<CacheSettingsPart>();
@@ -114,14 +115,14 @@ namespace Orchard.OutputCache.Controllers
         public ActionResult IndexPost()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You do not have permission to manage output cache.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var model = new IndexViewModel
             {
                 RouteConfigs = new List<CacheRouteConfig>()
             };
 
-            if (TryUpdateModel(model))
+            if (this.TryUpdateModel(model))
             {
                 var settings = Services.WorkContext.CurrentSite.As<CacheSettingsPart>();
                 settings.DefaultCacheDuration = model.DefaultCacheDuration;

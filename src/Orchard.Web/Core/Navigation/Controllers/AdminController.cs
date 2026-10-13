@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Aspects;
 using Orchard.ContentManagement.Handlers;
@@ -25,7 +25,6 @@ using Orchard.Utility.Extensions;
 
 namespace Orchard.Core.Navigation.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller, IUpdateModel
     {
         private readonly IContentManager _contentManager;
@@ -69,17 +68,17 @@ namespace Orchard.Core.Navigation.Controllers
             {
                 if (!_authorizer.Authorize(Permissions.ManageMenus, T("Not allowed to manage menus")))
                 {
-                    return new HttpUnauthorizedResult();
+                    return new UnauthorizedResult();
                 }
 
-                return RedirectToAction("Create", "Admin", new { area = "Contents", id = "Menu", returnUrl = Request.RawUrl });
+                return RedirectToAction("Create", "Admin", new { area = "Contents", id = "Menu", returnUrl = Request.GetRawUrl() });
             }
 
             var allowedMenus = menus.Where(menu => _authorizer.Authorize(Permissions.ManageMenus, menu)).ToList();
 
             if (!allowedMenus.Any())
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             IContent currentMenu = menuId == null
@@ -120,7 +119,7 @@ namespace Orchard.Core.Navigation.Controllers
                 Permissions.ManageMenus,
                 menuId.HasValue ? _menuService.GetMenu(menuId.Value) : null,
                 T("Couldn't manage the menu")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             // See https://github.com/OrchardCMS/Orchard/issues/948
             if (menuItemEntries != null)
@@ -159,7 +158,7 @@ namespace Orchard.Core.Navigation.Controllers
                 Permissions.ManageMenus,
                 menuPart == null ? null : _menuService.GetMenu(menuPart.Menu.Id),
                 T("Couldn't manage the menu")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (menuPart != null)
             {
@@ -198,20 +197,20 @@ namespace Orchard.Core.Navigation.Controllers
         public ActionResult CreateMenuItem(string id, int menuId, string returnUrl)
         {
             if (!_authorizer.Authorize(Permissions.ManageMenus, _menuService.GetMenu(menuId), T("Couldn't manage the menu")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             // create a new temporary menu item
             var contentItem = _contentManager.New(id);
             var menuPart = contentItem.As<MenuPart>();
 
             if (menuPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             // load the menu
             var menu = _contentManager.Get(menuId);
 
             if (menu == null)
-                return HttpNotFound();
+                return NotFound();
 
             try
             {
@@ -239,18 +238,18 @@ namespace Orchard.Core.Navigation.Controllers
         public ActionResult CreateMenuItemPost(string id, int menuId, string returnUrl)
         {
             if (!_authorizer.Authorize(Permissions.ManageMenus, _menuService.GetMenu(menuId), T("Couldn't manage the menu")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var contentItem = _contentManager.New(id);
             var menuPart = contentItem.As<MenuPart>();
 
             if (menuPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             // load the menu
             var menu = _contentManager.Get(menuId);
             if (menu == null)
-                return HttpNotFound();
+                return NotFound();
 
             _contentManager.Create(contentItem);
 
@@ -277,10 +276,10 @@ namespace Orchard.Core.Navigation.Controllers
             var contentItem = _contentManager.Get(id, VersionOptions.Latest);
 
             if (contentItem == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!_authorizer.Authorize(Permissions.ManageMenus, contentItem.Content.MenuPart.Menu, T("Couldn't manage the menu")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var model = _contentManager.BuildEditor(contentItem);
             return View(model);
@@ -305,10 +304,10 @@ namespace Orchard.Core.Navigation.Controllers
         {
             var menuPart = _contentManager.GetLatest<MenuPart>(id);
             if (menuPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!_authorizer.Authorize(Permissions.ManageMenus, menuPart.Menu, T("Couldn't manage the menu")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             _contentManager.Publish(menuPart.ContentItem);
 
@@ -328,10 +327,10 @@ namespace Orchard.Core.Navigation.Controllers
         {
             var menuPart = _contentManager.GetLatest<MenuPart>(id);
             if (menuPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!_authorizer.Authorize(Permissions.ManageMenus, menuPart.Menu, T("Couldn't manage the menu")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             _contentManager.Unpublish(menuPart.ContentItem);
 
@@ -370,10 +369,10 @@ namespace Orchard.Core.Navigation.Controllers
             var menuPart = contentItem.As<MenuPart>();
 
             if (menuPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!_authorizer.Authorize(Permissions.ManageMenus, menuPart.Menu, T("Couldn't manage the menu")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             string previousRoute = null;
             if (contentItem.Has<IAliasAspect>()
@@ -414,7 +413,7 @@ namespace Orchard.Core.Navigation.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

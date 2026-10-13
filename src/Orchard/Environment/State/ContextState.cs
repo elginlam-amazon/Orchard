@@ -1,7 +1,6 @@
 using System;
-using System.Runtime.Remoting;
-using System.Runtime.Remoting.Messaging;
-using System.Web;
+using System.Threading;
+using Microsoft.AspNetCore.Http;
 using Orchard.Mvc.Extensions;
 
 namespace Orchard.Environment.State
@@ -12,8 +11,12 @@ namespace Orchard.Environment.State
     /// <typeparam name="T">The type of data to store</typeparam>
     public class ContextState<T> where T : class
     {
+        private static readonly HttpContextAccessor _httpContextAccessor = new HttpContextAccessor();
+
         private readonly string _name;
         private readonly Func<T> _defaultValue;
+        // logical (async flow) data replacing the former CallContext logical data.
+        private readonly AsyncLocal<T> _logicalData = new AsyncLocal<T>();
 
         public ContextState(string name)
         {
@@ -28,44 +31,41 @@ namespace Orchard.Environment.State
 
         public T GetState()
         {
-            if (HttpContext.Current.IsBackgroundHttpContext())
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext.IsBackgroundHttpContext())
             {
-                // Because CallContext Logical Data can be shared across application domains,
-                // here we also check if it's a real local instance, not a tranparent proxy.
-                var handle = CallContext.LogicalGetData(_name) as ObjectHandle;
-                var data = handle != null && !RemotingServices.IsTransparentProxy(handle) ? handle.Unwrap() : null;
+                var data = _logicalData.Value;
 
                 if (data == null)
                 {
                     if (_defaultValue != null)
                     {
-                        // Because CallContext Logical Data can be shared across application domains,
-                        // data are wrapped in an ObjectHandle that inherits from MarshalByRefObject.
-                        CallContext.LogicalSetData(_name, new ObjectHandle(data = _defaultValue()));
-                        return data as T;
+                        _logicalData.Value = data = _defaultValue();
+                        return data;
                     }
                 }
 
-                return data as T;
+                return data;
             }
 
-            if (HttpContext.Current.Items[_name] == null)
+            if (!httpContext.Items.TryGetValue(_name, out var value) || value == null)
             {
-                HttpContext.Current.Items[_name] = _defaultValue == null ? null : _defaultValue();
+                httpContext.Items[_name] = value = _defaultValue == null ? null : _defaultValue();
             }
 
-            return HttpContext.Current.Items[_name] as T;
+            return value as T;
         }
 
         public void SetState(T state)
         {
-            if (HttpContext.Current.IsBackgroundHttpContext())
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext.IsBackgroundHttpContext())
             {
-                CallContext.LogicalSetData(_name, new ObjectHandle(state));
+                _logicalData.Value = state;
             }
             else
             {
-                HttpContext.Current.Items[_name] = state;
+                httpContext.Items[_name] = state;
             }
         }
     }

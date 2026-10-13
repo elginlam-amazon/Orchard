@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.AntiSpam.Models;
 using Orchard.Logging;
 
@@ -13,11 +14,11 @@ namespace Orchard.AntiSpam.Services
     {
         private readonly string _endpoint;
         private readonly string _apiKey;
-        private readonly HttpContextBase _context;
+        private readonly HttpContext _context;
 
         private const string AkismetApiPattern = "http://{0}.{1}/1.1/{2}";
 
-        public AkismetApiSpamFilter(string endpoint, string apiKey, HttpContextBase context)
+        public AkismetApiSpamFilter(string endpoint, string apiKey, HttpContext context)
         {
             _endpoint = endpoint;
             _apiKey = apiKey;
@@ -106,7 +107,7 @@ namespace Orchard.AntiSpam.Services
             }
         }
 
-        internal static bool HandleValidateResponse(HttpContextBase context, string response)
+        internal static bool HandleValidateResponse(HttpContext context, string response)
         {
             if (!string.IsNullOrEmpty(response))
             {

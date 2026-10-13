@@ -1,8 +1,10 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Email.Models;
 using Orchard.Localization;
+using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
 using Orchard.UI.Admin.Notification;
 using Orchard.UI.Notify;
 
@@ -27,7 +29,7 @@ namespace Orchard.Email.Services
 
             if (smtpSettings == null || !smtpSettings.IsValid())
             {
-                var urlHelper = new UrlHelper(workContext.HttpContext.Request.RequestContext);
+                var urlHelper = HtmlHelperFactory.CreateUrlHelper(workContext.HttpContext.GetActionContext());
                 var url = urlHelper.Action("Email", "Admin", new { Area = "Settings" });
                 yield return new NotifyEntry { Message = T("The <a href=\"{0}\">SMTP settings</a> need to be configured.", url), Type = NotifyType.Warning };
             }

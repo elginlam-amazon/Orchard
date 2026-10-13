@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Blogs.Extensions;
 using Orchard.Blogs.Models;
 using Orchard.Blogs.Routing;
@@ -55,14 +55,14 @@ namespace Orchard.Blogs.Controllers
             var archive = _archiveConstraint.FindArchiveData(path);
 
             if (blogPath == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (archive == null)
-                return HttpNotFound();
+                return NotFound();
 
             BlogPart blogPart = _blogService.Get(blogPath);
             if (blogPart == null)
-                return HttpNotFound();
+                return NotFound();
 
 
             if (archive.ToDateTime() == DateTime.MinValue)

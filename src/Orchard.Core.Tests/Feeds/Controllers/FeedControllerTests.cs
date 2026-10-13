@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
 using System.Xml.Linq;
 using Autofac;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Moq;
 using NUnit.Framework;
 using Orchard.ContentManagement;
@@ -41,7 +41,7 @@ namespace Orchard.Core.Tests.Feeds.Controllers
 
             var result = controller.Index("no-such-format");
             Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.TypeOf<HttpNotFoundResult>());
+            Assert.That(result, Is.TypeOf<NotFoundResult>());
         }
 
         [Test]
@@ -190,7 +190,7 @@ namespace Orchard.Core.Tests.Feeds.Controllers
             var builder = new ContainerBuilder();
             //builder.RegisterModule(new ImplicitCollectionSupportModule());
             builder.RegisterType<FeedController>();
-            builder.RegisterInstance(new RouteCollection());
+            builder.RegisterInstance(new Orchard.Mvc.Routes.OrchardRouteCollection());
             builder.RegisterInstance(mockContentManager.Object).As<IContentManager>();
             builder.RegisterType<RssFeedBuilder>().As<IFeedBuilderProvider>();
             builder.RegisterType<CorePartsFeedItemBuilder>().As<IFeedItemBuilder>();

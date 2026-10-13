@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using System.Web.Mvc;
 using System.Xml.Linq;
 using Orchard.Comments.Models;
 using Orchard.Comments.Settings;
@@ -16,6 +15,7 @@ using Orchard.Localization;
 using Orchard.Logging;
 using Orchard.Messaging.Services;
 using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
 using Orchard.Security;
 using Orchard.Services;
 
@@ -297,7 +297,7 @@ namespace Orchard.Comments.Services
             var workContext = _orchardServices.WorkContext;
             if (workContext.HttpContext != null)
             {
-                var url = new UrlHelper(workContext.HttpContext.Request.RequestContext);
+                var url = HtmlHelperFactory.CreateUrlHelper(workContext.HttpContext.GetActionContext());
                 return url.AbsoluteAction(action, "Comment", new { area = "Orchard.Comments", nonce = CreateNonce(part, TimeSpan.FromDays(7)) });
             }
 

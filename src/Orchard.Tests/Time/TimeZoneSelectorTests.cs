@@ -1,6 +1,6 @@
 using System;
-using System.Web;
 using Autofac;
+using Microsoft.AspNetCore.Http;
 using NUnit.Framework;
 using Orchard.Tests.Stubs;
 using Orchard.Time;
@@ -63,7 +63,7 @@ namespace Orchard.Tests.Time
         public TimeZoneInfo TimeZone { get; set; }
         public int Priority { get; set; }
 
-        public TimeZoneSelectorResult GetTimeZone(HttpContextBase context)
+        public TimeZoneSelectorResult GetTimeZone(HttpContext context)
         {
             return new TimeZoneSelectorResult
             {

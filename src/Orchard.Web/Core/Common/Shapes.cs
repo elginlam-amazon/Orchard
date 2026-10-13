@@ -1,5 +1,5 @@
 using System;
-using System.Web;
+using Microsoft.AspNetCore.Html;
 using Orchard.DisplayManagement;
 using Orchard.DisplayManagement.Descriptors;
 using Orchard.Localization;
@@ -26,7 +26,7 @@ namespace Orchard.Core.Common
         }
 
         [Shape]
-        public IHtmlString PublishedState(dynamic Display, DateTime createdDateTimeUtc, DateTime? publisheddateTimeUtc, LocalizedString customDateFormat)
+        public IHtmlContent PublishedState(dynamic Display, DateTime createdDateTimeUtc, DateTime? publisheddateTimeUtc, LocalizedString customDateFormat)
         {
             if (!publisheddateTimeUtc.HasValue)
             {
@@ -37,7 +37,7 @@ namespace Orchard.Core.Common
         }
 
         [Shape]
-        public IHtmlString PublishedWhen(dynamic Display, DateTime? dateTimeUtc)
+        public IHtmlContent PublishedWhen(dynamic Display, DateTime? dateTimeUtc)
         {
             if (dateTimeUtc == null)
                 return T("as a Draft");

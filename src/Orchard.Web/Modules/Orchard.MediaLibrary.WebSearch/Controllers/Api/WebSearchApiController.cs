@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Web.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.MediaLibrary.WebSearch.Providers;
 using Orchard.Security;
+using Orchard.WebApi;
 
 namespace Orchard.MediaLibrary.WebSearch.Controllers.Api
 {
@@ -19,11 +20,11 @@ namespace Orchard.MediaLibrary.WebSearch.Controllers.Api
         }
 
         [HttpGet]
-        public IHttpActionResult GetImages(string query, string providerType)
+        public IActionResult GetImages(string query, string providerType)
         {
             if (!_authorizer.Authorize(Permissions.AccessMediaWebSearch))
             {
-                return StatusCode(HttpStatusCode.Unauthorized);
+                return StatusCode((int)HttpStatusCode.Unauthorized);
             }
 
             var selectedProvider = _wsp.FirstOrDefault(provider => provider.Name == providerType);
@@ -32,7 +33,7 @@ namespace Orchard.MediaLibrary.WebSearch.Controllers.Api
                 return NotFound();
             }
 
-            return Json(selectedProvider.GetImages(query));
+            return new JsonResult(selectedProvider.GetImages(query));
         }
     }
 }

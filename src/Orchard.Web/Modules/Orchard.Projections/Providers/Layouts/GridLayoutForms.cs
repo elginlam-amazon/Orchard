@@ -116,19 +116,19 @@ namespace Orchard.Projections.Providers.Layouts
         {
             if (context.FormName == "GridLayout")
             {
-                if (context.ValueProvider.GetValue("Alignment") == null)
+                if (context.ValueProvider.GetValue("Alignment") == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
                 {
                     context.ModelState.AddModelError("Alignment", T("The field Alignment is required.").Text);
                 }
 
-                if (context.ValueProvider.GetValue("Columns") == null)
+                if (context.ValueProvider.GetValue("Columns") == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
                 {
                     context.ModelState.AddModelError("Columns", T("The field Columns/Lines is required.").Text);
                 }
                 else
                 {
                     int value;
-                    if (!int.TryParse(context.ValueProvider.GetValue("Columns").AttemptedValue, out value))
+                    if (!int.TryParse(context.ValueProvider.GetValue("Columns").FirstValue, out value))
                     {
                         context.ModelState.AddModelError("Columns", T("The field Columns/Lines must be a valid number.").Text);
                     }

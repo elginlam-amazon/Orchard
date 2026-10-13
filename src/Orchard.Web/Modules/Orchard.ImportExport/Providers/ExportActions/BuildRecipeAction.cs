@@ -60,13 +60,13 @@ namespace Orchard.ImportExport.Providers.ExportActions
                 {
                     if (viewModel.UploadConfigurationFile)
                     {
-                        var configurationFile = _orchardServices.WorkContext.HttpContext.Request.Files["ConfigurationFile"];
+                        var configurationFile = _orchardServices.WorkContext.HttpContext.Request.Form.Files["ConfigurationFile"];
 
-                        if (configurationFile.ContentLength == 0)
+                        if (configurationFile.Length == 0)
                             updater.AddModelError("ConfigurationFile", T("No configuration file was specified."));
                         else
                         {
-                            var configurationDocument = XDocument.Parse(new StreamReader(configurationFile.InputStream).ReadToEnd());
+                            var configurationDocument = XDocument.Parse(new StreamReader(configurationFile.OpenReadStream()).ReadToEnd());
                             Configure(new ExportActionConfigurationContext(configurationDocument.Root.Element(Name)));
                         }
                     }

@@ -18,7 +18,7 @@ namespace Orchard.Events
 
         public bool IsAdapterForIndividualComponents => false;
 
-        public IEnumerable<IComponentRegistration> RegistrationsFor(Service service, Func<Service, IEnumerable<IComponentRegistration>> registrationAccessor)
+        public IEnumerable<IComponentRegistration> RegistrationsFor(Service service, Func<Service, IEnumerable<ServiceRegistration>> registrationAccessor)
         {
             var serviceWithType = service as IServiceWithType;
             if (serviceWithType == null)

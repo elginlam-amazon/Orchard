@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Web.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.CodeGeneration.Services;
 using Orchard.Commands;
 using Orchard.Data.Migration.Generator;
 using Orchard.Data.Migration.Schema;
+using Orchard.Environment;
 using Orchard.Environment.Extensions;
 using Orchard.Environment.Extensions.Models;
 

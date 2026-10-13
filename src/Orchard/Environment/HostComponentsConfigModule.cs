@@ -5,7 +5,9 @@ using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
 using Autofac;
+using Autofac.Core.Resolving.Pipeline;
 using Autofac.Core;
+using Autofac.Core.Registration;
 using Module = Autofac.Module;
 
 namespace Orchard.Environment
@@ -76,7 +78,7 @@ namespace Orchard.Environment
             return attr.Value;
         }
 
-        protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
+        protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistry, IComponentRegistration registration)
         {
             var implementationType = registration.Activator.LimitType;
 
@@ -93,10 +95,18 @@ namespace Orchard.Environment
                 return;
 
             // otherwise, when an instance of this component is activated, inject the loggers on the instance
-            registration.Activated += (s, e) =>
+            registration.PipelineBuilding += (s, pipeline) =>
             {
-                foreach (var injector in injectors)
-                    injector(e.Context, e.Instance);
+                pipeline.Use(PipelinePhase.Activation, MiddlewareInsertionMode.EndOfPhase, (context, next) =>
+                {
+                    next(context);
+
+                    if (!context.NewInstanceActivated)
+                        return;
+
+                    foreach (var injector in injectors)
+                        injector(context, context.Instance);
+                });
             };
         }
 

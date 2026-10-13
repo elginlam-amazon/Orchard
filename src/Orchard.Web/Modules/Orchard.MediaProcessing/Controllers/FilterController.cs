@@ -2,7 +2,8 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Caching;
 using Orchard.Data;
 using Orchard.DisplayManagement;
@@ -11,14 +12,16 @@ using Orchard.Localization;
 using Orchard.MediaProcessing.Models;
 using Orchard.MediaProcessing.Services;
 using Orchard.MediaProcessing.ViewModels;
+using Orchard.Mvc.Extensions;
 using Orchard.Security;
 using Orchard.UI.Admin;
 using Orchard.UI.Notify;
+using Orchard.Mvc.ModelBinders;
 using FormParametersHelper = Orchard.Forms.Services.FormParametersHelper;
 
 namespace Orchard.MediaProcessing.Controllers
 {
-    [ValidateInput(false), Admin]
+    [Admin]
     public class FilterController : Controller
     {
         public FilterController(
@@ -51,7 +54,7 @@ namespace Orchard.MediaProcessing.Controllers
         public ActionResult Add(int id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage image profiles")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new FilterAddViewModel { Id = id, Filters = _processingManager.DescribeFilters() };
             return View(viewModel);
@@ -60,12 +63,12 @@ namespace Orchard.MediaProcessing.Controllers
         public ActionResult Delete(int id, int filterId)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage image profiles")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var filter = _filterRepository.Get(filterId);
             if (filter == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             filter.ImageProfilePartRecord.Filters.Remove(filter);
@@ -81,13 +84,13 @@ namespace Orchard.MediaProcessing.Controllers
         public ActionResult Edit(int id, string category, string type, int filterId = -1)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage image profiles")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var filter = _processingManager.DescribeFilters().SelectMany(x => x.Descriptors).FirstOrDefault(x => x.Category == category && x.Type == type);
 
             if (filter == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             // build the form, and let external components alter it
@@ -113,17 +116,17 @@ namespace Orchard.MediaProcessing.Controllers
         }
 
         [HttpPost, ActionName("Edit")]
-        public ActionResult EditPost(int id, string category, string type, [DefaultValue(-1)] int filterId, FormCollection formCollection)
+        public ActionResult EditPost(int id, string category, string type, [DefaultValue(-1)] int filterId, IFormCollection formCollection)
         {
             var profile = _profileService.GetImageProfile(id);
 
             var filter = _processingManager.DescribeFilters().SelectMany(x => x.Descriptors).FirstOrDefault(x => x.Category == category && x.Type == type);
 
             var model = new FilterEditViewModel();
-            TryUpdateModel(model);
+            this.TryUpdateModel(model);
 
             // validating form values
-            _formManager.Validate(new ValidatingContext { FormName = filter.Form, ModelState = ModelState, ValueProvider = ValueProvider });
+            _formManager.Validate(new ValidatingContext { FormName = filter.Form, ModelState = ModelState, ValueProvider = this.GetValueProvider() });
 
             if (ModelState.IsValid)
             {
@@ -141,7 +144,7 @@ namespace Orchard.MediaProcessing.Controllers
                     profile.Filters.Add(filterRecord);
                 }
 
-                var dictionary = formCollection.AllKeys.ToDictionary(key => key, formCollection.Get);
+                var dictionary = formCollection.Keys.ToDictionary(key => key, key => formCollection[key].ToString());
 
                 // save form parameters
                 filterRecord.State = FormParametersHelper.ToString(dictionary);
@@ -158,7 +161,7 @@ namespace Orchard.MediaProcessing.Controllers
             // model is invalid, display it again
             var form = _formManager.Build(filter.Form);
 
-            _formManager.Bind(form, formCollection);
+            _formManager.Bind(form, formCollection.ToValueProvider());
             var viewModel = new FilterEditViewModel { Id = id, Description = model.Description, Filter = filter, Form = form };
 
             return View(viewModel);

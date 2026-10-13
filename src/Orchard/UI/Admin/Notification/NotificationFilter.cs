@@ -1,7 +1,8 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.DisplayManagement;
 using Orchard.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.UI.Admin.Notification
 {
@@ -23,15 +24,11 @@ namespace Orchard.UI.Admin.Notification
 
         public void OnResultExecuting(ResultExecutingContext filterContext)
         {
-            if (!AdminFilter.IsApplied(filterContext.RequestContext))
+            if (!AdminFilter.IsApplied(filterContext))
                 return;
 
             // if it's not a view result, a redirect for example
-            if (!(filterContext.Result is ViewResultBase))
-                return;
-
-            // if it's a child action, a partial view for example
-            if (filterContext.IsChildAction)
+            if (!(filterContext.Result is ViewResult))
                 return;
 
 

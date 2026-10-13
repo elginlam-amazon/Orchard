@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Drivers;
 using Orchard.Environment.Extensions;
@@ -9,6 +8,7 @@ using Orchard.Users.Events;
 using Orchard.Users.Models;
 using Orchard.Users.Services;
 using Orchard.Users.ViewModels;
+using Orchard.Users.Extensions;
 
 namespace Orchard.Users.Drivers
 {

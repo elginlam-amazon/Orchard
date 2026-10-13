@@ -17,7 +17,7 @@ namespace Orchard.Comments.Feeds
 
         public FeedQueryMatch Match(FeedContext context)
         {
-            if (context.ValueProvider.GetValue("commentedon") != null)
+            if (context.ValueProvider.GetValue("commentedon") != Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
             {
                 return new FeedQueryMatch { Priority = -1, FeedQuery = this };
             }
@@ -26,11 +26,11 @@ namespace Orchard.Comments.Feeds
 
         public void Execute(FeedContext context)
         {
-            var commentedOn = (int)context.ValueProvider.GetValue("commentedon").ConvertTo(typeof(int));
+            var commentedOn = (int)System.Convert.ChangeType(context.ValueProvider.GetValue("commentedon").FirstValue, typeof(int), System.Globalization.CultureInfo.InvariantCulture);
 
             var limit = 20;
             var limitValue = context.ValueProvider.GetValue("limit");
-            if (limitValue != null)
+            if (limitValue != Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
             {
                 int.TryParse(Convert.ToString(limitValue), out limit);
             }

@@ -45,9 +45,9 @@ namespace Orchard.CustomForms.Drivers
             if (displayType.Equals("Detail"))
             {
                 int contentId = 0;
-                var queryString = _orchardServices.WorkContext.HttpContext.Request.QueryString;
+                var queryString = _orchardServices.WorkContext.HttpContext.Request.Query;
 
-                if (queryString.AllKeys.Contains("contentId"))
+                if (queryString.Keys.Contains("contentId"))
                 {
                     int.TryParse(queryString["contentId"], out contentId);
                 }

@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Blogs.Extensions;
 using Orchard.Blogs.Models;
 using Orchard.ContentManagement;
@@ -18,7 +17,9 @@ using Orchard.Localization;
 using Orchard.Logging;
 using Orchard.Mvc.Extensions;
 using Orchard.Mvc.Html;
+using Orchard.Mvc.Routes;
 using Orchard.Security;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Blogs.Services
 {
@@ -30,11 +31,11 @@ namespace Orchard.Blogs.Services
         private readonly IContentManager _contentManager;
         private readonly IAuthorizationService _authorizationService;
         private readonly IMembershipService _membershipService;
-        private readonly RouteCollection _routeCollection;
+        private readonly OrchardRouteCollection _routeCollection;
 
         public XmlRpcHandler(IBlogService blogService, IBlogPostService blogPostService, IContentManager contentManager,
             IAuthorizationService authorizationService, IMembershipService membershipService,
-            RouteCollection routeCollection)
+            OrchardRouteCollection routeCollection)
         {
             _blogService = blogService;
             _blogPostService = blogPostService;
@@ -57,7 +58,7 @@ namespace Orchard.Blogs.Services
 
         public void Process(XmlRpcContext context)
         {
-            var urlHelper = new UrlHelper(context.ControllerContext.RequestContext, _routeCollection);
+            var urlHelper = HtmlHelperFactory.CreateUrlHelper(context.ControllerContext);
 
             if (context.Request.MethodName == "blogger.getUsersBlogs")
             {
@@ -127,7 +128,7 @@ namespace Orchard.Blogs.Services
             }
         }
 
-        private XRpcArray MetaWeblogGetUserBlogs(UrlHelper urlHelper,
+        private XRpcArray MetaWeblogGetUserBlogs(IUrlHelper urlHelper,
             string userName,
             string password)
         {
@@ -153,7 +154,7 @@ namespace Orchard.Blogs.Services
         }
 
         private XRpcArray MetaWeblogGetRecentPosts(
-            UrlHelper urlHelper,
+            IUrlHelper urlHelper,
             string blogId,
             string userName,
             string password,
@@ -265,7 +266,7 @@ namespace Orchard.Blogs.Services
         }
 
         private XRpcStruct MetaWeblogGetPost(
-            UrlHelper urlHelper,
+            IUrlHelper urlHelper,
             int postId,
             string userName,
             string password,
@@ -388,7 +389,7 @@ namespace Orchard.Blogs.Services
 
         private static XRpcStruct CreateBlogStruct(
             BlogPostPart blogPostPart,
-            UrlHelper urlHelper)
+            IUrlHelper urlHelper)
         {
 
             var url = urlHelper.AbsoluteAction(() => urlHelper.ItemDisplayUrl(blogPostPart));

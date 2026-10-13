@@ -1,5 +1,4 @@
 using System;
-using Glimpse.Core.Message;
 using Orchard.Glimpse.Models;
 using Orchard.Widgets.Models;
 

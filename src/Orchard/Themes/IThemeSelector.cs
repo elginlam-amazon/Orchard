@@ -1,4 +1,4 @@
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.Themes
 {
@@ -10,7 +10,7 @@ namespace Orchard.Themes
 
     public interface IThemeSelector : IDependency
     {
-        ThemeSelectorResult GetTheme(RequestContext context);
+        ThemeSelectorResult GetTheme(ActionContext context);
     }
 
 }

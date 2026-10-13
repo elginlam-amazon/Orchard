@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Web.Helpers;
 
 namespace Orchard.Security
 {
@@ -23,7 +22,7 @@ namespace Orchard.Security
             }
             else
             {
-                using (var hashAlgorithm = HashAlgorithm.Create(hashAlgorithmName))
+                using (var hashAlgorithm = CryptographyAlgorithms.CreateHashAlgorithm(hashAlgorithmName))
                 {
                     return Convert.ToBase64String(hashAlgorithm.ComputeHash(combinedBytes));
                 }

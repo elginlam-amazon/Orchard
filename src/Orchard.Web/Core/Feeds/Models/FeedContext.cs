@@ -1,4 +1,4 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Orchard.Core.Feeds.Models
 {

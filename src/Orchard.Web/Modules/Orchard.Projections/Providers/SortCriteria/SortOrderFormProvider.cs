@@ -55,7 +55,7 @@ namespace Orchard.Projections.Providers.SortCriteria
         {
             if (context.FormName == SortCriterionFormProvider.FormName)
             {
-                if (context.ValueProvider.GetValue("Sort") == null)
+                if (context.ValueProvider.GetValue("Sort") == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
                 {
                     context.ModelState.AddModelError("Sort", T("The Sort field is required.").Text);
                 }

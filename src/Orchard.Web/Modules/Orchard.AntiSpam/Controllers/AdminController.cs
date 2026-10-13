@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.AntiSpam.Models;
 using Orchard.AntiSpam.Services;
 using Orchard.AntiSpam.ViewModels;
@@ -17,7 +17,6 @@ using Orchard.UI.Navigation;
 
 namespace Orchard.AntiSpam.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller
     {
         private readonly ISiteService _siteService;
@@ -44,7 +43,7 @@ namespace Orchard.AntiSpam.Controllers
         public ActionResult Index(SpamIndexOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageAntiSpam, T("Not authorized to manage spam")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(_siteService.GetSiteSettings(), pagerParameters);
 
@@ -108,7 +107,7 @@ namespace Orchard.AntiSpam.Controllers
         public ActionResult Index(SpamIndexOptions options, IEnumerable<int> itemIds)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageAntiSpam, T("Not authorized to manage spam")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             switch (options.BulkAction)
             {
@@ -154,7 +153,7 @@ namespace Orchard.AntiSpam.Controllers
         public ActionResult ReportSpam(int id, string returnUrl)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageAntiSpam, T("Not authorized to manage spam")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var spam = Services.ContentManager.Get(id, VersionOptions.Latest);
             if (spam != null)
@@ -171,7 +170,7 @@ namespace Orchard.AntiSpam.Controllers
         public ActionResult ReportHam(int id, string returnUrl)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageAntiSpam, T("Not authorized to manage spam")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var spam = Services.ContentManager.Get(id, VersionOptions.Latest);
             if (spam != null)

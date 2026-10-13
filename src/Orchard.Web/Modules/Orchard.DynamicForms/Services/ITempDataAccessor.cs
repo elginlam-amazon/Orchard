@@ -1,10 +1,12 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace Orchard.DynamicForms.Services
 {
     public interface IController
     {
-        TempDataDictionary TempData { get; }
+        ITempDataDictionary TempData { get; }
         ModelStateDictionary ModelState { get; }
     }
 }

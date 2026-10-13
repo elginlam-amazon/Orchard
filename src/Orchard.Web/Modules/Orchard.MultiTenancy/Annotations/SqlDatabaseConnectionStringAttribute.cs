@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace Orchard.MultiTenancy.Annotations
 {

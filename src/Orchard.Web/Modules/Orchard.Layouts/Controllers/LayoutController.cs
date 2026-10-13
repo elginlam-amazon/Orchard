@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Orchard.ContentManagement;
 using Orchard.Layouts.Elements;
@@ -36,7 +36,7 @@ namespace Orchard.Layouts.Controllers
         public IOrchardServices Services { get; set; }
         public Localizer T { get; set; }
 
-        [HttpPost, ValidateInput(enableValidation: false)]
+        [HttpPost]
         public ActionResult ApplyTemplate(int? templateId = null, string layoutData = null, int? contentId = null, string contentType = null)
         {
             var template = templateId != null ? _layoutManager.GetLayout(templateId.Value) : null;

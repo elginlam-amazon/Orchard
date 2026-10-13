@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 
 namespace Orchard.Localization.Services
 {
@@ -37,7 +37,7 @@ namespace Orchard.Localization.Services
             };
         }
 
-        public string GetCurrentCalendar(HttpContextBase requestContext)
+        public string GetCurrentCalendar(HttpContext requestContext)
         {
             var requestCalendar = _calendarSelectors
                 .Select(x => x.GetCalendar(requestContext))

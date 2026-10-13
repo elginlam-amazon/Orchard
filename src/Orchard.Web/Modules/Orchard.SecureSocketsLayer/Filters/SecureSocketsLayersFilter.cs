@@ -1,6 +1,8 @@
-using System.Collections.Specialized;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.Localization;
+using Orchard.Mvc.Extensions;
 using Orchard.Mvc.Filters;
 using Orchard.SecureSocketsLayer.Services;
 
@@ -24,7 +26,7 @@ namespace Orchard.SecureSocketsLayer.Filters
         {
             var settings = _sslService.GetSettings();
 
-            if (filterContext.IsChildAction || !settings.Enabled)
+            if (!settings.Enabled)
             {
                 return;
             }
@@ -37,14 +39,14 @@ namespace Orchard.SecureSocketsLayer.Filters
             var request = filterContext.HttpContext.Request;
 
             // redirect to a secured connection ?
-            if (secure && !request.IsSecureConnection)
+            if (secure && !request.IsHttps)
             {
                 var secureActionUrl = AppendQueryString(
                     request.QueryString,
                     _sslService.SecureActionUrl(
-                        filterContext.ActionDescriptor.ActionName,
-                        filterContext.ActionDescriptor.ControllerDescriptor.ControllerName,
-                        filterContext.RequestContext.RouteData.Values));
+                        filterContext.ActionDescriptor.GetActionName(),
+                        filterContext.ActionDescriptor.GetControllerName(),
+                        filterContext.RouteData.Values));
 
                 filterContext.Result = new RedirectResult(secureActionUrl, usePermanentRedirect);
                 return;
@@ -53,24 +55,24 @@ namespace Orchard.SecureSocketsLayer.Filters
             // non auth page on a secure canal
             // nb: needed as the ReturnUrl for LogOn doesn't force the scheme to http, and reuses the current one
             // Also don't force http on ajax requests.
-            if (!secure && request.IsSecureConnection && !request.IsAjaxRequest())
+            if (!secure && request.IsHttps && !request.IsAjaxRequest())
             {
                 var insecureActionUrl = AppendQueryString(
                     request.QueryString,
                     _sslService.InsecureActionUrl(
-                        filterContext.ActionDescriptor.ActionName,
-                        filterContext.ActionDescriptor.ControllerDescriptor.ControllerName,
-                        filterContext.RequestContext.RouteData.Values));
+                        filterContext.ActionDescriptor.GetActionName(),
+                        filterContext.ActionDescriptor.GetControllerName(),
+                        filterContext.RouteData.Values));
 
                 filterContext.Result = new RedirectResult(insecureActionUrl, usePermanentRedirect);
             }
         }
 
-        private static string AppendQueryString(NameValueCollection queryString, string url)
+        private static string AppendQueryString(QueryString queryString, string url)
         {
-            if (queryString.Count > 0)
+            if (queryString.HasValue && queryString.Value.Length > 1)
             {
-                url += '?' + queryString.ToString();
+                url += queryString.Value;
             }
             return url;
         }

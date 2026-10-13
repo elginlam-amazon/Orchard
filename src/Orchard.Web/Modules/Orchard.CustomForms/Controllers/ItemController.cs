@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Aspects;
 using Orchard.ContentManagement.MetaData;
@@ -19,12 +19,12 @@ using Orchard.Mvc.Extensions;
 using Orchard.Themes;
 using Orchard.Tokens;
 using Orchard.UI.Notify;
+using Orchard.Utility.Extensions;
 using Orchard.Workflows.Services;
 
 namespace Orchard.CustomForms.Controllers
 {
     [Themed(true)]
-    [ValidateInput(false)]
     public class ItemController : Controller, IUpdateModel
     {
         private readonly IContentDefinitionManager _contentDefinitionManager;
@@ -67,13 +67,13 @@ namespace Orchard.CustomForms.Controllers
 
             if (form == null || !form.Has<CustomFormPart>())
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var customForm = form.As<CustomFormPart>();
 
             // Retrieve the id of the content to edit
-            var queryString = Services.WorkContext.HttpContext.Request.QueryString;
+            var queryString = Services.WorkContext.HttpContext.Request.Query;
 
             int.TryParse(queryString["contentId"], out int contentId);
 
@@ -83,18 +83,18 @@ namespace Orchard.CustomForms.Controllers
                 contentItem = _contentManager.Get(contentId);
 
                 if (customForm.UseContentTypePermissions && !Services.Authorizer.Authorize(Core.Contents.Permissions.EditContent, contentItem))
-                    return new HttpUnauthorizedResult();
+                    return new UnauthorizedResult();
             }
             else
             {
                 contentItem = _contentManager.New(customForm.ContentType);
 
                 if (customForm.UseContentTypePermissions && !Services.Authorizer.Authorize(Core.Contents.Permissions.CreateContent, contentItem))
-                    return new HttpUnauthorizedResult();
+                    return new UnauthorizedResult();
             }
 
             if (contentItem == null || contentItem.ContentType != customForm.ContentType)
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!contentItem.Has<ICommonPart>())
             {
@@ -102,7 +102,7 @@ namespace Orchard.CustomForms.Controllers
             }
 
             if (!Services.Authorizer.Authorize(Permissions.CreateSubmitPermission(customForm.ContentType), contentItem, T("Cannot create content")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var model = _contentManager.BuildEditor(contentItem);
             var routeValues = _contentManager.GetItemMetadata(form).DisplayRouteValues;
@@ -138,7 +138,7 @@ namespace Orchard.CustomForms.Controllers
 
             if (form == null || !form.Has<CustomFormPart>())
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var customForm = form.As<CustomFormPart>();
@@ -147,7 +147,7 @@ namespace Orchard.CustomForms.Controllers
             var dummyContent = _contentManager.New(customForm.ContentType);
 
             if (!Services.Authorizer.Authorize(Permissions.CreateSubmitPermission(customForm.ContentType), dummyContent, T("Couldn't create content")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return CreatePOST(id, contentId, returnUrl, contentItem => _contentManager.Publish(contentItem));
         }
@@ -158,7 +158,7 @@ namespace Orchard.CustomForms.Controllers
 
             if (form == null || !form.Has<CustomFormPart>())
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var customForm = form.As<CustomFormPart>();
@@ -170,10 +170,10 @@ namespace Orchard.CustomForms.Controllers
                 contentItem = _contentManager.New(customForm.ContentType);
 
             if (contentItem == null || contentItem.ContentType != customForm.ContentType)
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!Services.Authorizer.Authorize(Permissions.CreateSubmitPermission(customForm.ContentType), contentItem, T("Couldn't create content")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (customForm.SaveContentItem && contentId <= 0)
                 _contentManager.Create(contentItem, VersionOptions.Draft);
@@ -245,13 +245,13 @@ namespace Orchard.CustomForms.Controllers
                 }
             }
 
-            var referrer = Request.UrlReferrer != null ? Request.UrlReferrer.ToString() : null;
-            return this.RedirectLocal(returnUrl, () => this.RedirectLocal(referrer, () => Redirect(Request.RawUrl)));
+            var referrer = Request.GetUrlReferrer() != null ? Request.GetUrlReferrer().ToString() : null;
+            return this.RedirectLocal(returnUrl, () => this.RedirectLocal(referrer, () => Redirect(Request.GetRawUrl())));
         }
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

@@ -1,4 +1,5 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.Mvc.Filters;
 using Orchard.UI.Resources;
 
@@ -16,7 +17,7 @@ namespace Orchard.MediaPicker
         public void OnResultExecuting(ResultExecutingContext filterContext)
         {
             // should only run on a full view rendering result
-            if (!(filterContext.Result is ViewResult) || !Orchard.UI.Admin.AdminFilter.IsApplied(filterContext.RequestContext))
+            if (!(filterContext.Result is ViewResult) || !Orchard.UI.Admin.AdminFilter.IsApplied(filterContext))
                 return;
             _resourceManager.Require("script", "jQuery");
             _resourceManager.Include("script", "~/Modules/Orchard.MediaPicker/Scripts/MediaPicker.js", null);

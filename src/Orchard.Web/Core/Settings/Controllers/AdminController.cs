@@ -1,16 +1,17 @@
 using System.Globalization;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Core.Settings.ViewModels;
 using Orchard.Localization;
 using Orchard.Localization.Services;
+using Orchard.Mvc.Extensions;
 using Orchard.Settings;
 using Orchard.UI.Notify;
 
 namespace Orchard.Core.Settings.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller, IUpdateModel
     {
         private readonly ISiteService _siteService;
@@ -33,7 +34,7 @@ namespace Orchard.Core.Settings.Controllers
         public ActionResult Index(string groupInfoId)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageSettings, T("Not authorized to manage settings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             dynamic model;
             var site = _siteService.GetSiteSettings();
@@ -42,11 +43,11 @@ namespace Orchard.Core.Settings.Controllers
                 model = Services.ContentManager.BuildEditor(site, groupInfoId);
 
                 if (model == null)
-                    return HttpNotFound();
+                    return NotFound();
 
                 var groupInfo = Services.ContentManager.GetEditorGroupInfo(site, groupInfoId);
                 if (groupInfo == null)
-                    return HttpNotFound();
+                    return NotFound();
 
                 model.GroupInfo = groupInfo;
             }
@@ -62,7 +63,7 @@ namespace Orchard.Core.Settings.Controllers
         public ActionResult IndexPOST(string groupInfoId)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageSettings, T("Not authorized to manage settings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var site = _siteService.GetSiteSettings();
             var model = Services.ContentManager.UpdateEditor(site, this, groupInfoId);
@@ -74,14 +75,14 @@ namespace Orchard.Core.Settings.Controllers
                 if (model == null)
                 {
                     Services.TransactionManager.Cancel();
-                    return HttpNotFound();
+                    return NotFound();
                 }
 
                 groupInfo = Services.ContentManager.GetEditorGroupInfo(site, groupInfoId);
                 if (groupInfo == null)
                 {
                     Services.TransactionManager.Cancel();
-                    return HttpNotFound();
+                    return NotFound();
                 }
             }
 
@@ -101,7 +102,7 @@ namespace Orchard.Core.Settings.Controllers
         {
             //todo: class and/or method attributes for our auth?
             if (!Services.Authorizer.Authorize(Permissions.ManageSettings, T("Not authorized to manage settings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var model = new SiteCulturesViewModel
             {
@@ -119,7 +120,7 @@ namespace Orchard.Core.Settings.Controllers
         public ActionResult AddCulture(string systemCultureName, string cultureName)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageSettings, T("Not authorized to manage settings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             cultureName = string.IsNullOrWhiteSpace(cultureName) ? systemCultureName : cultureName;
 
@@ -134,7 +135,7 @@ namespace Orchard.Core.Settings.Controllers
         public ActionResult DeleteCulture(string cultureName)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageSettings, T("Not authorized to manage settings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             _cultureManager.DeleteCulture(cultureName);
             return RedirectToAction("Culture");
@@ -142,7 +143,7 @@ namespace Orchard.Core.Settings.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

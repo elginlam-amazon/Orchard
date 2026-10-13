@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.AuditTrail.Helpers;
 using Orchard.AuditTrail.Services;
 using Orchard.AuditTrail.ViewModels;
@@ -42,7 +42,7 @@ namespace Orchard.AuditTrail.Controllers
         public ActionResult Index(PagerParameters pagerParameters)
         {
             if (!_authorizer.Authorize(Permissions.ViewAuditTrail))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = SetupViewModel(new RecycleBinViewModel(), pagerParameters);
             return View(viewModel);
@@ -53,7 +53,7 @@ namespace Orchard.AuditTrail.Controllers
         {
             var contentItem = _contentManager.Get(id, VersionOptions.AllVersions);
             if (!_authorizer.Authorize(Core.Contents.Permissions.PublishContent, contentItem))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var restoredContentItem = _recycleBin.Restore(contentItem);
             var restoredContentItemTitle = _contentManager.GetItemMetadata(restoredContentItem).DisplayText;

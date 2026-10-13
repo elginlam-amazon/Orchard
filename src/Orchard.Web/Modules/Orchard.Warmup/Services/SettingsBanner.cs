@@ -1,6 +1,8 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Localization;
+using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
 using Orchard.UI.Admin.Notification;
 using Orchard.UI.Notify;
 
@@ -24,7 +26,7 @@ namespace Orchard.Warmup.Services
         {
             if (string.IsNullOrWhiteSpace(_orchardServices.WorkContext.CurrentSite.BaseUrl))
             {
-                var urlHelper = new UrlHelper(_workContext.HttpContext.Request.RequestContext);
+                var urlHelper = HtmlHelperFactory.CreateUrlHelper(_workContext.HttpContext.GetActionContext());
                 var url = urlHelper.Action("Index", "Admin", new { Area = "Settings" });
                 yield return new NotifyEntry { Message = T("The Warmup feature needs the <a href=\"{0}\">Base Url site setting</a> to be set.", url), Type = NotifyType.Warning };
             }

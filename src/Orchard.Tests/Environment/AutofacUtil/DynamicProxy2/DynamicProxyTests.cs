@@ -5,6 +5,7 @@ using Autofac.Features.Metadata;
 using Castle.DynamicProxy;
 using NUnit.Framework;
 using Orchard.Environment.AutofacUtil.DynamicProxy2;
+using Autofac.Core.Registration;
 
 namespace Orchard.Tests.Environment.AutofacUtil.DynamicProxy2
 {
@@ -132,7 +133,7 @@ namespace Orchard.Tests.Environment.AutofacUtil.DynamicProxy2
         }
 
         protected override void AttachToComponentRegistration(
-            IComponentRegistry componentRegistry,
+            IComponentRegistryBuilder componentRegistry,
             IComponentRegistration registration)
         {
 

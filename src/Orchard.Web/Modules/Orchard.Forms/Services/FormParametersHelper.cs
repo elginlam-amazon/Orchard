@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Web.Mvc;
 using System.Xml;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -101,18 +101,18 @@ namespace Orchard.Forms.Services
             return JObject.Parse(state);
         }
 
-        public static string ToJsonString(FormCollection formCollection)
+        public static string ToJsonString(IFormCollection formCollection)
         {
             var o = new JObject();
 
-            foreach (var key in formCollection.AllKeys)
+            foreach (var key in formCollection.Keys)
             {
                 if (key.StartsWith("_"))
                 {
                     continue;
                 }
 
-                o.Add(new JProperty(key, formCollection.Get(key)));
+                o.Add(new JProperty(key, formCollection[key].ToString()));
             }
 
             return JsonConvert.SerializeObject(o);

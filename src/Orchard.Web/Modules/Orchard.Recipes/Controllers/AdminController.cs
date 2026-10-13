@@ -1,5 +1,5 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.DisplayManagement;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions;
@@ -50,7 +50,7 @@ namespace Orchard.Recipes.Controllers
         public ActionResult Index()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to execute recipe files.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var modules = _extensionManager.AvailableExtensions()
                 .Where(extensionDescriptor => ExtensionIsAllowed(extensionDescriptor))
@@ -76,7 +76,7 @@ namespace Orchard.Recipes.Controllers
         public ActionResult RecipesPOST(string moduleId, string name)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to execute recipe files.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var module = _extensionManager.AvailableExtensions()
                 .Where(extensionDescriptor => extensionDescriptor.Id == moduleId && ExtensionIsAllowed(extensionDescriptor))
@@ -84,14 +84,14 @@ namespace Orchard.Recipes.Controllers
 
             if (module == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var recipe = _recipeHarvester.HarvestRecipes(module.Id).FirstOrDefault(x => !x.IsSetupRecipe && x.Name == name);
 
             if (recipe == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var executionId = _recipeManager.Execute(recipe);
@@ -114,7 +114,7 @@ namespace Orchard.Recipes.Controllers
         public ActionResult RecipeResult(string executionId)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to view recipe file execution results.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var result = _recipeResultAccessor.GetResult(executionId);
 

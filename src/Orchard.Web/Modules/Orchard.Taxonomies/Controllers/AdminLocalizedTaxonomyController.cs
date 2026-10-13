@@ -1,5 +1,4 @@
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement.MetaData;
 using Orchard.Environment.Extensions;
 using Orchard.Localization.Services;
@@ -11,14 +10,14 @@ namespace Orchard.Taxonomies.Controllers
     [OrchardFeature("Orchard.Taxonomies.LocalizationExtensions")]
     public class AdminLocalizedTaxonomyController : LocalizedTaxonomyController
     {
-        private readonly RequestContext _requestContext;
+        private readonly ActionContext _requestContext;
 
         public AdminLocalizedTaxonomyController(IContentDefinitionManager contentDefinitionManager,
             ILocalizationService localizationService,
             ITaxonomyService taxonomyService,
             ITaxonomyExtensionsService
             taxonomyExtensionsService,
-            RequestContext requestContext) : base(contentDefinitionManager,
+            ActionContext requestContext) : base(contentDefinitionManager,
                 localizationService,
                 taxonomyService,
                 taxonomyExtensionsService)
@@ -27,7 +26,7 @@ namespace Orchard.Taxonomies.Controllers
             _requestContext = requestContext;
         }
 
-        [OutputCache(NoStore = true, Duration = 0)]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public override ActionResult GetTaxonomy(string contentTypeName, string taxonomyFieldName, int contentId, string culture, string selectedValues)
         {
             AdminFilter.Apply(_requestContext);

@@ -34,7 +34,7 @@ namespace Orchard.ContentPicker.Services
                 return;
             }
 
-            var queryString = workContext.HttpContext.Request.QueryString;
+            var queryString = workContext.HttpContext.Request.Query;
 
             string part = queryString["part"];
             string field = queryString["field"];

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Glimpse.Core.Message;
 using Orchard.DisplayManagement.Shapes;
 using Orchard.Glimpse.Models;
 

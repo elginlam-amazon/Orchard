@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using System.Web.Hosting;
+using Orchard.Environment;
 using Orchard.Environment.Extensions;
 using Orchard.Environment.Extensions.Models;
 using Orchard.Logging;

@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.Data;
 using Orchard.DisplayManagement;
 using Orchard.Forms.Services;
 using Orchard.Localization;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.Rules.Models;
 using Orchard.Rules.Services;
 using Orchard.Rules.ViewModels;
@@ -19,7 +21,6 @@ using Orchard.UI.Notify;
 
 namespace Orchard.Rules.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller, IUpdateModel
     {
         private readonly ISiteService _siteService;
@@ -50,7 +51,7 @@ namespace Orchard.Rules.Controllers
         public ActionResult Index(RulesIndexOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list rules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(_siteService.GetSiteSettings(), pagerParameters);
 
@@ -114,13 +115,13 @@ namespace Orchard.Rules.Controllers
 
         [HttpPost]
         [FormValueRequired("submit.BulkEdit")]
-        public ActionResult Index(FormCollection input)
+        public ActionResult Index(IFormCollection input)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage rules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new RulesIndexViewModel { Rules = new List<RulesEntry>(), Options = new RulesIndexOptions() };
-            UpdateModel(viewModel);
+            this.UpdateModel(viewModel);
 
             var checkedEntries = viewModel.Rules.Where(c => c.IsChecked);
             switch (viewModel.Options.BulkAction)
@@ -153,7 +154,7 @@ namespace Orchard.Rules.Controllers
         public ActionResult Move(string direction, int id, int actionId)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage rules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             switch (direction)
             {
@@ -173,7 +174,7 @@ namespace Orchard.Rules.Controllers
         public ActionResult Create()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage rules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return View(new CreateRuleViewModel());
         }
@@ -182,7 +183,7 @@ namespace Orchard.Rules.Controllers
         public ActionResult CreatePost(CreateRuleViewModel viewModel)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage rules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!ModelState.IsValid)
             {
@@ -200,7 +201,7 @@ namespace Orchard.Rules.Controllers
         public ActionResult Edit(int id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to edit rules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var rule = _rulesServices.GetRule(id);
             var viewModel = new EditRuleViewModel
@@ -257,7 +258,7 @@ namespace Orchard.Rules.Controllers
                             Category = action.Category,
                             Type = action.Type,
                             ActionRecordId = actionRecord.Id,
-                            DisplayText = action.Display(new ActionContext { Properties = actionParameters })
+                            DisplayText = action.Display(new Orchard.Rules.Models.ActionContext { Properties = actionParameters })
                         });
                 }
             }
@@ -273,7 +274,7 @@ namespace Orchard.Rules.Controllers
         public ActionResult EditPost(EditRuleViewModel viewModel)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage rules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!ModelState.IsValid)
             {
@@ -304,7 +305,7 @@ namespace Orchard.Rules.Controllers
         public ActionResult Delete(int id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage rules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var rule = _rulesServices.GetRule(id);
 
@@ -320,7 +321,7 @@ namespace Orchard.Rules.Controllers
         public ActionResult Enable(int id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage rules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var rule = _rulesServices.GetRule(id);
 
@@ -336,7 +337,7 @@ namespace Orchard.Rules.Controllers
         public ActionResult Disable(int id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage rules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var rule = _rulesServices.GetRule(id);
 
@@ -351,7 +352,7 @@ namespace Orchard.Rules.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         public void AddModelError(string key, LocalizedString errorMessage)

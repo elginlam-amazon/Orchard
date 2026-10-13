@@ -1,4 +1,5 @@
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using NUnit.Framework;
 using Orchard.Tests.Stubs;
 using Orchard.UI.Admin;
@@ -11,7 +12,7 @@ namespace Orchard.Tests.UI.Admin
         [Test]
         public void IsAppliedShouldBeFalseByDefault()
         {
-            var context = new RequestContext(new StubHttpContext(), new RouteData());
+            var context = new ActionContext(new StubHttpContext(), new RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
             var isApplied = AdminFilter.IsApplied(context);
             Assert.That(isApplied, Is.False);
         }
@@ -19,7 +20,7 @@ namespace Orchard.Tests.UI.Admin
         [Test]
         public void IsAppliedShouldBeTrueAfterBeingApplied()
         {
-            var context = new RequestContext(new StubHttpContext(), new RouteData());
+            var context = new ActionContext(new StubHttpContext(), new RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
             Assert.That(AdminFilter.IsApplied(context), Is.False);
             AdminFilter.Apply(context);
             Assert.That(AdminFilter.IsApplied(context), Is.True);
@@ -29,18 +30,18 @@ namespace Orchard.Tests.UI.Admin
         [Test]
         public void IsAppliedIsFalseOnNewContext()
         {
-            var context = new RequestContext(new StubHttpContext(), new RouteData());
+            var context = new ActionContext(new StubHttpContext(), new RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
             Assert.That(AdminFilter.IsApplied(context), Is.False);
             AdminFilter.Apply(context);
             Assert.That(AdminFilter.IsApplied(context), Is.True);
-            context = new RequestContext(new StubHttpContext(), new RouteData());
+            context = new ActionContext(new StubHttpContext(), new RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
             Assert.That(AdminFilter.IsApplied(context), Is.False);
         }
 
         [Test]
         public void ThemeResultShouldBeNullNormally()
         {
-            var context = new RequestContext(new StubHttpContext(), new RouteData());
+            var context = new ActionContext(new StubHttpContext(), new RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
 
             var selector = new AdminThemeSelector();
             var result = selector.GetTheme(context);
@@ -51,7 +52,7 @@ namespace Orchard.Tests.UI.Admin
         [Test]
         public void ThemeResultShouldBeTheAdminAt100AfterBeingSet()
         {
-            var context = new RequestContext(new StubHttpContext(), new RouteData());
+            var context = new ActionContext(new StubHttpContext(), new RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
 
             AdminFilter.Apply(context);
 

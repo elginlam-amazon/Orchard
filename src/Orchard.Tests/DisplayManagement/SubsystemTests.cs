@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Routing;
 using Moq;
 using NUnit.Framework;
 using Orchard.Caching;
@@ -57,7 +57,7 @@ namespace Orchard.Tests.DisplayManagement
             builder.RegisterType<StubParallelCacheContext>().As<IParallelCacheContext>();
             builder.RegisterInstance(new DefaultDisplayManagerTests.TestWorkContextAccessor(workContext)).As<IWorkContextAccessor>();
             builder.RegisterInstance(new SimpleShapes()).WithMetadata("Feature", testFeature);
-            builder.RegisterInstance(new RouteCollection());
+            builder.RegisterInstance(new Orchard.Mvc.Routes.OrchardRouteCollection());
             builder.RegisterAutoMocking(MockBehavior.Loose);
 
             _container = builder.Build();
@@ -69,13 +69,13 @@ namespace Orchard.Tests.DisplayManagement
         public class SimpleShapes
         {
             [Shape]
-            public IHtmlString Something()
+            public IHtmlContent Something()
             {
                 return new HtmlString("<br/>");
             }
 
             [Shape]
-            public IHtmlString Pager()
+            public IHtmlContent Pager()
             {
                 return new HtmlString("<div>hello</div>");
             }

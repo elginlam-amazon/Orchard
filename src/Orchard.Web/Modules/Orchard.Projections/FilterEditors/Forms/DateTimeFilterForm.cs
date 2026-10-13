@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement;
 using Orchard.Environment;

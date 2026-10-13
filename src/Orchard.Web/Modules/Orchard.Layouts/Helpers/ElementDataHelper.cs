@@ -5,9 +5,11 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Orchard.ContentManagement;
 using Orchard.Layouts.Framework.Elements;
+using Orchard.Mvc.ModelBinders;
 using Orchard.Utility;
 
 namespace Orchard.Layouts.Helpers
@@ -93,6 +95,23 @@ namespace Orchard.Layouts.Helpers
             return dictionary;
         }
 
+        public static ElementDataDictionary ToDictionary(this IFormCollection form)
+        {
+            var dictionary = new ElementDataDictionary();
+
+            foreach (var entry in form)
+            {
+                if (_elementDataBlackList.Contains(entry.Key))
+                {
+                    continue;
+                }
+
+                dictionary[entry.Key] = string.Join("\0", entry.Value.ToArray());
+            }
+
+            return dictionary;
+        }
+
         public static IDictionary<string, object> ToTokenDictionary(this NameValueCollection nameValues)
         {
             var copy = new NameValueCollection(nameValues);
@@ -132,7 +151,7 @@ namespace Orchard.Layouts.Helpers
 
         public static IValueProvider ToValueProvider(this ElementDataDictionary dictionary, CultureInfo culture)
         {
-            return new NameValueCollectionValueProvider(dictionary.ToNameValueCollection(), culture);
+            return new DictionaryValueProvider<string>(dictionary, culture);
         }
 
         public static TProperty Retrieve<TElement, TProperty>(this TElement element, Expression<Func<TElement, TProperty>> targetExpression, Func<TProperty> defaultValue = null) where TElement : Element

@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
 using System.Xml;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Drivers;
 using Orchard.ContentManagement.Handlers;

@@ -1,7 +1,6 @@
 using System;
-using System.Web.Mvc;
-using System.Web.UI;
-using System.Web.WebPages;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Orchard.Mvc;
 
 namespace Orchard.UI.Resources
 {
@@ -11,18 +10,10 @@ namespace Orchard.UI.Resources
 
         public ResourceRegister(IViewDataContainer container, IResourceManager resourceManager, string resourceType)
         {
-            var templateControl = container as TemplateControl;
-            if (templateControl != null)
+            var webPage = container as IRazorPage;
+            if (webPage != null && webPage.Path != null)
             {
-                _viewVirtualPath = templateControl.AppRelativeVirtualPath;
-            }
-            else
-            {
-                var webPage = container as WebPageBase;
-                if (webPage != null)
-                {
-                    _viewVirtualPath = webPage.VirtualPath;
-                }
+                _viewVirtualPath = webPage.Path.StartsWith("/") ? "~" + webPage.Path : webPage.Path;
             }
             ResourceManager = resourceManager;
             ResourceType = resourceType;

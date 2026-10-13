@@ -8,7 +8,6 @@ namespace Orchard.Glimpse
         internal const string Layers = "Orchard.Glimpse.Layers";
         internal const string Parts = "Orchard.Glimpse.Parts";
         internal const string Shapes = "Orchard.Glimpse.Shapes";
-        internal const string SQL = "Orchard.Glimpse.SQL";
         internal const string Widgets = "Orchard.Glimpse.Widgets";
     }
 }

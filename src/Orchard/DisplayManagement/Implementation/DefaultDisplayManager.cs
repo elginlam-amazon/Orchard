@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Web;
+using Microsoft.AspNetCore.Html;
 using Microsoft.CSharp.RuntimeBinder;
 using Orchard.DisplayManagement.Descriptors;
 using Orchard.DisplayManagement.Shapes;
@@ -50,7 +51,7 @@ namespace Orchard.DisplayManagement.Implementation
         public Localizer T { get; set; }
         public ILogger Logger { get; set; }
 
-        public IHtmlString Execute(DisplayContext context)
+        public IHtmlContent Execute(DisplayContext context)
         {
 
             var shape = _convertAsShapeCallsite.Target(_convertAsShapeCallsite, context.Value);
@@ -214,19 +215,19 @@ namespace Orchard.DisplayManagement.Implementation
             }
         }
 
-        static IHtmlString CoerceHtmlString(object value)
+        static IHtmlContent CoerceHtmlString(object value)
         {
             if (value == null)
                 return null;
 
-            var result = value as IHtmlString;
+            var result = value as IHtmlContent;
             if (result != null)
                 return result;
 
             return new HtmlString(HttpUtility.HtmlEncode(value));
         }
 
-        static IHtmlString Process(ShapeBinding shapeBinding, IShape shape, DisplayContext context)
+        static IHtmlContent Process(ShapeBinding shapeBinding, IShape shape, DisplayContext context)
         {
 
             if (shapeBinding == null || shapeBinding.Binding == null)

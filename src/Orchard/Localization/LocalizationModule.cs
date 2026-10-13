@@ -3,7 +3,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using Autofac;
+using Orchard.Environment.AutofacUtil;
+using Autofac.Core.Resolving.Pipeline;
 using Autofac.Core;
+using Autofac.Core.Registration;
 using Module = Autofac.Module;
 
 namespace Orchard.Localization
@@ -22,7 +25,7 @@ namespace Orchard.Localization
             builder.RegisterType<Text>().As<IText>().InstancePerDependency();
         }
 
-        protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
+        protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistry, IComponentRegistration registration)
         {
 
             var userProperty = FindUserProperty(registration.Activator.LimitType);
@@ -39,15 +42,15 @@ namespace Orchard.Localization
 
                 foreach (var scope in scopes)
                 {
-                    registration.Activated += (sender, e) =>
+                    registration.OnActivatedDeferred((context, instance) =>
                     {
-                        if (e.Instance.GetType().FullName != scope)
+                        if (instance.GetType().FullName != scope)
                         {
                             return;
                         }
-                        var localizer = _localizerCache.GetOrAdd(scope, key => LocalizationUtilities.Resolve(e.Context, scopes));
-                        userProperty.SetValue(e.Instance, localizer, null);
-                    };
+                        var localizer = _localizerCache.GetOrAdd(scope, key => LocalizationUtilities.Resolve(context, scopes));
+                        userProperty.SetValue(instance, localizer, null);
+                    });
                 }
             }
         }

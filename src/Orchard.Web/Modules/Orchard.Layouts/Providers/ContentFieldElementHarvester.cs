@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.ContentManagement.MetaData;
 using Orchard.ContentManagement.MetaData.Models;
 using Orchard.Data;
@@ -84,12 +85,12 @@ namespace Orchard.Layouts.Providers
             {
                 // The content item hasn't been stored yet, so bind form values with the content field to represent actual Data.
                 var controller = (Controller)context.Updater;
-                var oldValueProvider = controller.ValueProvider;
+                var oldValueProvider = controller.GetValueProvider();
 
-                controller.ValueProvider = context.Element.Data.ToValueProvider(_cultureAccessor.Value.CurrentCulture);
+                controller.SetValueProvider(context.Element.Data.ToValueProvider(_cultureAccessor.Value.CurrentCulture));
                 _contentFieldDisplay.Value.UpdateEditor(contentItem, contentField, context.Updater);
                 _transactionManager.Value.Cancel();
-                controller.ValueProvider = oldValueProvider;
+                controller.SetValueProvider(oldValueProvider);
             }
 
             var contentFieldShape = _contentFieldDisplay.Value.BuildDisplay(contentItem, contentField, displayType: "Layout");

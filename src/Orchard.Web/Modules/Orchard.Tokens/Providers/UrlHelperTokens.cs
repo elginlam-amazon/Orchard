@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Localization;
 
 namespace Orchard.Tokens.Providers
@@ -9,9 +9,9 @@ namespace Orchard.Tokens.Providers
     public class UrlHelperTokens : ITokenProvider
     {
         private readonly IWorkContextAccessor _workContextAccessor;
-        private readonly UrlHelper _urlHelper;
+        private readonly IUrlHelper _urlHelper;
 
-        public UrlHelperTokens(IWorkContextAccessor workContextAccessor, UrlHelper urlHelper)
+        public UrlHelperTokens(IWorkContextAccessor workContextAccessor, IUrlHelper urlHelper)
         {
             _workContextAccessor = workContextAccessor;
             _urlHelper = urlHelper;
@@ -22,7 +22,7 @@ namespace Orchard.Tokens.Providers
 
         public void Describe(DescribeContext context)
         {
-            context.For("Url", T("UrlHelper actions"), T("UrlHelper actions."))
+            context.For("Url", T("IUrlHelper actions"), T("IUrlHelper actions."))
                 .Token("Action:*", T("Action:<actionname,controllername[,area=MyModuleName][,customValue=42]>"), T("The route values to evaluate."));
         }
 
@@ -37,7 +37,7 @@ namespace Orchard.Tokens.Providers
                 .Token(token => token.StartsWith("Action:", StringComparison.OrdinalIgnoreCase) ? token.Substring("Action:".Length) : null, GetRoute);
         }
 
-        private object GetRoute(string token, UrlHelper url)
+        private object GetRoute(string token, IUrlHelper url)
         {
             var items = token.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             var actionName = items[0];

@@ -1,10 +1,11 @@
 using System.IO;
 using System.Text;
-using System.Web;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Html;
 
 namespace Orchard.Mvc.Spooling
 {
-    public class HtmlStringWriter : TextWriter, IHtmlString
+    public class HtmlStringWriter : TextWriter, IHtmlContent
     {
         private readonly TextWriter _writer;
 
@@ -18,6 +19,11 @@ namespace Orchard.Mvc.Spooling
         public string ToHtmlString()
         {
             return _writer.ToString();
+        }
+
+        public void WriteTo(TextWriter writer, HtmlEncoder encoder)
+        {
+            writer.Write(_writer.ToString());
         }
 
         public override string ToString()

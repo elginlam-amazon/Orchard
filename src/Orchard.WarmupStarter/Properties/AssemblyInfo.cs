@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
@@ -35,4 +34,3 @@ using System.Security;
 [assembly: AssemblyFileVersion("1.11")]
 
 // Enable web application to call this assembly in Full Trust
-[assembly: AllowPartiallyTrustedCallers]

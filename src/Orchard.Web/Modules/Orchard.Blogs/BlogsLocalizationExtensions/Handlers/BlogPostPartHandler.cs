@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Routing;
-
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Autoroute.Models;
 using Orchard.Autoroute.Services;
 using Orchard.Blogs.Models;
@@ -25,7 +24,7 @@ namespace Orchard.Blogs.BlogsLocalizationExtensions.Handlers
         private readonly IAutorouteService _routeService;
         private readonly ILocalizationService _localizationService;
 
-        public BlogPostPartHandler(RequestContext requestContext, IContentManager contentManager, IAutorouteService routeService, ILocalizationService localizationService, INotifier notifier)
+        public BlogPostPartHandler(ActionContext requestContext, IContentManager contentManager, IAutorouteService routeService, ILocalizationService localizationService, INotifier notifier)
         {
             _contentManager = contentManager;
             _routeService = routeService;

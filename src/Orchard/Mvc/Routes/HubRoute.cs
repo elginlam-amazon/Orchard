@@ -1,20 +1,19 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Environment;
 using Orchard.Environment.Configuration;
 
 namespace Orchard.Mvc.Routes
 {
 
-    public class HubRoute : RouteBase, IRouteWithArea, IComparable<HubRoute>
+    public class HubRoute : IRouter, INamedRouter, IRouteWithArea, IComparable<HubRoute>
     {
         private readonly IRunningShellTable _runningShellTable;
 
-        private readonly ConcurrentDictionary<string, IList<RouteBase>> _routesByShell = new ConcurrentDictionary<string, IList<RouteBase>>();
+        private readonly ConcurrentDictionary<string, IList<IRouter>> _routesByShell = new ConcurrentDictionary<string, IList<IRouter>>();
 
         public HubRoute(string name, string area, int priority, IRunningShellTable runningShellTable)
         {
@@ -33,57 +32,62 @@ namespace Orchard.Mvc.Routes
         /// </summary>
         public void ReleaseShell(ShellSettings shellSettings)
         {
-            IList<RouteBase> routes;
+            IList<IRouter> routes;
             _routesByShell.TryRemove(shellSettings.Name, out routes);
         }
 
-        public void Add(RouteBase route, ShellSettings shellSettings)
+        public void Add(IRouter route, ShellSettings shellSettings)
         {
-            var routes = _routesByShell.GetOrAdd(shellSettings.Name, key => new List<RouteBase>());
+            var routes = _routesByShell.GetOrAdd(shellSettings.Name, key => new List<IRouter>());
             routes.Add(route);
         }
 
-        public override RouteData GetRouteData(HttpContextBase httpContext)
+        public async Task RouteAsync(RouteContext context)
         {
-            var settings = _runningShellTable.Match(httpContext);
+            var settings = _runningShellTable.Match(context.HttpContext);
 
             if (settings == null)
-                return null;
+                return;
 
-            IList<RouteBase> routes;
+            IList<IRouter> routes;
             if (!_routesByShell.TryGetValue(settings.Name, out routes))
             {
-                return null;
+                return;
             }
 
             foreach (var route in routes)
             {
-                RouteData routeData = route.GetRouteData(httpContext);
-                if (routeData != null)
+                var snapshot = context.RouteData.PushState(route, null, null);
+                await route.RouteAsync(context);
+                if (context.Handler != null)
                 {
-                    return routeData;
+                    return;
                 }
+                snapshot.Restore();
             }
-
-            return null;
         }
 
-        public override VirtualPathData GetVirtualPath(RequestContext requestContext, RouteValueDictionary values)
+        public VirtualPathData GetVirtualPath(VirtualPathContext context)
         {
-            var settings = _runningShellTable.Match(requestContext.HttpContext);
+            var settings = _runningShellTable.Match(context.HttpContext);
 
             if (settings == null)
                 return null;
 
-            IList<RouteBase> routes;
+            IList<IRouter> routes;
             if (!_routesByShell.TryGetValue(settings.Name, out routes))
             {
                 return null;
             }
 
+            // The name of the hub route has already been matched, inner routes are not named.
+            var innerContext = string.IsNullOrEmpty(context.RouteName)
+                ? context
+                : new VirtualPathContext(context.HttpContext, context.AmbientValues, context.Values);
+
             foreach (var route in routes)
             {
-                VirtualPathData virtualPathData = route.GetVirtualPath(requestContext, values);
+                var virtualPathData = route.GetVirtualPath(innerContext);
                 if (virtualPathData != null)
                 {
                     return virtualPathData;

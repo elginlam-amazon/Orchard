@@ -1,4 +1,4 @@
-using System.Web.Routing;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Blogs.Models;
 using Orchard.Core.Feeds;
 

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Mvc.Routes;
+using Route = Orchard.Mvc.Routes.Route;
 
 namespace Orchard.Search
 {
@@ -32,7 +32,7 @@ namespace Orchard.Search
                             {"area", "Orchard.Search"},
                             {"controller", "Search"},
                             {"action", "Index"},
-                            {"searchIndex", UrlParameter.Optional}
+                            {"searchIndex", ""}
                         },
                         null,
                         new RouteValueDictionary {
@@ -47,7 +47,7 @@ namespace Orchard.Search
                             {"area", "Orchard.Search"},
                             {"controller", "BlogSearch"},
                             {"action", "Index"},
-                            {"blogId", UrlParameter.Optional}
+                            {"blogId", ""}
                         },
                         null,
                         new RouteValueDictionary {

@@ -17,7 +17,7 @@ namespace Orchard.Projections.FilterEditors.Forms
             if (context.FormName == DateTimeFilterForm.FormName)
             {
 
-                var op = (DateTimeOperator)Enum.Parse(typeof(DateTimeOperator), Convert.ToString(context.ValueProvider.GetValue("Operator").AttemptedValue));
+                var op = (DateTimeOperator)Enum.Parse(typeof(DateTimeOperator), Convert.ToString(context.ValueProvider.GetValue("Operator").FirstValue));
 
                 if (op == DateTimeOperator.IsNull || op == DateTimeOperator.IsNotNull)
                 {
@@ -34,19 +34,19 @@ namespace Orchard.Projections.FilterEditors.Forms
                     // validating mandatory values
                     if (isRange)
                     {
-                        if (min == null || string.IsNullOrWhiteSpace(min.AttemptedValue))
+                        if (min == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None || string.IsNullOrWhiteSpace(min.FirstValue))
                         {
                             context.ModelState.AddModelError("Min", T("The field {0} is required.", T("Min").Text).Text);
                         }
 
-                        if (max == null || string.IsNullOrWhiteSpace(max.AttemptedValue))
+                        if (max == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None || string.IsNullOrWhiteSpace(max.FirstValue))
                         {
                             context.ModelState.AddModelError("Max", T("The field {0} is required.", T("Max").Text).Text);
                         }
                     }
                     else
                     {
-                        if (min == null || string.IsNullOrWhiteSpace(value.AttemptedValue))
+                        if (min == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None || string.IsNullOrWhiteSpace(value.FirstValue))
                         {
                             context.ModelState.AddModelError("Value", T("The field {0} is required.", T("Value").Text).Text);
                         }
@@ -58,25 +58,25 @@ namespace Orchard.Projections.FilterEditors.Forms
                     }
 
                     // validating data type
-                    if (valueType.AttemptedValue == "0")
+                    if (valueType.FirstValue == "0")
                     {
                         // A date
 
                         if (isRange)
                         {
-                            if (!_dateRegEx.IsMatch(min.AttemptedValue) && !IsToken(min.AttemptedValue))
+                            if (!_dateRegEx.IsMatch(min.FirstValue) && !IsToken(min.FirstValue))
                             {
                                 context.ModelState.AddModelError("Min", T("The field {0} should contain a valid date (YYYY-MM-DD hh:mm:ss)", T("Min").Text).Text);
                             }
 
-                            if (!_dateRegEx.IsMatch(max.AttemptedValue) && !IsToken(max.AttemptedValue))
+                            if (!_dateRegEx.IsMatch(max.FirstValue) && !IsToken(max.FirstValue))
                             {
                                 context.ModelState.AddModelError("Max", T("The field {0} should contain a valid date (YYYY-MM-DD hh:mm:ss)", T("Max").Text).Text);
                             }
                         }
                         else
                         {
-                            if (!_dateRegEx.IsMatch(value.AttemptedValue) && !IsToken(value.AttemptedValue))
+                            if (!_dateRegEx.IsMatch(value.FirstValue) && !IsToken(value.FirstValue))
                             {
                                 context.ModelState.AddModelError("Value", T("The field {0} should contain a valid date (YYYY-MM-DD hh:mm:ss)", T("Value").Text).Text);
                             }
@@ -89,19 +89,19 @@ namespace Orchard.Projections.FilterEditors.Forms
                         int number;
                         if (isRange)
                         {
-                            if (!int.TryParse(min.AttemptedValue, out number) && !IsToken(min.AttemptedValue))
+                            if (!int.TryParse(min.FirstValue, out number) && !IsToken(min.FirstValue))
                             {
                                 context.ModelState.AddModelError("Min", T("The field {0} must be a valid number.", T("Min").Text).Text);
                             }
 
-                            if (!int.TryParse(max.AttemptedValue, out number) && !IsToken(max.AttemptedValue))
+                            if (!int.TryParse(max.FirstValue, out number) && !IsToken(max.FirstValue))
                             {
                                 context.ModelState.AddModelError("Max", T("The field {0} must be a valid number.", T("Max").Text).Text);
                             }
                         }
                         else
                         {
-                            if (!int.TryParse(value.AttemptedValue, out number) && !IsToken(value.AttemptedValue))
+                            if (!int.TryParse(value.FirstValue, out number) && !IsToken(value.FirstValue))
                             {
                                 context.ModelState.AddModelError("Value", T("The field {0} must be a valid number.", T("Value").Text).Text);
                             }

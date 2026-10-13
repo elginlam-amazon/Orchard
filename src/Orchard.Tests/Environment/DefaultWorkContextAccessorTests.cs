@@ -1,10 +1,11 @@
-using System.Web;
 using Autofac;
+using Microsoft.AspNetCore.Http;
 using NUnit.Framework;
 using Orchard.Environment;
 using Orchard.Mvc;
 using Orchard.Tests.Stubs;
 using Orchard.Tests.Utility;
+using IHttpContextAccessor = Orchard.Mvc.IHttpContextAccessor;
 
 namespace Orchard.Tests.Environment
 {
@@ -12,7 +13,7 @@ namespace Orchard.Tests.Environment
     public class DefaultWorkContextAccessorTests : ContainerTestBase
     {
 
-        HttpContextBase _httpContextCurrent;
+        HttpContext _httpContextCurrent;
 
         public override void Init()
         {

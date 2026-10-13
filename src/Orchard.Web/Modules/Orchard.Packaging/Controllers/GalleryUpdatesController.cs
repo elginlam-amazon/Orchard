@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.DisplayManagement;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions;
@@ -77,7 +77,7 @@ namespace Orchard.Packaging.Controllers
         private ActionResult PackageUpdate(string view, string extensionType, int? reportId, PagerParameters pagerParameters)
         {
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to add sources")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             Pager pager = new Pager(Services.WorkContext.CurrentSite, pagerParameters);
 

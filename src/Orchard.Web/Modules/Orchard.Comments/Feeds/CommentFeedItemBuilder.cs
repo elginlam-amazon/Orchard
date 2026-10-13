@@ -1,13 +1,14 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Comments.Models;
 using Orchard.ContentManagement;
 using Orchard.Core.Feeds;
 using Orchard.Core.Feeds.Models;
 using Orchard.Core.Feeds.StandardBuilders;
 using Orchard.Localization;
+using Orchard.Mvc.Html;
 
 namespace Orchard.Comments.Feeds
 {
@@ -45,7 +46,7 @@ namespace Orchard.Comments.Feeds
                     var guid = new XElement("guid", new XAttribute("isPermaLink", "false"));
                     context.Response.Contextualize(requestContext =>
                     {
-                        var urlHelper = new UrlHelper(requestContext);
+                        var urlHelper = HtmlHelperFactory.CreateUrlHelper(requestContext);
                         link.Add(urlHelper.RouteUrl(commentedOnInspector.Link) + "#comment-" + comment.Record.Id);
                         guid.Add("urn:comment:" + comment.Record.Id);
                     });
@@ -61,7 +62,7 @@ namespace Orchard.Comments.Feeds
                     var feedItem1 = feedItem;
                     context.Response.Contextualize(requestContext =>
                     {
-                        var urlHelper = new UrlHelper(requestContext);
+                        var urlHelper = HtmlHelperFactory.CreateUrlHelper(requestContext);
                         context.Builder.AddProperty(context, feedItem1, "link", urlHelper.RouteUrl(commentedOnInspector.Link));
                     });
                     context.Builder.AddProperty(context, feedItem, "title", title.ToString());

@@ -1,12 +1,13 @@
 using System;
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
 using Orchard.Alias;
 using Orchard.ContentManagement;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions;
 using Orchard.Localization.Services;
+using Orchard.Mvc.Extensions;
 using Orchard.UI.Admin;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Localization.Selectors
 {
@@ -30,16 +31,16 @@ namespace Orchard.Localization.Selectors
             _shellSettings = shellSettings;
         }
 
-        public CultureSelectorResult GetCulture(HttpContextBase context)
+        public CultureSelectorResult GetCulture(HttpContext context)
         {
             if (context == null || AdminFilter.IsApplied(context)) return null;
 
             // Attempt to determine culture by previous route if by POST
             string path;
-            if (context.Request.HttpMethod.Equals(HttpVerbs.Post.ToString(), StringComparison.OrdinalIgnoreCase))
+            if (context.Request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase))
             {
-                if (context.Request.UrlReferrer != null)
-                    path = context.Request.UrlReferrer.AbsolutePath;
+                if (context.Request.GetUrlReferrer() != null)
+                    path = context.Request.GetUrlReferrer().AbsolutePath;
                 else
                     return null;
             }
@@ -48,7 +49,7 @@ namespace Orchard.Localization.Selectors
                 path = context.Request.Path;
             }
 
-            var appPath = context.Request.ApplicationPath ?? "/";
+            var appPath = context.Request.GetApplicationPath() ?? "/";
             var requestUrl = (path.StartsWith(appPath) ? path.Substring(appPath.Length) : path).TrimStart('/');
 
             var prefix = _shellSettings.RequestUrlPrefix;

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Mvc.Html;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.ContentManagement.ViewModels;
 using Orchard.UI;
 
@@ -9,7 +8,7 @@ namespace Orchard.Mvc.Html
 {
     public static class TemplateViewModelExtensions
     {
-        public static void RenderTemplates(this HtmlHelper html, IEnumerable<TemplateViewModel> templates)
+        public static void RenderTemplates(this IHtmlHelper html, IEnumerable<TemplateViewModel> templates)
         {
             if (templates == null)
                 return;
@@ -20,7 +19,7 @@ namespace Orchard.Mvc.Html
             }
         }
 
-        public static void RenderTemplates(this HtmlHelper html, TemplateViewModel template)
+        public static void RenderTemplates(this IHtmlHelper html, TemplateViewModel template)
         {
             if (template.WasUsed)
                 return;

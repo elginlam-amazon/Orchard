@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Orchard
 {
-    public class Logger : MarshalByRefObject
+    public class Logger
     {
         private readonly bool _verbose;
         private readonly TextWriter _output;
@@ -21,12 +21,6 @@ namespace Orchard
                 _output.Write("{0}: ", DateTime.Now);
                 _output.WriteLine(format, args);
             }
-        }
-
-        public override object InitializeLifetimeService()
-        {
-            // never expire the cross-AppDomain lease on this object
-            return null;
         }
     }
 }

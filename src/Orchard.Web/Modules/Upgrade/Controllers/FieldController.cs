@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
 using Orchard.Environment.Features;
 using Orchard.Localization;
+using Orchard.Mvc.Extensions;
 using Orchard.Security;
 using Orchard.UI.Admin;
 using Orchard.UI.Notify;
@@ -61,11 +62,11 @@ namespace Upgrade.Controllers
         public ActionResult IndexPOST()
         {
             if (!_orchardServices.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to migrate fields.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new MigrateViewModel { ContentTypes = new List<ContentTypeEntry>() };
 
-            if (TryUpdateModel(viewModel))
+            if (this.TryUpdateModel(viewModel))
             {
                 var contentTypesToMigrate = viewModel.ContentTypes.Where(c => c.IsChecked).Select(c => c.ContentTypeName);
 

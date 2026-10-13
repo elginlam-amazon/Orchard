@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac;
-using Autofac.Integration.Web;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Routing;
 using NUnit.Framework;
 using Orchard.Caching;
 using Orchard.Environment;
@@ -33,10 +32,8 @@ namespace Orchard.Tests.Environment
     {
         private IContainer _container;
         private ILifetimeScope _lifetime;
-        private RouteCollection _routeCollection;
+        private OrchardRouteCollection _routeCollection;
         private ModelBinderDictionary _modelBinderDictionary;
-        private ControllerBuilder _controllerBuilder;
-        private ViewEngineCollection _viewEngineCollection;
 
         [SetUp]
         public void Init()
@@ -44,10 +41,8 @@ namespace Orchard.Tests.Environment
             var clock = new StubClock();
             var appDataFolder = new StubAppDataFolder(clock);
 
-            _controllerBuilder = new ControllerBuilder();
-            _routeCollection = new RouteCollection();
+            _routeCollection = new OrchardRouteCollection();
             _modelBinderDictionary = new ModelBinderDictionary();
-            _viewEngineCollection = new ViewEngineCollection { new WebFormViewEngine() };
 
             _container = OrchardStarter.CreateHostContainer(
                 builder =>
@@ -59,26 +54,18 @@ namespace Orchard.Tests.Environment
                     builder.RegisterType<StubExtensionManager>().As<IExtensionManager>();
                     builder.RegisterType<StubVirtualPathMonitor>().As<IVirtualPathMonitor>();
                     builder.RegisterInstance(appDataFolder).As<IAppDataFolder>();
-                    builder.RegisterInstance(_controllerBuilder);
                     builder.RegisterInstance(_routeCollection);
                     builder.RegisterInstance(_modelBinderDictionary);
-                    builder.RegisterInstance(_viewEngineCollection);
                     builder.RegisterAutoMocking()
                         .Ignore<IExtensionFolders>()
                         .Ignore<IRouteProvider>()
                         .Ignore<IHttpRouteProvider>()
                         .Ignore<IModelBinderProvider>()
                         .Ignore<IWorkContextEvents>()
-                        .Ignore<IOwinMiddlewareProvider>();
+                        .Ignore<IOwinMiddlewareProvider>()
+                        .Ignore<Microsoft.AspNetCore.Hosting.Builder.IApplicationBuilderFactory>();
                 });
             _lifetime = _container.BeginLifetimeScope();
-
-            _container.Mock<IContainerProvider>()
-                .SetupGet(cp => cp.ApplicationContainer).Returns(_container);
-            _container.Mock<IContainerProvider>()
-                .SetupGet(cp => cp.RequestLifetime).Returns(_lifetime);
-            _container.Mock<IContainerProvider>()
-                .Setup(cp => cp.EndRequestLifetime()).Callback(() => _lifetime.Dispose());
 
             _container.Mock<IShellDescriptorManager>()
                 .Setup(cp => cp.GetShellDescriptor()).Returns(default(ShellDescriptor));

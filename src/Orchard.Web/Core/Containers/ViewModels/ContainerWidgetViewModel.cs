@@ -1,4 +1,4 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.Core.Containers.Models;
 
 namespace Orchard.Core.Containers.ViewModels

@@ -1,10 +1,11 @@
 using System.IO;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Localization;
 using Orchard.Logging;
 using Orchard.Mvc;
 using Orchard.Mvc.Extensions;
 using Orchard.Services;
+using IHttpContextAccessor = Orchard.Mvc.IHttpContextAccessor;
 
 namespace Orchard.Environment
 {
@@ -29,7 +30,14 @@ namespace Orchard.Environment
 
         public override void RestartAppDomain()
         {
-            bool success = TryWriteBinFolder() || TryWriteWebConfig();
+            // There is no AppDomain recycling on .NET: the application is stopped and restarted by the process host.
+            // The marker files are still written for the deployment tools watching them.
+            bool success = TryWriteBinFolder() | TryWriteWebConfig();
+            if (HostingEnvironment.IsHosted)
+            {
+                HostingEnvironment.InitiateShutdown();
+                success = true;
+            }
 
             if (!success)
             {
@@ -49,15 +57,14 @@ namespace Orchard.Environment
             if (!httpContext.IsBackgroundContext())
             {
                 // Don't redirect posts...
-                if (httpContext.Request.RequestType == "GET")
+                if (HttpMethods.IsGet(httpContext.Request.Method))
                 {
-                    httpContext.Response.Redirect(HttpContext.Current.Request.RawUrl, true /*endResponse*/);
+                    httpContext.Response.Redirect(httpContext.Request.PathBase + httpContext.Request.Path + httpContext.Request.QueryString);
                 }
                 else
                 {
                     httpContext.Response.ContentType = "text/html";
-                    httpContext.Response.WriteFile(RefreshHtmlPath);
-                    httpContext.Response.End();
+                    httpContext.Response.SendFileAsync(MapPath(RefreshHtmlPath)).GetAwaiter().GetResult();
                 }
             }
         }

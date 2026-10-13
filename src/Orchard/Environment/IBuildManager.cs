@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Web.Compilation;
+using Orchard.Environment.Extensions.Compilers;
 using Orchard.Exceptions;
 using Orchard.FileSystems.VirtualPath;
 using Orchard.Logging;
@@ -21,29 +23,35 @@ namespace Orchard.Environment
     {
         private readonly IVirtualPathProvider _virtualPathProvider;
         private readonly IAssemblyLoader _assemblyLoader;
+        private readonly Lazy<IExtensionCompiler> _extensionCompiler;
+        private readonly ConcurrentDictionary<string, Assembly> _compiledAssemblies = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
         public ILogger Logger { get; set; }
 
         public DefaultBuildManager(
             IVirtualPathProvider virtualPathProvider,
-            IAssemblyLoader assemblyLoader)
+            IAssemblyLoader assemblyLoader,
+            Lazy<IExtensionCompiler> extensionCompiler)
         {
 
             _virtualPathProvider = virtualPathProvider;
             _assemblyLoader = assemblyLoader;
+            _extensionCompiler = extensionCompiler;
 
             Logger = NullLogger.Instance;
         }
 
         public IEnumerable<Assembly> GetReferencedAssemblies()
         {
-            return BuildManager.GetReferencedAssemblies().OfType<Assembly>();
+            // The assemblies of the application (formerly the ASP.NET "bin" referenced assemblies).
+            return AppDomain.CurrentDomain.GetAssemblies().Where(assembly => !assembly.IsDynamic);
         }
 
         public bool HasReferencedAssembly(string name)
         {
             var assemblyPath = _virtualPathProvider.Combine("~/bin", name + ".dll");
-            return _virtualPathProvider.FileExists(assemblyPath);
+            return _virtualPathProvider.FileExists(assemblyPath)
+                || File.Exists(Path.Combine(AppContext.BaseDirectory, name + ".dll"));
         }
 
         public Assembly GetReferencedAssembly(string name)
@@ -59,7 +67,7 @@ namespace Orchard.Environment
         {
             try
             {
-                return BuildManager.GetCompiledAssembly(virtualPath);
+                return _compiledAssemblies.GetOrAdd(virtualPath, Compile);
             }
             catch (Exception ex)
             {
@@ -70,7 +78,25 @@ namespace Orchard.Environment
                 Logger.Warning(ex, "Error when compiling assembly under {0}.", virtualPath);
                 return null;
             }
+        }
 
+        private Assembly Compile(string virtualPath)
+        {
+            if (!".csproj".Equals(Path.GetExtension(virtualPath), StringComparison.OrdinalIgnoreCase))
+            {
+                throw new NotSupportedException(string.Format("Only extension project files can be compiled, '{0}' is not supported.", virtualPath));
+            }
+
+            var orchardVersion = new AssemblyName(typeof(IDependency).Assembly.FullName).Version;
+            var assemblyBuilder = new RoslynAssemblyBuilder(new[] { "TRACE", string.Format("ORCHARD_{0}_{1}", orchardVersion.Major, orchardVersion.Minor) });
+
+            _extensionCompiler.Value.Compile(new CompileExtensionContext
+            {
+                VirtualPath = virtualPath,
+                AssemblyBuilder = assemblyBuilder
+            });
+
+            return assemblyBuilder.Build(Path.GetFileNameWithoutExtension(virtualPath));
         }
     }
 }

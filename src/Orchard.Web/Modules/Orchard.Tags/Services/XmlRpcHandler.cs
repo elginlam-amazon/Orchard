@@ -8,6 +8,7 @@ using Orchard.Localization;
 using Orchard.Security;
 using Orchard.Tags.Helpers;
 using Orchard.Tags.Models;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Tags.Services
 {

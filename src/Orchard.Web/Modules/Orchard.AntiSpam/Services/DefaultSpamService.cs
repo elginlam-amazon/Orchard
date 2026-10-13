@@ -5,6 +5,7 @@ using Orchard.AntiSpam.Models;
 using Orchard.AntiSpam.Rules;
 using Orchard.AntiSpam.Settings;
 using Orchard.ContentManagement;
+using Orchard.Mvc.Extensions;
 using Orchard.Tokens;
 
 namespace Orchard.AntiSpam.Services
@@ -151,9 +152,9 @@ namespace Orchard.AntiSpam.Services
 
             if (workContext.HttpContext != null)
             {
-                context.UserIp = workContext.HttpContext.Request.ServerVariables["REMOTE_ADDR"];
-                context.UserAgent = workContext.HttpContext.Request.UserAgent;
-                context.Referrer = Convert.ToString(workContext.HttpContext.Request.UrlReferrer);
+                context.UserIp = workContext.HttpContext.Connection.RemoteIpAddress?.ToString();
+                context.UserAgent = workContext.HttpContext.Request.Headers["User-Agent"].ToString();
+                context.Referrer = Convert.ToString(workContext.HttpContext.Request.GetUrlReferrer());
             }
 
             return context;

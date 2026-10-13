@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.ContentManagement.MetaData;
 using Orchard.ContentManagement.MetaData.Models;
 using Orchard.DynamicForms.Elements;
@@ -11,6 +12,7 @@ using Orchard.Layouts.Framework.Drivers;
 using Orchard.Layouts.Helpers;
 using Orchard.Layouts.Services;
 using Orchard.Tokens;
+using Orchard.Mvc.ModelBinders;
 using DescribeContext = Orchard.Forms.Services.DescribeContext;
 
 namespace Orchard.DynamicForms.Drivers
@@ -152,7 +154,7 @@ namespace Orchard.DynamicForms.Drivers
             {
                 // Read any posted values from the previous request.
                 var values = controller.FetchPostedValues(element);
-                _formService.ReadElementValues(element, new NameValueCollectionValueProvider(values, _cultureAccessor.CurrentCulture));
+                _formService.ReadElementValues(element, values.ToValueProvider(_cultureAccessor.CurrentCulture));
 
                 // Add any model validation errors from the previous request.
                 controller.ApplyAnyModelErrors(element, modelState);

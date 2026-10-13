@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Core.Contents;
 using Orchard.DisplayManagement;
@@ -10,7 +10,6 @@ using Orchard.UI.Notify;
 
 namespace Orchard.Localization.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller
     {
         private readonly IContentManager _contentManager;
@@ -41,14 +40,14 @@ namespace Orchard.Localization.Controllers
         {
             var masterContentItem = _contentManager.Get(id, VersionOptions.Latest);
             if (masterContentItem == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!Services.Authorizer.Authorize(Permissions.ViewContent, masterContentItem, T("Couldn't open original content")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var masterLocalizationPart = masterContentItem.As<LocalizationPart>();
             if (masterLocalizationPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             // Check if current item still exists, and redirect.
             var existingTranslation = _localizationService.GetLocalizedContentItem(masterContentItem, to);
@@ -64,7 +63,7 @@ namespace Orchard.Localization.Controllers
             var dummyContent = _contentManager.New(masterContentItem.ContentType);
 
             if (!Services.Authorizer.Authorize(Permissions.EditContent, dummyContent, T("Couldn't create translated content")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var contentItemTranslation = _contentManager.Clone(masterContentItem);
 
@@ -80,13 +79,13 @@ namespace Orchard.Localization.Controllers
             var editorRouteValues = _contentManager.GetItemMetadata(contentItemTranslation).EditorRouteValues;
             // adds request variables of current controller to the new redirect route 
             // for example the returnUrl parameter
-            foreach (var key in Request.Form.AllKeys.Where(x => !x.StartsWith("__") && !editorRouteValues.Keys.Contains(x)))
+            foreach (var key in Request.Form.Keys.Where(x => !x.StartsWith("__") && !editorRouteValues.Keys.Contains(x)))
             {
                 editorRouteValues.Add(key, Request.Form[key]);
             }
-            foreach (var key in Request.QueryString.AllKeys.Where(x => !x.StartsWith("__") && !editorRouteValues.Keys.Contains(x)))
+            foreach (var key in Request.Query.Keys.Where(x => !x.StartsWith("__") && !editorRouteValues.Keys.Contains(x)))
             {
-                editorRouteValues.Add(key, Request.QueryString[key]);
+                editorRouteValues.Add(key, Request.Query[key]);
             }
             return RedirectToRoute(editorRouteValues);
         }

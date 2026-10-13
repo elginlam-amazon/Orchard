@@ -1,104 +1,46 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Web;
-using System.Web.SessionState;
+using Microsoft.AspNetCore.Http;
+using Orchard.Utility;
 
 namespace Orchard.Tests.Stubs
 {
-    public class StubHttpContext : HttpContextBase
+    /// <summary>
+    /// A request for an application relative path and a host (the application is at the root of the site).
+    /// </summary>
+    public class StubHttpContext : HttpContext
     {
-        private readonly string _appRelativeCurrentExecutionFilePath;
-        private readonly string _hostHeader;
-        private readonly IDictionary _items = new Dictionary<object, object>();
+        // DefaultHttpContext is sealed: the stub delegates to an instance.
+        private readonly DefaultHttpContext _inner = new DefaultHttpContext();
 
         public StubHttpContext()
+            : this("~/yadda")
         {
-            _appRelativeCurrentExecutionFilePath = "~/yadda";
-            _hostHeader = "localhost";
         }
 
         public StubHttpContext(string appRelativeCurrentExecutionFilePath)
+            : this(appRelativeCurrentExecutionFilePath, "localhost")
         {
-            _appRelativeCurrentExecutionFilePath = appRelativeCurrentExecutionFilePath;
-            _hostHeader = "localhost";
         }
 
         public StubHttpContext(string appRelativeCurrentExecutionFilePath, string hostHeader)
         {
-            _appRelativeCurrentExecutionFilePath = appRelativeCurrentExecutionFilePath;
-            _hostHeader = hostHeader;
+            Request.Scheme = "http";
+            Request.Host = new HostString(hostHeader);
+            Request.PathBase = PathString.Empty;
+            Request.Path = new PathString("/" + appRelativeCurrentExecutionFilePath.TrimStart('~').TrimStart('/'));
+            Items[VirtualPathUtility.ApplicationPathBaseKey] = string.Empty;
         }
 
-        public override void SetSessionStateBehavior(SessionStateBehavior sessionStateBehavior)
-        {
-        }
-
-        public override HttpRequestBase Request => new StubHttpRequest(this);
-
-        public override HttpResponseBase Response => new StubHttpResponse(this);
-
-        public override IDictionary Items => _items;
-
-        #region Nested type: StubHttpRequest
-
-        private class StubHttpRequest : HttpRequestBase
-        {
-            private readonly StubHttpContext _httpContext;
-            private NameValueCollection _headers;
-            private NameValueCollection _serverVariables;
-
-            public StubHttpRequest(StubHttpContext httpContext)
-            {
-                _httpContext = httpContext;
-            }
-
-            public override string AppRelativeCurrentExecutionFilePath => _httpContext._appRelativeCurrentExecutionFilePath;
-
-            public override string ApplicationPath => "/";
-
-            public override string Path => _httpContext._appRelativeCurrentExecutionFilePath.TrimStart('~');
-
-            public override string PathInfo => "";
-
-            public override NameValueCollection Headers
-            {
-                get
-                {
-                    return _headers = _headers
-                                      ?? new NameValueCollection { { "Host", _httpContext._hostHeader } };
-                }
-            }
-
-            public override NameValueCollection ServerVariables
-            {
-                get
-                {
-                    return _serverVariables = _serverVariables
-                                              ?? new NameValueCollection { { "HTTP_HOST", _httpContext._hostHeader } };
-                }
-            }
-        }
-
-        #endregion
-
-        #region Nested type: StubHttpResponse
-
-        private class StubHttpResponse : HttpResponseBase
-        {
-            private readonly StubHttpContext _httpContext;
-
-            public StubHttpResponse(StubHttpContext httpContext)
-            {
-                _httpContext = httpContext;
-            }
-
-            public override string ApplyAppPathModifier(string virtualPath)
-            {
-                return "~/" + virtualPath.TrimStart('/');
-            }
-        }
-
-        #endregion
+        public override Microsoft.AspNetCore.Http.Features.IFeatureCollection Features => _inner.Features;
+        public override HttpRequest Request => _inner.Request;
+        public override HttpResponse Response => _inner.Response;
+        public override ConnectionInfo Connection => _inner.Connection;
+        public override WebSocketManager WebSockets => _inner.WebSockets;
+        public override System.Security.Claims.ClaimsPrincipal User { get => _inner.User; set => _inner.User = value; }
+        public override System.Collections.Generic.IDictionary<object, object> Items { get => _inner.Items; set => _inner.Items = value; }
+        public override System.IServiceProvider RequestServices { get => _inner.RequestServices; set => _inner.RequestServices = value; }
+        public override System.Threading.CancellationToken RequestAborted { get => _inner.RequestAborted; set => _inner.RequestAborted = value; }
+        public override string TraceIdentifier { get => _inner.TraceIdentifier; set => _inner.TraceIdentifier = value; }
+        public override ISession Session { get => _inner.Session; set => _inner.Session = value; }
+        public override void Abort() => _inner.Abort();
     }
 }

@@ -1,6 +1,6 @@
 using System;
 using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Localization;
 using Orchard.Media;
 using Orchard.Media.Services;

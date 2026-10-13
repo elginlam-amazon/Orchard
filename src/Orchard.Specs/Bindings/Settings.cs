@@ -1,7 +1,7 @@
 using System.Linq;
 using Orchard.Localization.Services;
 using Orchard.Specs.Hosting.Orchard.Web;
-using TechTalk.SpecFlow;
+using Reqnroll;
 
 namespace Orchard.Specs.Bindings
 {

@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.DisplayManagement.Shapes;
 
 namespace Orchard.UI
@@ -35,14 +35,14 @@ namespace Orchard.UI
     {
         string ZoneName { get; set; }
         Shape Add(object item, string position);
-        IZone Add(Action<HtmlHelper> action, string position);
+        IZone Add(Action<IHtmlHelper> action, string position);
     }
 
     public class Zone : Shape, IZone
     {
         public virtual string ZoneName { get; set; }
 
-        public IZone Add(Action<HtmlHelper> action, string position)
+        public IZone Add(Action<IHtmlHelper> action, string position)
         {
             // pszmyd: Replaced the NotImplementedException with simply doing nothing
             return this;

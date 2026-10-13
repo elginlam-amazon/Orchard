@@ -1,6 +1,6 @@
 using System;
-using System.Web.Security;
 using Orchard.ContentManagement.Records;
+using Orchard.Security;
 
 namespace Orchard.Users.Models
 {

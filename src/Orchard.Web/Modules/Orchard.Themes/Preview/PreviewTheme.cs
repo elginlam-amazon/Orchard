@@ -1,5 +1,8 @@
 using System;
 using Orchard.Mvc;
+using IHttpContextAccessor = Orchard.Mvc.IHttpContextAccessor;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Orchard.Themes.Preview
 {
@@ -15,10 +18,10 @@ namespace Orchard.Themes.Preview
 
         public string GetPreviewTheme()
         {
-            var httpContext = _httpContextAccessor.Current();
-            if (httpContext.Session != null)
+            var session = _httpContextAccessor.Current()?.Features.Get<ISessionFeature>()?.Session;
+            if (session != null)
             {
-                return Convert.ToString(httpContext.Session[PreviewThemeKey]);
+                return session.GetString(PreviewThemeKey);
             }
 
             return null;
@@ -26,16 +29,16 @@ namespace Orchard.Themes.Preview
 
         public void SetPreviewTheme(string themeName)
         {
-            var httpContext = _httpContextAccessor.Current();
-            if (httpContext.Session != null)
+            var session = _httpContextAccessor.Current()?.Features.Get<ISessionFeature>()?.Session;
+            if (session != null)
             {
                 if (string.IsNullOrEmpty(themeName))
                 {
-                    httpContext.Session.Remove(PreviewThemeKey);
+                    session.Remove(PreviewThemeKey);
                 }
                 else
                 {
-                    httpContext.Session[PreviewThemeKey] = themeName;
+                    session.SetString(PreviewThemeKey, themeName);
                 }
             }
         }

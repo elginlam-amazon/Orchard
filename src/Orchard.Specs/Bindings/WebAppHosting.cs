@@ -7,11 +7,11 @@ using System.Threading;
 using System.Web;
 using Castle.Core.Logging;
 using HtmlAgilityPack;
-using log4net.Appender;
-using log4net.Core;
 using NUnit.Framework;
 using Orchard.Specs.Hosting;
-using TechTalk.SpecFlow;
+using Reqnroll;
+using log4net.Appender;
+using log4net.Core;
 using Path = Bleroy.FluentPath.Path;
 
 namespace Orchard.Specs.Bindings
@@ -26,6 +26,13 @@ namespace Orchard.Specs.Bindings
         private DynamicCompilationOption _dynamicCompilationOption = DynamicCompilationOption.Enabled;
 
         public WebHost Host { get; private set; }
+
+        static WebAppHosting()
+        {
+            // The forms are located by their start element and their "</form>" end text node (the parsing of
+            // HtmlAgilityPack 1.4, recent versions parse the form elements as containers by default).
+            HtmlNode.ElementsFlags["form"] = HtmlElementFlag.CanOverlap | HtmlElementFlag.Empty;
+        }
 
         public RequestDetails Details { get; set; }
 

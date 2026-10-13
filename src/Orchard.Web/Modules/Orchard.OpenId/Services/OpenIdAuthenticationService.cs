@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.Security;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions;
 using Orchard.Mvc;
 using Orchard.Mvc.Extensions;
+using Orchard.OpenId.Security;
 using Orchard.Security;
 using Orchard.Security.Providers;
 using Orchard.Services;
@@ -93,9 +92,9 @@ namespace Orchard.OpenId.Services
                 return FallbackAuthenticationService.GetAuthenticatedUser();
             }
 
-            var userIdentity = _httpContextAccessor.Current().GetOwinContext().Authentication.User.Identity;
+            var userIdentity = OpenIdAuthenticationSchemes.GetExternalUser(_httpContextAccessor.Current(), _settings)?.Identity;
 
-            if (string.IsNullOrEmpty(userIdentity.Name?.Trim()) || !userIdentity.IsAuthenticated)
+            if (userIdentity == null || string.IsNullOrEmpty(userIdentity.Name?.Trim()) || !userIdentity.IsAuthenticated)
             {
                 return null;
             }
@@ -112,7 +111,7 @@ namespace Orchard.OpenId.Services
             var localUser =
                 _membershipService.GetUser(userName) ??
                 _membershipService.CreateUser(new CreateUserParams(
-                    userName, Membership.GeneratePassword(16, 1), userName, string.Empty, string.Empty, true, false
+                    userName, GeneratePassword(16), userName, string.Empty, string.Empty, true, false
                 ));
 
             return _localAuthenticationUser = localUser;
@@ -127,7 +126,7 @@ namespace Orchard.OpenId.Services
                 return true;
             }
 
-            var anyClaim = httpContext.GetOwinContext().Authentication.User.Claims.FirstOrDefault();
+            var anyClaim = OpenIdAuthenticationSchemes.GetExternalUser(httpContext, _settings)?.Claims.FirstOrDefault();
 
             if (anyClaim == null || anyClaim.Issuer == Constants.General.LocalIssuer || anyClaim.Issuer == Constants.General.FormsIssuer)
             {
@@ -135,6 +134,20 @@ namespace Orchard.OpenId.Services
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Generates a random password (the former System.Web.Security.Membership.GeneratePassword).
+        /// </summary>
+        private static string GeneratePassword(int length)
+        {
+            const string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=[{]};:<>|./?";
+            var password = new char[length];
+            for (var i = 0; i < length; i++)
+            {
+                password[i] = characters[System.Security.Cryptography.RandomNumberGenerator.GetInt32(characters.Length)];
+            }
+            return new string(password);
         }
 
         private bool IsAnyProviderSettingsValid()

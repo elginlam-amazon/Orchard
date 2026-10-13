@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using NuGet;
 using Orchard.ContentManagement;
 using Orchard.Environment.Extensions;
 using Orchard.Environment.Extensions.Models;
@@ -9,19 +8,16 @@ using Orchard.Localization;
 using Orchard.Logging;
 using Orchard.Packaging.Extensions;
 using Orchard.Packaging.Models;
+using Orchard.Packaging.Packages;
 using Orchard.Services;
 using Orchard.UI;
 using Orchard.UI.Notify;
-using NuGetPackageManager = NuGet.PackageManager;
 
 namespace Orchard.Packaging.Services
 {
     [OrchardFeature("PackagingServices")]
     public class PackageInstaller : IPackageInstaller
     {
-        private const string PackagesPath = "packages";
-        private const string SolutionFilename = "Orchard.sln";
-
         private readonly INotifier _notifier;
         private readonly IVirtualPathProvider _virtualPathProvider;
         private readonly IExtensionManager _extensionManager;
@@ -52,7 +48,7 @@ namespace Orchard.Packaging.Services
         public PackageInfo Install(string packageId, string version, string location, string applicationPath)
         {
             // instantiates the appropriate package repository
-            IPackageRepository packageRepository = PackageRepositoryFactory.Default.CreateRepository(new PackageSource(location, "Default"));
+            var packageRepository = new PackageRepository(location);
 
             // gets an IPackage instance from the repository
             var packageVersion = string.IsNullOrEmpty(version) ? null : new Version(version);
@@ -64,17 +60,15 @@ namespace Orchard.Packaging.Services
                 throw new OrchardException(message);
             }
 
-            return InstallPackage(package, packageRepository, location, applicationPath);
+            return InstallPackage(package, location, applicationPath);
         }
 
         public PackageInfo Install(IPackage package, string location, string applicationPath)
         {
-            // instantiates the appropriate package repository
-            IPackageRepository packageRepository = PackageRepositoryFactory.Default.CreateRepository(new PackageSource(location, "Default"));
-            return InstallPackage(package, packageRepository, location, applicationPath);
+            return InstallPackage(package, location, applicationPath);
         }
 
-        protected PackageInfo InstallPackage(IPackage package, IPackageRepository packageRepository, string location, string applicationPath)
+        protected PackageInfo InstallPackage(IPackage package, string location, string applicationPath)
         {
             bool previousInstalled;
 
@@ -101,7 +95,7 @@ namespace Orchard.Packaging.Services
                 }
             }
 
-            var packageInfo = ExecuteInstall(package, packageRepository, location, applicationPath);
+            var packageInfo = ExecuteInstall(package, applicationPath);
 
             // check the new package is compatible with current Orchard version
             var descriptor = package.GetExtensionDescriptor(packageInfo.ExtensionType);
@@ -130,61 +124,47 @@ namespace Orchard.Packaging.Services
         }
 
         /// <summary>
-        /// Executes a package installation.
+        /// Executes a package installation: the "Content" files of the package are copied to the application.
         /// </summary>
         /// <param name="package">The package to install.</param>
-        /// <param name="packageRepository">The repository for the package.</param>
-        /// <param name="sourceLocation">The source location.</param>
         /// <param name="targetPath">The path where to install the package.</param>
         /// <returns>The package information.</returns>
-        protected PackageInfo ExecuteInstall(IPackage package, IPackageRepository packageRepository, string sourceLocation, string targetPath)
+        /// <remarks>
+        /// The former NuGet.Core project manager also installed the package in the solution "packages" folder,
+        /// which is not done anymore (it's not used by Orchard at runtime).
+        /// </remarks>
+        protected PackageInfo ExecuteInstall(IPackage package, string targetPath)
         {
-            // this logger is used to render NuGet's log on the notifier
-            var logger = new NugetLogger(_notifier);
+            const string contentFolder = "Content";
+            var now = _clock.UtcNow;
 
-            bool installed = false;
-
-            // if we can access the parent directory, and the solution is inside, NuGet-install the package here
-            string solutionPath;
-            var installedPackagesPath = string.Empty;
-            if (TryGetSolutionPath(targetPath, out solutionPath))
+            foreach (var file in package.GetFiles())
             {
-                installedPackagesPath = Path.Combine(solutionPath, PackagesPath);
-                try
+                var path = file.Path.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar).TrimStart(Path.DirectorySeparatorChar);
+                if (!path.StartsWith(contentFolder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
                 {
-                    var packageManager = new NuGetPackageManager(
-                        packageRepository,
-                        new DefaultPackagePathResolver(sourceLocation),
-                        new PhysicalFileSystem(installedPackagesPath) { Logger = logger }
-                        )
-                    { Logger = logger };
+                    continue;
+                }
 
-                    packageManager.InstallPackage(package, true);
-                    installed = true;
-                }
-                catch
+                var relativePath = path.Substring(contentFolder.Length + 1);
+                var fullPath = Path.GetFullPath(Path.Combine(targetPath, relativePath));
+
+                // prevent the package from writing outside of the application
+                if (!fullPath.StartsWith(Path.GetFullPath(targetPath), StringComparison.OrdinalIgnoreCase))
                 {
-                    // installing the package at the solution level failed
+                    throw new OrchardException(T("The package file {0} is outside of the application folder.", file.Path));
                 }
+
+                Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+                using (var source = file.GetStream())
+                using (var destination = File.Create(fullPath))
+                {
+                    source.CopyTo(destination);
+                }
+
+                File.SetLastWriteTimeUtc(fullPath, now);
+                Logger.Debug("Added file '{0}'", relativePath);
             }
-
-            // if the package got installed successfully, use it, otherwise use the previous repository
-            var sourceRepository = installed
-                ? new LocalPackageRepository(installedPackagesPath)
-                : packageRepository;
-
-            var project = new FileBasedProjectSystem(targetPath) { Logger = logger };
-            project.OverwriteLastWriteTimeUtcForAddedFiles(_clock.UtcNow);
-            var projectManager = new ProjectManager(
-                sourceRepository, // source repository for the package to install
-                new DefaultPackagePathResolver(targetPath),
-                project,
-                new ExtensionReferenceRepository(project, sourceRepository, _extensionManager)
-                )
-            { Logger = logger };
-
-            // add the package to the project
-            projectManager.AddPackageReference(package.Id, package.Version);
 
             return new PackageInfo
             {
@@ -202,7 +182,6 @@ namespace Orchard.Packaging.Services
         /// <param name="applicationPath">The application path.</param>
         public void Uninstall(string packageId, string applicationPath)
         {
-            string solutionPath;
             string extensionFullPath = string.Empty;
 
             if (packageId.StartsWith(PackagingSourceManager.GetExtensionPrefix(DefaultExtensionTypes.Theme)))
@@ -221,72 +200,10 @@ namespace Orchard.Packaging.Services
                 throw new OrchardException(T("Package not found: {0}", packageId));
             }
 
-            // if we can access the parent directory, and the solution is inside, NuGet-uninstall the package here
-            if (TryGetSolutionPath(applicationPath, out solutionPath))
-            {
-
-                // this logger is used to render NuGet's log on the notifier
-                var logger = new NugetLogger(_notifier);
-
-                var installedPackagesPath = Path.Combine(solutionPath, PackagesPath);
-                var sourcePackageRepository = new LocalPackageRepository(installedPackagesPath);
-
-                try
-                {
-                    var project = new FileBasedProjectSystem(applicationPath) { Logger = logger };
-                    var projectManager = new ProjectManager(
-                        sourcePackageRepository,
-                        new DefaultPackagePathResolver(installedPackagesPath),
-                        project,
-                        new ExtensionReferenceRepository(project, sourcePackageRepository, _extensionManager)
-                        )
-                    { Logger = logger };
-
-                    // add the package to the project
-                    projectManager.RemovePackageReference(packageId);
-                }
-                catch
-                {
-                    // Uninstalling the package at the solution level failed
-                }
-
-                try
-                {
-                    var packageManager = new NuGetPackageManager(
-                        sourcePackageRepository,
-                        new DefaultPackagePathResolver(applicationPath),
-                        new PhysicalFileSystem(installedPackagesPath) { Logger = logger }
-                        )
-                    { Logger = logger };
-
-                    packageManager.UninstallPackage(packageId);
-                }
-                catch
-                {
-                    // Package doesnt exist anymore
-                }
-            }
-
-            // If the package was not installed through nuget we still need to try to uninstall it by removing its directory
+            // The package is uninstalled by removing its directory
             if (Directory.Exists(extensionFullPath))
             {
                 Directory.Delete(extensionFullPath, true);
-            }
-        }
-
-        private static bool TryGetSolutionPath(string applicationPath, out string parentPath)
-        {
-            try
-            {
-                parentPath = Directory.GetParent(applicationPath).Parent.FullName;
-                var solutionPath = Path.Combine(parentPath, SolutionFilename);
-                return File.Exists(solutionPath);
-            }
-            catch
-            {
-                // Either solution does not exist or we are running under medium trust
-                parentPath = null;
-                return false;
             }
         }
 

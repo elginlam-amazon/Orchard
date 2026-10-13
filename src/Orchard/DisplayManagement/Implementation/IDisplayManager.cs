@@ -1,4 +1,4 @@
-using System.Web;
+using Microsoft.AspNetCore.Html;
 
 namespace Orchard.DisplayManagement.Implementation
 {
@@ -9,6 +9,6 @@ namespace Orchard.DisplayManagement.Implementation
     /// </summary>
     public interface IDisplayManager : IDependency
     {
-        IHtmlString Execute(DisplayContext context);
+        IHtmlContent Execute(DisplayContext context);
     }
 }

@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Mvc.Html;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.ContentManagement;
 using Orchard.Localization;
 using Orchard.Roles.Models;
 using Orchard.Security;
 using Orchard.Users.Services;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Roles.Services
 {
@@ -39,7 +41,7 @@ namespace Orchard.Roles.Services
 
         public Localizer T { get; set; }
 
-        public IEnumerable<Func<HtmlHelper, MvcHtmlString>> UserActionLinks(IUser user)
+        public IEnumerable<Func<IHtmlHelper, IHtmlContent>> UserActionLinks(IUser user)
         {
             // Get the user whose roles we want to assign
             var userRolesPart = user.As<UserRolesPart>();
@@ -61,7 +63,7 @@ namespace Orchard.Roles.Services
                 yield break;
             }
 
-            yield return (Func<HtmlHelper, MvcHtmlString>)
+            yield return (Func<IHtmlHelper, IHtmlContent>)
                 (Html => Html.ActionLink(
                     T("Roles").ToString(),
                     "Assign",
@@ -70,7 +72,7 @@ namespace Orchard.Roles.Services
                         Area = "Orchard.Roles",
                         Controller = "Admin",
                         id = user.Id,
-                        returnUrl = Html.ViewContext.RequestContext.HttpContext.Request.RawUrl
+                        returnUrl = Html.ViewContext.HttpContext.Request.GetRawUrl()
                     }));
         }
     }

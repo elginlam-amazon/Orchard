@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Web;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement.Handlers;
 using Orchard.DisplayManagement;
 using Orchard.DisplayManagement.Descriptors;
@@ -10,6 +9,7 @@ using Orchard.FileSystems.VirtualPath;
 using Orchard.Logging;
 using Orchard.Mvc.Routes;
 using Orchard.UI.Zones;
+using Orchard.Utility;
 
 namespace Orchard.ContentManagement
 {
@@ -19,7 +19,7 @@ namespace Orchard.ContentManagement
         private readonly IShapeFactory _shapeFactory;
         private readonly Lazy<IShapeTableLocator> _shapeTableLocator;
 
-        private readonly RequestContext _requestContext;
+        private readonly ActionContext _requestContext;
         private readonly IVirtualPathProvider _virtualPathProvider;
         private readonly IWorkContextAccessor _workContextAccessor;
         private readonly ShellSettings _shellSettings;
@@ -29,7 +29,7 @@ namespace Orchard.ContentManagement
             Lazy<IEnumerable<IContentHandler>> handlers,
             IShapeFactory shapeFactory,
             Lazy<IShapeTableLocator> shapeTableLocator,
-            RequestContext requestContext,
+            ActionContext requestContext,
             IVirtualPathProvider virtualPathProvider,
             IWorkContextAccessor workContextAccessor,
             ShellSettings shellSettings)

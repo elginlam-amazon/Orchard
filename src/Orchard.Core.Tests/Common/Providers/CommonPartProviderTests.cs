@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Routing;
 using Moq;
 using NUnit.Framework;
 using Orchard.Caching;
@@ -67,7 +68,7 @@ namespace Orchard.Core.Tests.Common.Providers
             builder.RegisterType<StubThemeService>().As<IThemeManager>();
             builder.RegisterInstance(new Mock<IOrchardServices>().Object);
 
-            builder.RegisterInstance(new RequestContext(new StubHttpContext(), new RouteData()));
+            builder.RegisterInstance(new ActionContext(new StubHttpContext(), new RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor()));
             builder.RegisterInstance(new Orchard.Environment.Work<IEnumerable<IShapeTableEventHandler>>(resolve => _container.Resolve<IEnumerable<IShapeTableEventHandler>>())).AsSelf();
             builder.RegisterType<DefaultShapeTableManager>().As<IShapeTableManager>();
             builder.RegisterType<ShapeTableLocator>().As<IShapeTableLocator>();
@@ -90,7 +91,7 @@ namespace Orchard.Core.Tests.Common.Providers
                 .As<DefaultShapeTableManagerTests.TestShapeProvider>()
                 .InstancePerLifetimeScope();
 
-            builder.RegisterInstance(new RouteCollection());
+            builder.RegisterInstance(new Orchard.Mvc.Routes.OrchardRouteCollection());
             builder.RegisterModule(new ShapeAttributeBindingModule());
 
             _authn = new Mock<IAuthenticationService>();
@@ -218,7 +219,7 @@ namespace Orchard.Core.Tests.Common.Providers
                 Location = "~/Themes",
             };
 
-            public ExtensionDescriptor GetRequestTheme(RequestContext requestContext) { return _theme; }
+            public ExtensionDescriptor GetRequestTheme(ActionContext requestContext) { return _theme; }
         }
 
         [Test]

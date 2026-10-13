@@ -40,8 +40,8 @@ namespace Orchard.Users.Forms
         {
             if (context.FormName != "SignInUser") return;
 
-            var userName = context.ValueProvider.GetValue("UserNameOrEmail").AttemptedValue;
-            var password = context.ValueProvider.GetValue("Password").AttemptedValue;
+            var userName = context.ValueProvider.GetValue("UserNameOrEmail").FirstValue;
+            var password = context.ValueProvider.GetValue("Password").FirstValue;
 
             if (string.IsNullOrWhiteSpace(userName))
             {

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Conditions.Services;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Utilities;
@@ -21,12 +21,12 @@ namespace Orchard.Glimpse.AlternateImplementation
     {
         private readonly IGlimpseService _glimpseService;
         private readonly IOrchardServices _orchardServices;
-        private readonly UrlHelper _urlHelper;
+        private readonly IUrlHelper _urlHelper;
         private readonly IConditionManager _conditionManager;
 
         private readonly LazyField<int[]> _activeLayerIDs;
 
-        public GlimpseLayerEvaluationService(IGlimpseService glimpseService, IOrchardServices orchardServices, UrlHelper urlHelper, IConditionManager conditionManager)
+        public GlimpseLayerEvaluationService(IGlimpseService glimpseService, IOrchardServices orchardServices, IUrlHelper urlHelper, IConditionManager conditionManager)
         {
             _glimpseService = glimpseService;
             _orchardServices = orchardServices;

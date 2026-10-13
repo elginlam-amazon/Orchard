@@ -7,7 +7,6 @@ using Orchard.Localization.Models;
 using Orchard.Localization.Services;
 using Orchard.Taxonomies.Models;
 
-
 namespace Orchard.Taxonomies.Services
 {
     [OrchardFeature("Orchard.Taxonomies.LocalizationExtensions")]

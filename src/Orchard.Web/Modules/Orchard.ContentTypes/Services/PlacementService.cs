@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Drivers;
 using Orchard.ContentManagement.Handlers;
@@ -14,6 +13,7 @@ using Orchard.FileSystems.VirtualPath;
 using Orchard.Logging;
 using Orchard.Themes.Services;
 using Orchard.UI.Zones;
+using Orchard.Utility;
 
 namespace Orchard.ContentTypes.Services
 {
@@ -33,7 +33,7 @@ namespace Orchard.ContentTypes.Services
         private readonly IExtensionManager _extensionManager;
         private readonly IShapeFactory _shapeFactory;
         private readonly IShapeTableLocator _shapeTableLocator;
-        private readonly RequestContext _requestContext;
+        private readonly ActionContext _requestContext;
         private readonly IEnumerable<IContentPartDriver> _contentPartDrivers;
         private readonly IEnumerable<IContentFieldDriver> _contentFieldDrivers;
         private readonly IVirtualPathProvider _virtualPathProvider;
@@ -45,7 +45,7 @@ namespace Orchard.ContentTypes.Services
             IExtensionManager extensionManager,
             IShapeFactory shapeFactory,
             IShapeTableLocator shapeTableLocator,
-            RequestContext requestContext,
+            ActionContext requestContext,
             IEnumerable<IContentPartDriver> contentPartDrivers,
             IEnumerable<IContentFieldDriver> contentFieldDrivers,
             IVirtualPathProvider virtualPathProvider,

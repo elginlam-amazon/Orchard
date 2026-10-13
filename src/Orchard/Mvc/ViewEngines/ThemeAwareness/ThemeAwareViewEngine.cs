@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Orchard.Environment.Descriptor.Models;
 using Orchard.Environment.Extensions;
 using Orchard.Environment.Extensions.Models;
@@ -11,8 +12,8 @@ namespace Orchard.Mvc.ViewEngines.ThemeAwareness
 {
     public interface IThemeAwareViewEngine : IDependency
     {
-        ViewEngineResult FindPartialView(ControllerContext controllerContext, string partialViewName, bool useCache, bool useDeepPaths);
-        ViewEngineResult FindView(ControllerContext controllerContext, string viewName, string masterName, bool useCache, bool useDeepPaths);
+        ViewEngineResult FindPartialView(ActionContext controllerContext, string partialViewName, bool useCache, bool useDeepPaths);
+        ViewEngineResult FindView(ActionContext controllerContext, string viewName, string masterName, bool useCache, bool useDeepPaths);
     }
 
     public class ThemeAwareViewEngine : IThemeAwareViewEngine
@@ -42,7 +43,7 @@ namespace Orchard.Mvc.ViewEngines.ThemeAwareness
 
         public ILogger Logger { get; set; }
 
-        public ViewEngineResult FindPartialView(ControllerContext controllerContext, string partialViewName, bool useCache, bool useDeepPaths)
+        public ViewEngineResult FindPartialView(ActionContext controllerContext, string partialViewName, bool useCache, bool useDeepPaths)
         {
             var engines = _nullEngines;
 
@@ -55,10 +56,10 @@ namespace Orchard.Mvc.ViewEngines.ThemeAwareness
                 engines = useDeepPaths ? DeepEngines(_workContext.CurrentTheme) : ShallowEngines(_workContext.CurrentTheme);
             }
 
-            return engines.FindPartialView(controllerContext, partialViewName, useCache);
+            return engines.FindView(controllerContext, partialViewName, false);
         }
 
-        public ViewEngineResult FindView(ControllerContext controllerContext, string viewName, string masterName, bool useCache, bool useDeepPaths)
+        public ViewEngineResult FindView(ActionContext controllerContext, string viewName, string masterName, bool useCache, bool useDeepPaths)
         {
             var engines = _nullEngines;
 
@@ -71,7 +72,7 @@ namespace Orchard.Mvc.ViewEngines.ThemeAwareness
                 engines = useDeepPaths ? DeepEngines(_workContext.CurrentTheme) : ShallowEngines(_workContext.CurrentTheme);
             }
 
-            return engines.FindView(controllerContext, viewName, masterName, useCache);
+            return engines.FindView(controllerContext, viewName, true);
         }
 
 
@@ -176,11 +177,6 @@ namespace Orchard.Mvc.ViewEngines.ThemeAwareness
                 }
                 return list;
             }
-        }
-
-        public void ReleaseView(ControllerContext controllerContext, IView view)
-        {
-            throw new NotImplementedException();
         }
     }
 

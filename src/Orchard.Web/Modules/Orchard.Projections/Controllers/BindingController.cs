@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement.Records;
 using Orchard.Data;
 using Orchard.DisplayManagement;
@@ -16,7 +16,7 @@ using Orchard.UI.Notify;
 
 namespace Orchard.Projections.Controllers
 {
-    [ValidateInput(false), Admin]
+    [Admin]
     public class BindingController : Controller
     {
         private readonly IRepository<MemberBindingRecord> _repository;
@@ -43,7 +43,7 @@ namespace Orchard.Projections.Controllers
         public ActionResult Index(BindingIndexOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list bindings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(Services.WorkContext.CurrentSite, pagerParameters);
 
@@ -101,7 +101,7 @@ namespace Orchard.Projections.Controllers
         public ActionResult Select()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list bindings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var recordBluePrints = _sessionFactoryHolder.GetSessionFactoryParameters().RecordDescriptors;
 
@@ -125,7 +125,7 @@ namespace Orchard.Projections.Controllers
         public ActionResult Create(string fullName, string member)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list bindings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var recordBluePrints = _sessionFactoryHolder.GetSessionFactoryParameters().RecordDescriptors;
 
@@ -133,14 +133,14 @@ namespace Orchard.Projections.Controllers
 
             if (record == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var property = record.Type.GetProperty(member, BindingFlags.Instance | BindingFlags.Public);
 
             if (property == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var model = new BindingEditViewModel
@@ -157,7 +157,7 @@ namespace Orchard.Projections.Controllers
         public ActionResult CreatePost(BindingEditViewModel model)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list bindings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (ModelState.IsValid)
             {
@@ -181,13 +181,13 @@ namespace Orchard.Projections.Controllers
         public ActionResult Edit(int id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list bindings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var binding = _repository.Get(id);
 
             if (binding == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var recordBluePrints = _sessionFactoryHolder.GetSessionFactoryParameters().RecordDescriptors;
@@ -224,7 +224,7 @@ namespace Orchard.Projections.Controllers
         public ActionResult Edit(BindingEditViewModel model)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list bindings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (ModelState.IsValid)
             {
@@ -233,7 +233,7 @@ namespace Orchard.Projections.Controllers
 
                 if (binding == null)
                 {
-                    return HttpNotFound();
+                    return NotFound();
                 }
 
                 binding.DisplayName = model.Display;
@@ -251,13 +251,13 @@ namespace Orchard.Projections.Controllers
         public ActionResult Delete(int id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to delete bindings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var binding = _repository.Get(id);
 
             if (binding == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             _repository.Delete(binding);

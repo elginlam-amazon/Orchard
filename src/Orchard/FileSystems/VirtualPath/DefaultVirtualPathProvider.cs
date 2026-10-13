@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web;
-using System.Web.Hosting;
+using Orchard.Environment;
 using Orchard.Exceptions;
 using Orchard.Logging;
+using Orchard.Utility;
 
 namespace Orchard.FileSystems.VirtualPath
 {
@@ -25,22 +25,26 @@ namespace Orchard.FileSystems.VirtualPath
 
         public virtual IEnumerable<string> ListFiles(string path)
         {
-            return HostingEnvironment
-                .VirtualPathProvider
-                .GetDirectory(path)
-                .Files
-                .OfType<VirtualFile>()
-                .Select(f => VirtualPathUtility.ToAppRelative(f.VirtualPath));
+            var directory = ToAppRelativeDirectory(path);
+            var physicalPath = MapPath(directory);
+            if (!Directory.Exists(physicalPath))
+                return Enumerable.Empty<string>();
+
+            return Directory
+                .GetFiles(physicalPath)
+                .Select(f => directory + Path.GetFileName(f));
         }
 
         public virtual IEnumerable<string> ListDirectories(string path)
         {
-            return HostingEnvironment
-                .VirtualPathProvider
-                .GetDirectory(path)
-                .Directories
-                .OfType<VirtualDirectory>()
-                .Select(d => VirtualPathUtility.ToAppRelative(d.VirtualPath));
+            var directory = ToAppRelativeDirectory(path);
+            var physicalPath = MapPath(directory);
+            if (!Directory.Exists(physicalPath))
+                return Enumerable.Empty<string>();
+
+            return Directory
+                .GetDirectories(physicalPath)
+                .Select(d => directory + Path.GetFileName(d) + "/");
         }
 
         public virtual string Combine(params string[] paths)
@@ -55,7 +59,7 @@ namespace Orchard.FileSystems.VirtualPath
 
             try
             {
-                string result = VirtualPathUtility.ToAppRelative(virtualPath);
+                string result = NormalizeAppRelative(virtualPath);
 
                 // In some cases, ToAppRelative doesn't normalize the path. In those cases,
                 // the path is invalid.
@@ -128,7 +132,7 @@ namespace Orchard.FileSystems.VirtualPath
 
         public virtual Stream OpenFile(string virtualPath)
         {
-            return HostingEnvironment.VirtualPathProvider.GetFile(virtualPath).Open();
+            return File.OpenRead(MapPath(virtualPath));
         }
 
         public virtual StreamWriter CreateText(string virtualPath)
@@ -148,11 +152,7 @@ namespace Orchard.FileSystems.VirtualPath
             // has been measured to make a significant difference (4x) on slow file systems.
             return File.GetLastWriteTimeUtc(MapPath(virtualPath));
 #else
-            var dependency = HostingEnvironment.VirtualPathProvider.GetCacheDependency(virtualPath, new[] { virtualPath }, DateTime.UtcNow);
-            if (dependency == null) {
-                throw new Exception(string.Format("Invalid virtual path: '{0}'", virtualPath));
-            }
-            return dependency.UtcLastModified;
+            return File.GetLastWriteTimeUtc(MapPath(virtualPath));
 #endif
         }
 
@@ -163,7 +163,24 @@ namespace Orchard.FileSystems.VirtualPath
 
         public string GetFileHash(string virtualPath, IEnumerable<string> dependencies)
         {
-            return HostingEnvironment.VirtualPathProvider.GetFileHash(virtualPath, dependencies);
+            // Hash of the last write times and sizes of the files (the former ASP.NET virtual path provider file hash).
+            var hash = new HashCode();
+            foreach (var dependency in dependencies.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(d => d, StringComparer.OrdinalIgnoreCase))
+            {
+                var physicalPath = MapPath(dependency);
+                hash.Add(dependency.ToLowerInvariant());
+                if (File.Exists(physicalPath))
+                {
+                    var fileInfo = new FileInfo(physicalPath);
+                    hash.Add(fileInfo.LastWriteTimeUtc.Ticks);
+                    hash.Add(fileInfo.Length);
+                }
+                else if (Directory.Exists(physicalPath))
+                {
+                    hash.Add(Directory.GetLastWriteTimeUtc(physicalPath).Ticks);
+                }
+            }
+            return hash.ToHashCode().ToString("x8", System.Globalization.CultureInfo.InvariantCulture);
         }
 
         public virtual void DeleteFile(string virtualPath)
@@ -178,7 +195,7 @@ namespace Orchard.FileSystems.VirtualPath
 
         public virtual bool FileExists(string virtualPath)
         {
-            return HostingEnvironment.VirtualPathProvider.FileExists(virtualPath);
+            return File.Exists(MapPath(virtualPath));
         }
 
         public virtual bool TryFileExists(string virtualPath)
@@ -203,12 +220,61 @@ namespace Orchard.FileSystems.VirtualPath
 
         public virtual bool DirectoryExists(string virtualPath)
         {
-            return HostingEnvironment.VirtualPathProvider.DirectoryExists(virtualPath);
+            return Directory.Exists(MapPath(virtualPath));
         }
 
         public virtual void CreateDirectory(string virtualPath)
         {
             Directory.CreateDirectory(MapPath(virtualPath));
+        }
+
+        private string ToAppRelativeDirectory(string virtualPath)
+        {
+            var directory = NormalizeAppRelative(virtualPath);
+            return directory.EndsWith("/") ? directory : directory + "/";
+        }
+
+        /// <summary>
+        /// Converts a rooted (/...) or app relative (~/...) virtual path to its normalized app relative form,
+        /// resolving the "." and ".." segments (the former VirtualPathUtility.ToAppRelative).
+        /// </summary>
+        private static string NormalizeAppRelative(string virtualPath)
+        {
+            var path = virtualPath.Replace('\\', '/');
+            if (path.StartsWith("~/"))
+            {
+                path = path.Substring(1);
+            }
+            else if (path == "~")
+            {
+                path = "/";
+            }
+            else if (!path.StartsWith("/"))
+            {
+                throw new ArgumentException(string.Format("The virtual path '{0}' is not rooted.", virtualPath));
+            }
+
+            var segments = new List<string>();
+            foreach (var segment in path.Split('/'))
+            {
+                if (segment == "..")
+                {
+                    if (segments.Count == 0)
+                        throw new ArgumentException(string.Format("The virtual path '{0}' is outside of the application.", virtualPath));
+                    segments.RemoveAt(segments.Count - 1);
+                }
+                else if (segment != "." && segment.Length > 0)
+                {
+                    segments.Add(segment);
+                }
+            }
+
+            var result = "~/" + string.Join("/", segments);
+            if (path.EndsWith("/") && segments.Count > 0)
+            {
+                result += "/";
+            }
+            return result;
         }
 
         public virtual void DeleteDirectory(string virtualPath)

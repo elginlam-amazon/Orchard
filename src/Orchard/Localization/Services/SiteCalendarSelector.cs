@@ -1,4 +1,4 @@
-using System.Web;
+using Microsoft.AspNetCore.Http;
 
 namespace Orchard.Localization.Services
 {
@@ -11,7 +11,7 @@ namespace Orchard.Localization.Services
             _workContextAccessor = workContextAccessor;
         }
 
-        public CalendarSelectorResult GetCalendar(HttpContextBase context)
+        public CalendarSelectorResult GetCalendar(HttpContext context)
         {
             string currentCalendarName = _workContextAccessor.GetContext().CurrentSite.SiteCalendar;
 

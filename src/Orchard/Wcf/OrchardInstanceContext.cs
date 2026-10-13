@@ -1,8 +1,9 @@
 using System;
 using System.Linq;
-using System.ServiceModel;
+using CoreWCF;
 using Autofac;
 using Autofac.Core;
+using Orchard.Environment.AutofacUtil;
 
 namespace Orchard.Wcf
 {

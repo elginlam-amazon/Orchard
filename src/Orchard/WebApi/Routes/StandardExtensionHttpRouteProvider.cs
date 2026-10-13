@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Http;
 using Orchard.Environment.ShellBuilders.Models;
 using Orchard.Mvc.Routes;
 
@@ -29,8 +28,8 @@ namespace Orchard.WebApi.Routes
                 var routeDescriptor = new HttpRouteDescriptor
                 {
                     Priority = -10,
-                    RouteTemplate = "api/" + displayPath + "/{controller}/{id}",
-                    Defaults = new { area = areaName, controller = "api", id = RouteParameter.Optional }
+                    RouteTemplate = "api/" + displayPath + "/{controller}/{id?}",
+                    Defaults = new { area = areaName, controller = "api" }
                 };
 
                 routes.Add(routeDescriptor);

@@ -1,4 +1,5 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Orchard.Mvc;
 
 namespace Orchard.DisplayManagement.Implementation
 {

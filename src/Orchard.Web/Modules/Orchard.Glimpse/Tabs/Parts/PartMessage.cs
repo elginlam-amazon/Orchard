@@ -1,5 +1,4 @@
 using System;
-using Glimpse.Core.Message;
 using Orchard.ContentManagement.MetaData.Models;
 using Orchard.Glimpse.Models;
 

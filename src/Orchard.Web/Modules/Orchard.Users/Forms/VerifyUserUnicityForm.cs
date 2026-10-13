@@ -34,8 +34,8 @@ namespace Orchard.Users.Forms
         {
             if (context.FormName != "VerifyUserUnicity") return;
 
-            var userName = context.ValueProvider.GetValue("UserName").AttemptedValue;
-            var email = context.ValueProvider.GetValue("Email").AttemptedValue;
+            var userName = context.ValueProvider.GetValue("UserName").FirstValue;
+            var email = context.ValueProvider.GetValue("Email").FirstValue;
 
             if (string.IsNullOrWhiteSpace(userName))
             {

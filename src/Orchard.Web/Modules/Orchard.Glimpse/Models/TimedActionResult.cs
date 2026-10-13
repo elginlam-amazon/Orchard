@@ -1,4 +1,3 @@
-using Glimpse.Core.Extensibility;
 
 namespace Orchard.Glimpse.Models
 {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.ContentManagement;
 using Orchard.FileSystems.Media;
 using Orchard.Localization;
@@ -196,12 +196,12 @@ namespace Orchard.Media.Services
         /// <param name="postedFile">The file to upload.</param>
         /// <param name="extractZip">Boolean value indicating weather zip files should be extracted.</param>
         /// <returns>The path to the uploaded file.</returns>
-        public string UploadMediaFile(string folderPath, HttpPostedFileBase postedFile, bool extractZip)
+        public string UploadMediaFile(string folderPath, IFormFile postedFile, bool extractZip)
         {
             Argument.ThrowIfNullOrEmpty(folderPath, "folderPath");
             Argument.ThrowIfNull(postedFile, "postedFile");
 
-            return UploadMediaFile(folderPath, Path.GetFileName(postedFile.FileName), postedFile.InputStream, extractZip);
+            return UploadMediaFile(folderPath, Path.GetFileName(postedFile.FileName), postedFile.OpenReadStream(), extractZip);
         }
 
         /// <summary>
@@ -262,7 +262,7 @@ namespace Orchard.Media.Services
         /// </summary>
         /// <param name="postedFile">The posted file</param>
         /// <returns>True if the file is allowed; false if otherwise.</returns>
-        public bool FileAllowed(HttpPostedFileBase postedFile)
+        public bool FileAllowed(IFormFile postedFile)
         {
             if (postedFile == null)
             {

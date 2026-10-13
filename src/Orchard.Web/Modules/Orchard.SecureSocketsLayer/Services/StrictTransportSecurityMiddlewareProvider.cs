@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Orchard.Caching;
 using Orchard.ContentManagement;
 using Orchard.Logging;
 using Orchard.Owin;
 using Orchard.SecureSocketsLayer.Models;
-using Owin;
 
 namespace Orchard.SecureSocketsLayer.Services
 {

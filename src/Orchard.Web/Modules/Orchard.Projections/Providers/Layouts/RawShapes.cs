@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.DisplayManagement;
 using Orchard.Localization;
+using Orchard.Mvc.Html;
 
 namespace Orchard.Projections.Providers.Layouts
 {
@@ -17,7 +18,7 @@ namespace Orchard.Projections.Providers.Layouts
         public Localizer T { get; set; }
 
         [Shape]
-        public void Raw(dynamic Display, TextWriter Output, HtmlHelper Html, string Id, string Tag, IEnumerable<dynamic> Items, IEnumerable<string> Classes, IDictionary<string, string> Attributes, string ItemTag, IEnumerable<string> ItemClasses, IDictionary<string, string> ItemAttributes, string Prepend, string Append, string Separator)
+        public void Raw(dynamic Display, TextWriter Output, IHtmlHelper Html, string Id, string Tag, IEnumerable<dynamic> Items, IEnumerable<string> Classes, IDictionary<string, string> Attributes, string ItemTag, IEnumerable<string> ItemClasses, IDictionary<string, string> ItemAttributes, string Prepend, string Append, string Separator)
         {
             if (Items == null)
                 return;
@@ -83,7 +84,7 @@ namespace Orchard.Projections.Providers.Layouts
             foreach (var cssClass in classes ?? Enumerable.Empty<string>())
                 tagBuilder.AddCssClass(cssClass);
             if (!string.IsNullOrWhiteSpace(id))
-                tagBuilder.GenerateId(id);
+                tagBuilder.GenerateId(id, "_");
             return tagBuilder;
         }
 

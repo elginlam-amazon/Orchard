@@ -4,6 +4,7 @@ using Orchard.Environment.Extensions;
 using Orchard.Localization;
 using Orchard.Security;
 using Orchard.UI.Navigation;
+using Microsoft.AspNetCore.Routing;
 
 namespace Orchard.Search
 {
@@ -32,7 +33,7 @@ namespace Orchard.Search
         public void GetNavigation(NavigationBuilder builder)
         {
             var blogId = 0;
-            int.TryParse(_workContextAccessor.GetContext().HttpContext.Request.RequestContext.RouteData.Values["blogId"]?.ToString(), out blogId);
+            int.TryParse(_workContextAccessor.GetContext().HttpContext.Request.HttpContext.GetRouteData().Values["blogId"]?.ToString(), out blogId);
             if (blogId > 0)
             {
                 builder.Add(T("Search Posts"), "2.0", item => item.Action("Index", "BlogSearch", new { area = "Orchard.Search", blogId })

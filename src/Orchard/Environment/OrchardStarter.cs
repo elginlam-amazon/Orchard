@@ -1,13 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
-using System.Web.Hosting;
-using System.Web.Http;
-using System.Web.Http.Dispatcher;
-using System.Web.Mvc;
 using Autofac;
-using Autofac.Configuration;
 using Orchard.Caching;
 using Orchard.Data;
 using Orchard.Environment.AutofacUtil;
@@ -28,14 +22,8 @@ using Orchard.FileSystems.VirtualPath;
 using Orchard.FileSystems.WebSite;
 using Orchard.Logging;
 using Orchard.Mvc;
-using Orchard.Mvc.DataAnnotations;
-using Orchard.Mvc.Filters;
-using Orchard.Mvc.ViewEngines.Razor;
-using Orchard.Mvc.ViewEngines.ThemeAwareness;
 using Orchard.Services;
 using Orchard.UI.Resources;
-using Orchard.WebApi;
-using Orchard.WebApi.Filters;
 
 namespace Orchard.Environment
 {
@@ -49,7 +37,6 @@ namespace Orchard.Environment
             // Application paths and parameters
             builder.RegisterInstance(extensionLocations);
 
-            builder.RegisterModule(new CollectionOrderModule());
             builder.RegisterModule(new LoggingModule());
             builder.RegisterModule(new EventsModule());
             builder.RegisterModule(new CacheModule());
@@ -63,10 +50,8 @@ namespace Orchard.Environment
             builder.RegisterType<DefaultHostEnvironment>().As<IHostEnvironment>().SingleInstance();
             builder.RegisterType<DefaultHostLocalRestart>().As<IHostLocalRestart>().Named<IEventHandler>(typeof(IShellSettingsManagerEventHandler).Name).SingleInstance();
             builder.RegisterType<DefaultBuildManager>().As<IBuildManager>().SingleInstance();
-            builder.RegisterType<DynamicModuleVirtualPathProvider>().As<ICustomVirtualPathProvider>().SingleInstance();
             builder.RegisterType<AppDataFolderRoot>().As<IAppDataFolderRoot>().SingleInstance();
             builder.RegisterType<DefaultExtensionCompiler>().As<IExtensionCompiler>().SingleInstance();
-            builder.RegisterType<DefaultRazorCompilationEvents>().As<IRazorCompilationEvents>().SingleInstance();
             builder.RegisterType<DefaultProjectFileParser>().As<IProjectFileParser>().SingleInstance();
             builder.RegisterType<DefaultAssemblyLoader>().As<IAssemblyLoader>().SingleInstance();
             builder.RegisterType<AppDomainAssemblyNameResolver>().As<IAssemblyNameResolver>().SingleInstance();
@@ -135,10 +120,6 @@ namespace Orchard.Environment
 
             registrations(builder);
 
-            var autofacSection = ConfigurationManager.GetSection(ConfigurationSettingsReaderConstants.DefaultSectionName);
-            if (autofacSection != null)
-                builder.RegisterModule(new ConfigurationSettingsReader());
-
             var optionalHostConfig = HostingEnvironment.MapPath("~/Config/Host.config");
             if (File.Exists(optionalHostConfig))
                 builder.RegisterModule(new ConfigurationSettingsReader(ConfigurationSettingsReaderConstants.DefaultSectionName, optionalHostConfig));
@@ -149,38 +130,12 @@ namespace Orchard.Environment
 
             var container = builder.Build();
 
-            //
-            // Register Virtual Path Providers
-            //
-            if (HostingEnvironment.IsHosted)
-            {
-                foreach (var vpp in container.Resolve<IEnumerable<ICustomVirtualPathProvider>>())
-                {
-                    HostingEnvironment.RegisterVirtualPathProvider(vpp.Instance);
-                }
-            }
-
-            ControllerBuilder.Current.SetControllerFactory(new OrchardControllerFactory());
-            FilterProviders.Providers.Add(new OrchardFilterProvider());
-
-            GlobalConfiguration.Configuration.Services.Replace(typeof(IHttpControllerSelector), new DefaultOrchardWebApiHttpControllerSelector(GlobalConfiguration.Configuration));
-            GlobalConfiguration.Configuration.Services.Replace(typeof(IHttpControllerActivator), new DefaultOrchardWebApiHttpControllerActivator(GlobalConfiguration.Configuration));
-            GlobalConfiguration.Configuration.DependencyResolver = new AutofacWebApiDependencyResolver(container);
-
-            GlobalConfiguration.Configuration.Filters.Add(new OrchardApiActionFilterDispatcher());
-            GlobalConfiguration.Configuration.Filters.Add(new OrchardApiExceptionFilterDispatcher());
-            GlobalConfiguration.Configuration.Filters.Add(new OrchardApiAuthorizationFilterDispatcher());
-
-            ViewEngines.Engines.Clear();
-            ViewEngines.Engines.Add(new ThemeAwareViewEngineShim());
+            // Note: the MVC integration (controller activation, filters, view engines, model validation)
+            // is configured by the ASP.NET Core host, see OrchardMvcBuilderExtensions.
 
             var hostContainer = new DefaultOrchardHostContainer(container);
             //MvcServiceLocator.SetCurrent(hostContainer);
             OrchardHostContainerRegistry.RegisterHostContainer(hostContainer);
-
-            // Register localized data annotations
-            ModelValidatorProviders.Providers.Clear();
-            ModelValidatorProviders.Providers.Add(new LocalizedModelValidatorProvider());
 
             return container;
         }

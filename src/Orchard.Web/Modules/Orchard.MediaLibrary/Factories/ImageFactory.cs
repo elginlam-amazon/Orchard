@@ -1,4 +1,3 @@
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using Orchard.ContentManagement;
@@ -19,13 +18,18 @@ namespace Orchard.MediaLibrary.Factories
             _contentDefinitionManager = contentDefinitionManager;
         }
 
+        // The image formats which can be decoded (formerly the GDI+ image decoders).
+        private static readonly string[] SupportedImageMimeTypes = {
+            "image/bmp", "image/jpeg", "image/gif", "image/x-emf", "image/x-wmf", "image/tiff", "image/png", "image/x-icon", "image/webp"
+        };
+
         public MediaFactorySelectorResult GetMediaFactory(Stream stream, string mimeType, string contentType)
         {
             if (!mimeType.StartsWith("image/"))
             {
                 return null;
             }
-            if (!ImageCodecInfo.GetImageDecoders().Select(d => d.MimeType).Contains(mimeType))
+            if (!SupportedImageMimeTypes.Contains(mimeType))
             {
                 return null;
             }

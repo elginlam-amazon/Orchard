@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using System.Web;
+using Orchard.Utility;
 
 namespace Orchard.DisplayManagement.Descriptors.ShapePlacementStrategy
 {

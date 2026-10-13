@@ -1,9 +1,9 @@
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.Mvc
 {
     public interface IHasRequestContext
     {
-        RequestContext RequestContext { get; }
+        ActionContext ActionContext { get; }
     }
 }

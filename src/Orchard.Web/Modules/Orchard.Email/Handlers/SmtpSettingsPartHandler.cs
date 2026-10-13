@@ -1,5 +1,5 @@
 using System;
-using System.Configuration;
+using Orchard.Email.Services;
 using System.Text;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Handlers;
@@ -57,7 +57,7 @@ namespace Orchard.Email.Handlers
                 part.Store(x => x.Password, encryptedPassword);
             });
 
-            part.AddressPlaceholderField.Loader(() => (string)((dynamic)ConfigurationManager.GetSection("system.net/mailSettings/smtp")).From);
+            part.AddressPlaceholderField.Loader(() => SmtpSection.Load()?.From);
         }
 
         public Localizer T { get; set; }

@@ -1,5 +1,5 @@
 using System;
-using System.Web;
+using Microsoft.AspNetCore.Html;
 using Orchard.DisplayManagement.Shapes;
 using Orchard.Localization;
 using Orchard.UI.Resources;
@@ -17,9 +17,9 @@ namespace Orchard.Mvc
         ResourceRegister Style { get; }
         dynamic Display { get; }
         dynamic Layout { get; }
-        IHtmlString DisplayChildren(object shape);
+        IHtmlContent DisplayChildren(object shape);
         WorkContext WorkContext { get; }
-        IDisposable Capture(Action<IHtmlString> callback);
+        IDisposable Capture(Action<IHtmlContent> callback);
 
         void RegisterLink(LinkEntry link);
         void SetMeta(string name, string content, string httpEquiv, string charset);

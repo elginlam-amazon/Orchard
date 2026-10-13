@@ -1,15 +1,16 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Web;
-using System.Web.Mvc;
-using Microsoft.Owin.Security;
-using Microsoft.Owin.Security.Cookies;
-using Microsoft.Owin.Security.OpenIdConnect;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions;
 using Orchard.Localization;
 using Orchard.Logging;
 using Orchard.Mvc.Extensions;
+using Orchard.OpenId.Security;
+using IAuthenticationService = Orchard.Security.IAuthenticationService;
 using Orchard.OpenId.Services;
 using Orchard.Security;
 using Orchard.Themes;
@@ -28,7 +29,10 @@ namespace Orchard.OpenId.Controllers
         private readonly IOrchardServices _orchardServices;
         private readonly IUserEventHandler _userEventHandler;
 
+        private readonly ShellSettings _shellSettings;
+
         public AccountController(
+            ShellSettings shellSettings,
             IEnumerable<IOpenIdProvider> openIdProviders,
             IAuthenticationService authenticationService,
             IMembershipService membershipService,
@@ -36,6 +40,7 @@ namespace Orchard.OpenId.Controllers
             IUserEventHandler userEventHandler)
         {
 
+            _shellSettings = shellSettings;
             _openIdProviders = openIdProviders;
             _authenticationService = authenticationService;
             _membershipService = membershipService;
@@ -53,7 +58,7 @@ namespace Orchard.OpenId.Controllers
         [HttpGet]
         public ActionResult LogOn(string returnUrl)
         {
-            if (Request.IsAuthenticated)
+            if ((HttpContext.User.Identity?.IsAuthenticated ?? false))
             {
                 return Redirect("~/");
             }
@@ -64,7 +69,6 @@ namespace Orchard.OpenId.Controllers
         }
 
         [HttpPost]
-        [ValidateInput(false)]
         [SuppressMessage("Microsoft.Design", "CA1054:UriParametersShouldNotBeStrings", Justification = "Needs to take same parameter type as Controller.Redirect()")]
         public ActionResult LogOn(string userNameOrEmail, string password, string returnUrl, bool rememberMe = false)
         {
@@ -93,34 +97,42 @@ namespace Orchard.OpenId.Controllers
 
         [AlwaysAccessible]
         [SuppressMessage("Microsoft.Design", "CA1054:UriParametersShouldNotBeStrings", Justification = "Needs to take same parameter type as Controller.Redirect()")]
-        public void Challenge(string openIdProvider, string returnUrl)
+        public ActionResult Challenge(string openIdProvider, string returnUrl)
         {
             _userEventHandler.LoggingIn(openIdProvider, string.Empty);
 
             if (string.IsNullOrWhiteSpace(openIdProvider))
-                openIdProvider = OpenIdConnectAuthenticationDefaults.AuthenticationType;
+                openIdProvider = OpenIdConnectDefaults.AuthenticationScheme;
 
-            if (Request.IsAuthenticated)
+            if ((HttpContext.User.Identity?.IsAuthenticated ?? false))
             {
-                this.RedirectLocal(returnUrl);
-                return;
+                return this.RedirectLocal(returnUrl);
             }
             else
             {
                 TempData["ReturnUrl"] = returnUrl;
             }
 
-            var redirectUri = Url.Content(GetCallbackPath(_orchardServices.WorkContext));
+            // the tenant url prefix is part of the path base, the url helper adds it
+            var redirectUri = Url.Content("~" + Constants.General.LogonCallbackUrl);
 
-            HttpContext.GetOwinContext().Authentication.Challenge(new AuthenticationProperties { RedirectUri = redirectUri }, openIdProvider);
+            return Challenge(new AuthenticationProperties { RedirectUri = redirectUri }, OpenIdAuthenticationSchemes.GetScheme(_shellSettings, openIdProvider));
         }
 
         public ActionResult LogOff(string openIdProvider)
         {
             if (string.IsNullOrWhiteSpace(openIdProvider))
-                openIdProvider = OpenIdConnectAuthenticationDefaults.AuthenticationType;
+                openIdProvider = OpenIdConnectDefaults.AuthenticationScheme;
 
-            HttpContext.GetOwinContext().Authentication.SignOut(openIdProvider, CookieAuthenticationDefaults.AuthenticationType);
+            HttpContext.SignOutAsync(OpenIdAuthenticationSchemes.GetScheme(_shellSettings, OpenIdAuthenticationSchemes.ExternalCookie)).GetAwaiter().GetResult();
+            try
+            {
+                // remote sign out, only supported by some providers (OpenID Connect)
+                HttpContext.SignOutAsync(OpenIdAuthenticationSchemes.GetScheme(_shellSettings, openIdProvider)).GetAwaiter().GetResult();
+            }
+            catch (System.NotSupportedException)
+            {
+            }
             _authenticationService.SignOut();
 
             var loggedUser = _authenticationService.GetAuthenticatedUser();
@@ -149,7 +161,7 @@ namespace Orchard.OpenId.Controllers
 
         public ActionResult AccessDenied()
         {
-            var returnUrl = Request.QueryString["ReturnUrl"];
+            var returnUrl = Request.Query["ReturnUrl"].ToString();
             var currentUser = _authenticationService.GetAuthenticatedUser();
 
             if (currentUser == null)
@@ -193,18 +205,6 @@ namespace Orchard.OpenId.Controllers
             }
 
             return user;
-        }
-
-        private string GetCallbackPath(WorkContext workContext)
-        {
-            var shellSettings = workContext.Resolve<ShellSettings>();
-            var tenantPrefix = shellSettings.RequestUrlPrefix;
-
-            var callbackUrl = string.IsNullOrWhiteSpace(tenantPrefix) ?
-                Constants.General.LogonCallbackUrl :
-                string.Format("/{0}{1}", tenantPrefix, Constants.General.LogonCallbackUrl);
-
-            return callbackUrl;
         }
     }
 }

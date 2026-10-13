@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Routing;
 
 namespace Orchard.Alias
 {
@@ -25,7 +25,7 @@ namespace Orchard.Alias
 
         IEnumerable<Tuple<string, RouteValueDictionary>> List();
         IEnumerable<Tuple<string, RouteValueDictionary, string>> List(string sourceStartsWith);
-        IEnumerable<VirtualPathData> LookupVirtualPaths(RouteValueDictionary routeValues, System.Web.HttpContextBase httpContext);
+        IEnumerable<VirtualPathData> LookupVirtualPaths(RouteValueDictionary routeValues, Microsoft.AspNetCore.Http.HttpContext httpContext);
 
     }
 }

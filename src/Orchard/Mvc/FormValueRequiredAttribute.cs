@@ -1,5 +1,6 @@
-using System.Reflection;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.ActionConstraints;
+using Microsoft.AspNetCore.Routing;
 
 namespace Orchard.Mvc
 {
@@ -12,9 +13,15 @@ namespace Orchard.Mvc
             _submitButtonName = submitButtonName;
         }
 
-        public override bool IsValidForRequest(ControllerContext controllerContext, MethodInfo methodInfo)
+        public override bool IsValidForRequest(RouteContext routeContext, ActionDescriptor action)
         {
-            var value = controllerContext.HttpContext.Request.Form[_submitButtonName];
+            var request = routeContext.HttpContext.Request;
+            if (!request.HasFormContentType)
+            {
+                return false;
+            }
+
+            var value = request.Form[_submitButtonName];
             return !string.IsNullOrEmpty(value);
         }
     }

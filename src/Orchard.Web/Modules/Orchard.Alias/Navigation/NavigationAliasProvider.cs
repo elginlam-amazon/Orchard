@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.Environment.Extensions;
 using Orchard.Localization;
 using Orchard.Mvc;
 using Orchard.UI.Navigation;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Alias.Navigation
 {
@@ -34,8 +35,9 @@ namespace Orchard.Alias.Navigation
                 if (item.Content != null && item.Content.ContentItem.ContentType == "AliasBreadcrumbMenuItem")
                 {
                     var request = _hca.Current().Request;
-                    var path = request.Path;
-                    var appPath = request.ApplicationPath ?? "/";
+                    // the request path is relative to the application and tenant path base
+                    var path = request.Path.Value ?? "/";
+                    var appPath = "/";
                     var requestUrl = (path.StartsWith(appPath) ? path.Substring(appPath.Length) : path).TrimStart('/');
                     var endsWithSlash = requestUrl.EndsWith("/");
 
@@ -49,7 +51,7 @@ namespace Orchard.Alias.Navigation
                     RouteValueDictionary contentRoute;
                     if (menuLevel == urlLevel)
                     {
-                        contentRoute = request.RequestContext.RouteData.Values;
+                        contentRoute = request.HttpContext.GetRouteData().Values;
                     }
                     else
                     {

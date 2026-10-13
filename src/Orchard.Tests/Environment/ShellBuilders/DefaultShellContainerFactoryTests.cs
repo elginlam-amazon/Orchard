@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Http.Controllers;
-using System.Web.Mvc;
 using Autofac;
 using Autofac.Core;
 using Autofac.Core.Lifetime;
+using Autofac.Core.Registration;
 using Autofac.Features.Indexed;
 using Autofac.Features.Metadata;
 using Castle.DynamicProxy;
+using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
 using Orchard.Environment;
 using Orchard.Environment.AutofacUtil.DynamicProxy2;
@@ -32,7 +32,6 @@ namespace Orchard.Tests.Environment.ShellBuilders
             builder.RegisterType<ShellContainerFactory>().As<IShellContainerFactory>();
             builder.RegisterType<ShellContainerRegistrations>().As<IShellContainerRegistrations>();
             builder.RegisterType<ComponentForHostContainer>();
-            builder.RegisterType<ControllerActionInvoker>().As<IActionInvoker>();
             _container = builder.Build();
         }
 
@@ -45,8 +44,8 @@ namespace Orchard.Tests.Environment.ShellBuilders
             return new ShellBlueprint
             {
                 Dependencies = items.OfType<DependencyBlueprint>(),
-                Controllers = items.OfType<ControllerBlueprint>().Where(bp => typeof(IController).IsAssignableFrom(bp.Type)),
-                HttpControllers = items.OfType<ControllerBlueprint>().Where(bp => typeof(IHttpController).IsAssignableFrom(bp.Type)),
+                Controllers = items.OfType<ControllerBlueprint>().Where(bp => typeof(Controller).IsAssignableFrom(bp.Type)),
+                HttpControllers = items.OfType<ControllerBlueprint>().Where(bp => typeof(Orchard.WebApi.ApiController).IsAssignableFrom(bp.Type)),
                 Records = items.OfType<RecordBlueprint>(),
             };
         }
@@ -93,7 +92,7 @@ namespace Orchard.Tests.Environment.ShellBuilders
 
             var factory = _container.Resolve<IShellContainerFactory>();
             var shellContainer = factory.CreateContainer(settings, blueprint);
-            var controllers = shellContainer.Resolve<IIndex<string, IController>>();
+            var controllers = shellContainer.Resolve<IIndex<string, ControllerBase>>();
             var controller = controllers["foo/bar"];
             Assert.That(controller, Is.Not.Null);
             Assert.That(controller, Is.InstanceOf<TestController>());
@@ -115,7 +114,7 @@ namespace Orchard.Tests.Environment.ShellBuilders
             var factory = _container.Resolve<IShellContainerFactory>();
             var shellContainer = factory.CreateContainer(settings, blueprint);
 
-            var controllerMetas = shellContainer.Resolve<IIndex<string, Meta<IController>>>();
+            var controllerMetas = shellContainer.Resolve<IIndex<string, Meta<ControllerBase>>>();
             var metadata = controllerMetas["foo/bar"].Metadata;
 
             Assert.That(metadata["Hello"], Is.EqualTo("World"));
@@ -124,7 +123,7 @@ namespace Orchard.Tests.Environment.ShellBuilders
 
         public class TestModule : Module
         {
-            protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
+            protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistry, IComponentRegistration registration)
             {
                 registration.Metadata["Hello"] = "World";
             }
@@ -348,7 +347,7 @@ namespace Orchard.Tests.Environment.ShellBuilders
                 builder.RegisterType<ProxIntercept>();
             }
 
-            protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
+            protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistry, IComponentRegistration registration)
             {
                 if (registration.Activator.LimitType == typeof(ProxDependency))
                 {
@@ -417,8 +416,9 @@ namespace Orchard.Tests.Environment.ShellBuilders
 
             Assert.That(eventHandlers, Is.Not.Null);
             Assert.That(eventHandlers.Count(), Is.EqualTo(2));
-            Assert.That(eventHandlers[0], Is.InstanceOf<StubEventHandler2>());
-            Assert.That(eventHandlers[1], Is.InstanceOf<StubEventHandler1>());
+            // Autofac (since v4) resolves the collections of a lifetime scope in the registration order (Autofac 3 reversed it)
+            Assert.That(eventHandlers[0], Is.InstanceOf<StubEventHandler1>());
+            Assert.That(eventHandlers[1], Is.InstanceOf<StubEventHandler2>());
         }
 
         public interface ITestDecorator : IDependency { ITestDecorator DecoratedService { get; } }

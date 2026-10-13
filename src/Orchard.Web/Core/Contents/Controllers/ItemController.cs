@@ -1,8 +1,9 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Core.Common.Models;
 using Orchard.Localization;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.Themes;
 
 namespace Orchard.Core.Contents.Controllers
@@ -31,7 +32,7 @@ namespace Orchard.Core.Contents.Controllers
         public ActionResult Display(int? id, int? version)
         {
             if (id == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (version.HasValue)
                 return Preview(id, version);
@@ -45,7 +46,7 @@ namespace Orchard.Core.Contents.Controllers
             }
 
             if (contentItem == null)
-                return HttpNotFound();
+                return NotFound();
 
 
             var container = contentItem.As<CommonPart>()?.Container;
@@ -56,13 +57,13 @@ namespace Orchard.Core.Contents.Controllers
                 // Open point: should we handle hierarchies? 
                 if (!Services.Authorizer.Authorize(Permissions.PreviewContent, contentItem))
                 {
-                    return HttpNotFound();
+                    return NotFound();
                 }
             }
 
             if (!Services.Authorizer.Authorize(Permissions.ViewContent, contentItem, T("Cannot view content")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var model = _contentManager.BuildDisplay(contentItem);
@@ -79,7 +80,7 @@ namespace Orchard.Core.Contents.Controllers
         public ActionResult Preview(int? id, int? version)
         {
             if (id == null)
-                return HttpNotFound();
+                return NotFound();
 
             var versionOptions = VersionOptions.Latest;
 
@@ -88,11 +89,11 @@ namespace Orchard.Core.Contents.Controllers
 
             var contentItem = _contentManager.Get(id.Value, versionOptions);
             if (contentItem == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!Services.Authorizer.Authorize(Permissions.PreviewContent, contentItem, T("Cannot preview content")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var model = _contentManager.BuildDisplay(contentItem);

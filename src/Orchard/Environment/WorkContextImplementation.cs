@@ -30,7 +30,14 @@ namespace Orchard.Environment
 
         public override bool TryResolve<T>(out T service)
         {
-            return _componentContext.TryResolve(out service);
+            if (_componentContext.TryResolve(typeof(T), out var instance))
+            {
+                service = (T)instance;
+                return true;
+            }
+
+            service = default(T);
+            return false;
         }
 
         public override bool TryResolve(Type serviceType, out object service)

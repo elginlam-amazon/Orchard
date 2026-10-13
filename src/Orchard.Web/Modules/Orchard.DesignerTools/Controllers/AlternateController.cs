@@ -1,10 +1,12 @@
 using System.IO;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Orchard.Environment;
 using Orchard.FileSystems.WebSite;
 using Orchard.Localization;
 using Orchard.Mvc.Extensions;
 using Orchard.Security;
 using Orchard.Themes;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.DesignerTools.Controllers
 {
@@ -26,13 +28,13 @@ namespace Orchard.DesignerTools.Controllers
 
         public ActionResult Create(string template, string alternate, string returnUrl)
         {
-            if (!Request.IsLocal && !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to create templates")))
-                return new HttpUnauthorizedResult();
+            if (!Request.IsLocal() && !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to create templates")))
+                return new UnauthorizedResult();
 
             alternate = alternate.Replace("__", "-").Replace("_", ".");
 
             var currentTheme = Services.WorkContext.CurrentTheme;
-            var alternateFilename = Server.MapPath(Path.Combine(currentTheme.Location, currentTheme.Id, "Views", alternate));
+            var alternateFilename = HostingEnvironment.MapPath(Path.Combine(currentTheme.Location, currentTheme.Id, "Views", alternate));
             var isCodeTemplate = template.Contains("::");
 
             // use same extension as template, or ".cshtml" if it's a code template))

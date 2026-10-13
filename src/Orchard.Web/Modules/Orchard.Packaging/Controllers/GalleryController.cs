@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Web.Mvc;
-using System.Web.Routing;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions;
 using Orchard.Environment.Extensions.Models;
@@ -59,7 +59,7 @@ namespace Orchard.Packaging.Controllers
         public ActionResult Sources()
         {
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list sources")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return View(new PackagingSourcesViewModel
             {
@@ -71,7 +71,7 @@ namespace Orchard.Packaging.Controllers
         public ActionResult Remove(int id)
         {
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to remove sources")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             _packagingSourceManager.RemoveSource(id);
             Services.Notifier.Success(T("The feed has been removed successfully."));
@@ -81,7 +81,7 @@ namespace Orchard.Packaging.Controllers
         public ActionResult AddSource()
         {
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to add sources")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return View(new PackagingAddSourceViewModel());
         }
@@ -90,7 +90,7 @@ namespace Orchard.Packaging.Controllers
         public ActionResult AddSource(string url)
         {
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to add sources")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!string.IsNullOrEmpty(url))
             {
@@ -136,7 +136,7 @@ namespace Orchard.Packaging.Controllers
         public ActionResult Modules(PackagingExtensionsOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list Modules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(Services.WorkContext.CurrentSite, pagerParameters);
             return ListExtensions(options, DefaultExtensionTypes.Module, pager);
@@ -145,7 +145,7 @@ namespace Orchard.Packaging.Controllers
         public ActionResult Themes(PackagingExtensionsOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list Themes")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(Services.WorkContext.CurrentSite, pagerParameters);
             return ListExtensions(options, DefaultExtensionTypes.Theme, pager);
@@ -258,7 +258,7 @@ namespace Orchard.Packaging.Controllers
 
                 if (_extensionDisplayEventHandler != null)
                 {
-                    foreach (string notification in _extensionDisplayEventHandler.Displaying(packagings.Item1, ControllerContext.RequestContext))
+                    foreach (string notification in _extensionDisplayEventHandler.Displaying(packagings.Item1, ControllerContext))
                     {
                         packagings.Item2.Notifications.Add(notification);
                     }

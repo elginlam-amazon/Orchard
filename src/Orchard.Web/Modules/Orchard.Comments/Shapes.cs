@@ -1,10 +1,11 @@
 using System.IO;
-using System.Web.Mvc;
-using System.Web.Mvc.Html;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement;
 using Orchard.Localization;
 using Orchard.Mvc.Html;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Comments
 {
@@ -18,7 +19,7 @@ namespace Orchard.Comments
         public Localizer T { get; set; }
 
         [Shape]
-        public void CommentSummaryLinks(dynamic Display, TextWriter Output, HtmlHelper Html, ContentItem item, int count, int pendingCount)
+        public void CommentSummaryLinks(dynamic Display, TextWriter Output, IHtmlHelper Html, ContentItem item, int count, int pendingCount)
         {
             var commentText = "";
 
@@ -41,7 +42,7 @@ namespace Orchard.Comments
                                 Area = "Orchard.Comments",
                                 Controller = "Admin",
                                 id = item.Id,
-                                returnUrl = Html.ViewContext.HttpContext.Request.RawUrl
+                                returnUrl = Html.ViewContext.HttpContext.Request.GetRawUrl()
                             });
                 }
 
@@ -54,7 +55,7 @@ namespace Orchard.Comments
                                                        Area = "Orchard.Comments",
                                                        Controller = "Admin",
                                                        id = item.Id,
-                                                       returnUrl = Html.ViewContext.HttpContext.Request.Url
+                                                       returnUrl = Html.ViewContext.HttpContext.Request.GetUrl()
                                                    });
                 }
             }
