@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ActionConstraints;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Data.Migration;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Descriptor.Models;
@@ -24,7 +26,6 @@ using Orchard.Utility.Extensions;
 
 namespace Orchard.Themes.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller
     {
         private readonly IExtensionDisplayEventHandler _extensionDisplayEventHandler;
@@ -117,7 +118,7 @@ namespace Orchard.Themes.Controllers
 
                     if (_extensionDisplayEventHandler != null)
                     {
-                        foreach (string notification in _extensionDisplayEventHandler.Displaying(themeEntry.Descriptor, ControllerContext.RequestContext))
+                        foreach (string notification in _extensionDisplayEventHandler.Displaying(themeEntry.Descriptor, ControllerContext))
                         {
                             themeEntry.Notifications.Add(notification);
                         }
@@ -139,7 +140,7 @@ namespace Orchard.Themes.Controllers
         public ActionResult Preview(string themeId, string returnUrl)
         {
             if (!Services.Authorizer.Authorize(Permissions.ApplyTheme, T("Couldn't preview the current theme")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (_extensionManager.AvailableExtensions()
                 .FirstOrDefault(extension => DefaultExtensionTypes.IsTheme(extension.ExtensionType) && extension.Id.Equals(themeId)) == null)
@@ -163,7 +164,7 @@ namespace Orchard.Themes.Controllers
         public ActionResult ApplyPreview(string themeId, string returnUrl)
         {
             if (!Services.Authorizer.Authorize(Permissions.ApplyTheme, T("Couldn't preview the current theme")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (_extensionManager.AvailableExtensions()
                 .FirstOrDefault(extension => DefaultExtensionTypes.IsTheme(extension.ExtensionType) && extension.Id.Equals(themeId)) == null)
@@ -184,7 +185,7 @@ namespace Orchard.Themes.Controllers
         public ActionResult CancelPreview(string returnUrl)
         {
             if (!Services.Authorizer.Authorize(Permissions.ApplyTheme, T("Couldn't preview the current theme")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (TempData.ContainsKey(AlreadyEnabledFeatures))
             {
@@ -210,7 +211,7 @@ namespace Orchard.Themes.Controllers
         public ActionResult Enable(string themeId)
         {
             if (!Services.Authorizer.Authorize(Permissions.ApplyTheme, T("Couldn't enable the theme")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (_extensionManager.AvailableExtensions()
                 .FirstOrDefault(extension => DefaultExtensionTypes.IsTheme(extension.ExtensionType) && extension.Id.Equals(themeId)) == null)
@@ -230,7 +231,7 @@ namespace Orchard.Themes.Controllers
         public ActionResult Disable(string themeId)
         {
             if (!Services.Authorizer.Authorize(Permissions.ApplyTheme, T("Couldn't disable the current theme")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (_extensionManager.AvailableExtensions()
                 .FirstOrDefault(extension => DefaultExtensionTypes.IsTheme(extension.ExtensionType) && extension.Id.Equals(themeId)) == null)
@@ -250,7 +251,7 @@ namespace Orchard.Themes.Controllers
         public ActionResult Activate(string themeId)
         {
             if (!Services.Authorizer.Authorize(Permissions.ApplyTheme, T("Couldn't set the current theme")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (_extensionManager.AvailableExtensions()
                 .FirstOrDefault(extension => DefaultExtensionTypes.IsTheme(extension.ExtensionType) && extension.Id.Equals(themeId)) == null)
@@ -260,7 +261,7 @@ namespace Orchard.Themes.Controllers
             }
             else if (_shellSettings.Themes.Any() && !_shellSettings.Themes.Contains(themeId))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
             else
             {
@@ -275,10 +276,10 @@ namespace Orchard.Themes.Controllers
         public ActionResult Update(string themeId)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Couldn't update theme")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (string.IsNullOrEmpty(themeId))
-                return HttpNotFound();
+                return NotFound();
 
             try
             {
@@ -305,9 +306,10 @@ namespace Orchard.Themes.Controllers
                 _submitButtonName = submitButtonName;
             }
 
-            public override bool IsValidForRequest(ControllerContext controllerContext, MethodInfo methodInfo)
+            public override bool IsValidForRequest(RouteContext routeContext, Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor action)
             {
-                var value = controllerContext.HttpContext.Request.Form[_submitButtonName];
+                var request = routeContext.HttpContext.Request;
+                var value = request.HasFormContentType ? request.Form[_submitButtonName].ToString() : null;
                 return string.IsNullOrEmpty(value);
             }
         }

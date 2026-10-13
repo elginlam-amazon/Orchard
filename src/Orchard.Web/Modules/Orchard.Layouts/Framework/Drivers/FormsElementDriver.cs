@@ -88,9 +88,9 @@ namespace Orchard.Layouts.Framework.Drivers
             if (name != null)
             {
                 var value = context.ValueProvider.GetValue(context.Prefix + name);
-                if (value != null)
+                if (value != Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
                 {
-                    context.Element.Data[name] = value.AttemptedValue;
+                    context.Element.Data[name] = value.FirstValue;
                 }
                 else if (formElementShape.Metadata.Type == "Checkbox")
                 {

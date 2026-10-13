@@ -1,4 +1,4 @@
-using System.Web;
+using Microsoft.AspNetCore.Http;
 
 namespace Orchard.Localization.Services
 {
@@ -10,6 +10,6 @@ namespace Orchard.Localization.Services
 
     public interface ICultureSelector : IDependency
     {
-        CultureSelectorResult GetCulture(HttpContextBase context);
+        CultureSelectorResult GetCulture(HttpContext context);
     }
 }

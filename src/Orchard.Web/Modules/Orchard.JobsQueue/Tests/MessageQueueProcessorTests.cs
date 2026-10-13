@@ -5,7 +5,6 @@ using Moq;
 using NUnit.Framework;
 using Orchard.JobsQueue.Models;
 using Orchard.JobsQueue.Services;
-using Orchard.Messaging.Models;
 using Orchard.Messaging.Services;
 using Orchard.Tests;
 
@@ -46,7 +45,7 @@ namespace Orchard.Messaging.Tests {
         public void ProcessingQueueWithEnoughTimeSendsAllMessages() {
             var processor = _container.Resolve<IJobsQueueProcessor>();
             
-            processor.ProcessQueue();
+            processor.ProcessQueue(1, uint.MaxValue);
             
         }
 

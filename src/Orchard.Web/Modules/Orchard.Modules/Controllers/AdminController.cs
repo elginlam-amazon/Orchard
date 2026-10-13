@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Data.Migration;
 using Orchard.DisplayManagement;
 using Orchard.Environment.Configuration;
@@ -66,7 +66,7 @@ namespace Orchard.Modules.Controllers
         public ActionResult Index(ModulesIndexOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to manage modules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             Pager pager = new Pager(Services.WorkContext.CurrentSite, pagerParameters);
 
@@ -95,7 +95,7 @@ namespace Orchard.Modules.Controllers
 
                 if (_extensionDisplayEventHandler != null)
                 {
-                    foreach (string notification in _extensionDisplayEventHandler.Displaying(moduleEntry.Descriptor, ControllerContext.RequestContext))
+                    foreach (string notification in _extensionDisplayEventHandler.Displaying(moduleEntry.Descriptor, ControllerContext))
                     {
                         moduleEntry.Notifications.Add(notification);
                     }
@@ -115,7 +115,7 @@ namespace Orchard.Modules.Controllers
         public ActionResult Features()
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageFeatures, T("Not allowed to manage features")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var featuresThatNeedUpdate = _dataMigrationManager.GetFeaturesThatNeedUpdate();
 
@@ -144,7 +144,7 @@ namespace Orchard.Modules.Controllers
         {
 
             if (!Services.Authorizer.Authorize(Permissions.ManageFeatures, T("Not allowed to manage features")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (featureIds == null || !featureIds.Any())
             {

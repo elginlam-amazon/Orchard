@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData.Models;
 using Orchard.Environment.Extensions;
@@ -17,9 +17,9 @@ namespace Orchard.Glimpse.AlternateImplementation
     {
         private readonly IContentManager _decoratedService;
         private readonly IGlimpseService _glimpseService;
-        private readonly UrlHelper _urlHelper;
+        private readonly IUrlHelper _urlHelper;
 
-        public GlimpseWidgetContentManagerDecorator(IContentManager decoratedService, IGlimpseService glimpseService, UrlHelper urlHelper)
+        public GlimpseWidgetContentManagerDecorator(IContentManager decoratedService, IGlimpseService glimpseService, IUrlHelper urlHelper)
         {
             _decoratedService = decoratedService;
             _glimpseService = glimpseService;

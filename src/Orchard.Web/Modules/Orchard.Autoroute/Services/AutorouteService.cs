@@ -73,7 +73,7 @@ namespace Orchard.Autoroute.Services
                 // TODO: Refactor the below so that we don't need to know about Request.Form["Localization.SelectedCulture"].
                 // If we are creating from a form post we use the form value for culture.
                 var context = _httpContextAccessor.Current();
-                var selectedCulture = context.Request.Form["Localization.SelectedCulture"];
+                var selectedCulture = context.Request.Form["Localization.SelectedCulture"].ToString();
                 if (!string.IsNullOrEmpty(selectedCulture))
                 {
                     itemCulture = selectedCulture;

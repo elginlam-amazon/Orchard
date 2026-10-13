@@ -1,14 +1,14 @@
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Layouts.Filters;
 
 namespace Orchard.Layouts.Services
 {
     public class CurrentControllerAccessor : ICurrentControllerAccessor
     {
-        private readonly HttpContextBase _httpContext;
+        private readonly HttpContext _httpContext;
 
-        public CurrentControllerAccessor(HttpContextBase httpContext)
+        public CurrentControllerAccessor(HttpContext httpContext)
         {
             _httpContext = httpContext;
         }

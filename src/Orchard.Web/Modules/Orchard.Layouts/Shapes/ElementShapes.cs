@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.ContentManagement;
 using Orchard.Core.Shapes;
 using Orchard.DisplayManagement;
@@ -9,6 +9,7 @@ using Orchard.DisplayManagement.Shapes;
 using Orchard.Environment;
 using Orchard.Layouts.Framework.Elements;
 using Orchard.Tokens;
+using Orchard.Mvc.Html;
 
 namespace Orchard.Layouts.Shapes
 {
@@ -65,8 +66,9 @@ namespace Orchard.Layouts.Shapes
                 Output.Write(tagBuilder.StartElement);
                 if (title != null)
                 {
-                    var legendTagBuilder = new TagBuilder("legend") { InnerHtml = title };
-                    Output.WriteLine(legendTagBuilder.ToString());
+                    var legendTagBuilder = new TagBuilder("legend");
+                    legendTagBuilder.InnerHtml.AppendHtml(title);
+                    Output.WriteLine(legendTagBuilder.ToHtmlString());
                 }
                 DisplayChildren(form, Display, Output);
                 Output.WriteLine(tagBuilder.EndElement);

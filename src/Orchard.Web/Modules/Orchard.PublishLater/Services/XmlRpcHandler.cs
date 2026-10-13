@@ -10,6 +10,7 @@ using Orchard.Localization;
 using Orchard.PublishLater.Models;
 using Orchard.Security;
 using Orchard.Tasks.Scheduling;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.PublishLater.Services
 {

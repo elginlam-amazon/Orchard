@@ -1,5 +1,5 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Blogs.Extensions;
 using Orchard.Blogs.Models;
 using Orchard.Blogs.Services;
@@ -68,11 +68,11 @@ namespace Orchard.Blogs.Controllers
 
             var blogPart = _blogService.Get(blogId, VersionOptions.Published).As<BlogPart>();
             if (blogPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!_services.Authorizer.Authorize(Orchard.Core.Contents.Permissions.ViewContent, blogPart, T("Cannot view content")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             pager.PageSize = blogPart.PostsPerPage;

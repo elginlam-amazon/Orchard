@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Data.Migration;
 using Orchard.Environment.Extensions;
 using Orchard.Localization;
 using Orchard.Modules.Extensions;
+using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
 using Orchard.UI.Admin.Notification;
 using Orchard.UI.Notify;
 
@@ -38,7 +40,7 @@ namespace Orchard.Modules.Data.Migration
 
             if (features.Any())
             {
-                UrlHelper urlHelper = new UrlHelper(_workContext.HttpContext.Request.RequestContext);
+                IUrlHelper urlHelper = HtmlHelperFactory.CreateUrlHelper(_workContext.HttpContext.GetActionContext());
 
                 yield return new NotifyEntry
                 {

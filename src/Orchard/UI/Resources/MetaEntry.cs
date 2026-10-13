@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Orchard.Mvc.Html;
 
 namespace Orchard.UI.Resources
 {

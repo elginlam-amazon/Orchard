@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Http.Controllers;
-using System.Web.Mvc;
 using Autofac.Core;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Records;
 using Orchard.Data;
@@ -200,12 +199,13 @@ namespace Orchard.Environment.ShellBuilders
 
         private static bool IsController(Type type)
         {
-            return typeof(IController).IsAssignableFrom(type);
+            // the MVC controllers (formerly IController), the HTTP API controllers are also MVC controllers
+            return typeof(ControllerBase).IsAssignableFrom(type) && !IsHttpController(type);
         }
 
         private static bool IsHttpController(Type type)
         {
-            return typeof(IHttpController).IsAssignableFrom(type);
+            return typeof(Orchard.WebApi.ApiController).IsAssignableFrom(type);
         }
 
         private static ControllerBlueprint BuildController(Type type, Feature feature)
@@ -215,6 +215,9 @@ namespace Orchard.Environment.ShellBuilders
             var controllerName = type.Name;
             if (controllerName.EndsWith("Controller"))
                 controllerName = controllerName.Substring(0, controllerName.Length - "Controller".Length);
+
+            // Controllers are routed by area in the application wide MVC model.
+            Orchard.Mvc.ControllerAreaConvention.Register(type, areaName);
 
             return new ControllerBlueprint
             {

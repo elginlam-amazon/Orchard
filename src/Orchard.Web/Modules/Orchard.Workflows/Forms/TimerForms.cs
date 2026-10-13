@@ -1,4 +1,4 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.DisplayManagement;
 using Orchard.Environment.Extensions;
 using Orchard.Forms.Services;
@@ -58,12 +58,12 @@ namespace Orchard.Workflows.Forms
         {
             if (context.FormName == "ActivityTimer")
             {
-                if (context.ValueProvider.GetValue("Amount").AttemptedValue == string.Empty)
+                if (context.ValueProvider.GetValue("Amount").FirstValue == string.Empty)
                 {
                     context.ModelState.AddModelError("Amount", T("You must provide an Amount").Text);
                 }
 
-                if (context.ValueProvider.GetValue("Unity").AttemptedValue == string.Empty)
+                if (context.ValueProvider.GetValue("Unity").FirstValue == string.Empty)
                 {
                     context.ModelState.AddModelError("Unity", T("You must provide a Type").Text);
                 }

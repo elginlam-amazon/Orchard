@@ -42,7 +42,7 @@ namespace Orchard.DynamicForms.Validators
                 {
                     var result = ExecuteValidateRequest(
                         settings.PrivateKey,
-                        httpContext.Request.ServerVariables["REMOTE_ADDR"],
+                        httpContext.Connection.RemoteIpAddress?.ToString(),
                         response
                         );
 

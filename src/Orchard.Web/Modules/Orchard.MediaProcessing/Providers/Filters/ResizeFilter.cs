@@ -1,8 +1,7 @@
 using System;
-using System.Drawing;
 using System.IO;
-using System.Web.Mvc;
-using ImageResizer;
+using SkiaSharp;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.DisplayManagement;
 using Orchard.Forms.Services;
 using Orchard.Localization;
@@ -39,64 +38,57 @@ namespace Orchard.MediaProcessing.Providers.Filters
             string padcolor = context.State.PadColor;
             string scale = context.State.Scale;
 
-            var settings = new ResizeSettings
-            {
-                Mode = FitMode.Max,
-                Height = height,
-                Width = witdh
-            };
+            var fitMode = ImageFitMode.Max;
+            var scaleMode = ImageScaleMode.DownscaleOnly;
+            var anchor = ImageAnchor.MiddleCenter;
+            SKColor? backgroundColor = null;
 
             switch (mode)
             {
-                case "max": settings.Mode = FitMode.Max; break;
+                case "max": fitMode = ImageFitMode.Max; break;
                 case "pad":
-                    settings.Mode = FitMode.Pad;
-                    settings.Scale = ScaleMode.Both;
+                    fitMode = ImageFitMode.Pad;
+                    scaleMode = ImageScaleMode.Both;
                     break;
-                case "crop": settings.Mode = FitMode.Crop; break;
-                case "stretch": settings.Mode = FitMode.Stretch; break;
+                case "crop": fitMode = ImageFitMode.Crop; break;
+                case "stretch": fitMode = ImageFitMode.Stretch; break;
             }
 
             switch (alignment)
             {
-                case "topleft": settings.Anchor = ContentAlignment.TopLeft; break;
-                case "topcenter": settings.Anchor = ContentAlignment.TopCenter; break;
-                case "topright": settings.Anchor = ContentAlignment.TopRight; break;
-                case "middleleft": settings.Anchor = ContentAlignment.MiddleLeft; break;
-                case "middlecenter": settings.Anchor = ContentAlignment.MiddleCenter; break;
-                case "middleright": settings.Anchor = ContentAlignment.MiddleRight; break;
-                case "bottomleft": settings.Anchor = ContentAlignment.BottomLeft; break;
-                case "bottomcenter": settings.Anchor = ContentAlignment.BottomCenter; break;
-                case "bottomright": settings.Anchor = ContentAlignment.BottomRight; break;
+                case "topleft": anchor = ImageAnchor.TopLeft; break;
+                case "topcenter": anchor = ImageAnchor.TopCenter; break;
+                case "topright": anchor = ImageAnchor.TopRight; break;
+                case "middleleft": anchor = ImageAnchor.MiddleLeft; break;
+                case "middlecenter": anchor = ImageAnchor.MiddleCenter; break;
+                case "middleright": anchor = ImageAnchor.MiddleRight; break;
+                case "bottomleft": anchor = ImageAnchor.BottomLeft; break;
+                case "bottomcenter": anchor = ImageAnchor.BottomCenter; break;
+                case "bottomright": anchor = ImageAnchor.BottomRight; break;
             }
 
             if (!string.IsNullOrWhiteSpace(padcolor))
             {
-                if (padcolor.StartsWith("#"))
+                // html (#rrggbb) or named colors
+                if (SKColor.TryParse(padcolor, out var color) || SKColor.TryParse(System.Drawing.ColorTranslator.ToHtml(System.Drawing.Color.FromName(padcolor)), out color))
                 {
-                    settings.BackgroundColor = ColorTranslator.FromHtml(padcolor);
-                }
-                else
-                {
-                    settings.BackgroundColor = Color.FromName(padcolor);
+                    backgroundColor = color;
                 }
             }
 
             switch (scale)
             {
-                case "downscaleOnly": settings.Scale = ScaleMode.DownscaleOnly; break;
-                case "upscaleOnly": settings.Scale = ScaleMode.UpscaleOnly; break;
-                case "both": settings.Scale = ScaleMode.Both; break;
-                case "upscaleCanvas": settings.Scale = ScaleMode.UpscaleCanvas; break;
+                case "downscaleOnly": scaleMode = ImageScaleMode.DownscaleOnly; break;
+                case "upscaleOnly": scaleMode = ImageScaleMode.UpscaleOnly; break;
+                case "both": scaleMode = ImageScaleMode.Both; break;
+                case "upscaleCanvas": scaleMode = ImageScaleMode.UpscaleCanvas; break;
             }
 
-            var result = new MemoryStream();
             if (context.Media.CanSeek)
             {
                 context.Media.Seek(0, SeekOrigin.Begin);
             }
-            ImageBuilder.Current.Build(context.Media, result, settings, true);
-            context.Media = result;
+            context.Media = SkiaImageProcessor.Resize(context.Media, witdh, height, fitMode, scaleMode, anchor, backgroundColor);
         }
 
         public LocalizedString DisplayFilter(FilterContext context)

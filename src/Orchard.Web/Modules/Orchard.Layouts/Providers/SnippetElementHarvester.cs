@@ -111,10 +111,10 @@ namespace Orchard.Layouts.Providers
                     var name = fieldDescriptor.Name;
                     var result = context.ValueProvider.GetValue(name);
 
-                    if (result == null)
+                    if (result == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
                         continue;
 
-                    context.Element.Data[name] = result.AttemptedValue;
+                    context.Element.Data[name] = result.FirstValue;
                 }
             }
 
@@ -161,7 +161,7 @@ namespace Orchard.Layouts.Providers
         private SnippetDescriptor CreateSnippetDescriptor(ShapeDescriptor shapeDescriptor, Snippet snippetElement)
         {
             // Initializing and checking access to the Snippet manifest file.
-            var physicalSourcePath = _wca.GetContext().HttpContext.Server.MapPath(shapeDescriptor.BindingSource);
+            var physicalSourcePath = HostingEnvironment.MapPath(shapeDescriptor.BindingSource);
             var fullPath = Path.Combine(
                 Path.GetDirectoryName(physicalSourcePath) ?? "",
                 Path.GetFileNameWithoutExtension(physicalSourcePath) + ".txt");

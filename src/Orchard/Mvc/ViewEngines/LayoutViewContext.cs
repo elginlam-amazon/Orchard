@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.Mvc.ViewEngines
 {
@@ -14,14 +14,14 @@ namespace Orchard.Mvc.ViewEngines
             Contents = new Dictionary<string, TextWriter>();
         }
 
-        public static LayoutViewContext From(ControllerContext context)
+        public static LayoutViewContext From(ActionContext context)
         {
             return From(context.HttpContext);
         }
 
-        public static LayoutViewContext From(HttpContextBase context)
+        public static LayoutViewContext From(HttpContext context)
         {
-            if (!context.Items.Contains(_key))
+            if (!context.Items.ContainsKey(_key))
             {
                 context.Items.Add(_key, new LayoutViewContext());
             }

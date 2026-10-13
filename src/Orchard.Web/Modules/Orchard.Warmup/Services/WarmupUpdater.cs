@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Web;
 using System.Xml;
 using Orchard.ContentManagement;
 using Orchard.Environment.Configuration;
@@ -11,6 +10,7 @@ using Orchard.FileSystems.AppData;
 using Orchard.FileSystems.LockFile;
 using Orchard.Logging;
 using Orchard.Services;
+using Orchard.Utility;
 using Orchard.Warmup.Models;
 
 namespace Orchard.Warmup.Services

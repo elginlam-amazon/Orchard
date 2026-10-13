@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.UI.WebControls;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
 using Orchard.Environment.Extensions;
@@ -37,7 +36,7 @@ namespace Orchard.Taxonomies.Controllers
             _localizationService = localizationService;
         }
 
-        [OutputCache(NoStore = true, Duration = 0)]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public virtual ActionResult GetTaxonomy(string contentTypeName, string taxonomyFieldName, int contentId, string culture, string selectedValues)
         {
             return GetTaxonomyInternal(contentTypeName, taxonomyFieldName, contentId, culture, selectedValues);

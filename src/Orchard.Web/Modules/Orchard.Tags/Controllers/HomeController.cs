@@ -1,5 +1,5 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement;
 using Orchard.Localization;
@@ -12,7 +12,7 @@ using Orchard.UI.Navigation;
 
 namespace Orchard.Tags.Controllers
 {
-    [ValidateInput(false), Themed]
+    [Themed]
     public class HomeController : Controller
     {
         private readonly ITagService _tagService;

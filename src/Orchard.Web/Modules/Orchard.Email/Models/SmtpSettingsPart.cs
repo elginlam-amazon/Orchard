@@ -1,6 +1,5 @@
 using System;
-using System.Configuration;
-using System.Net.Configuration;
+using Orchard.Email.Services;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Utilities;
 
@@ -95,7 +94,7 @@ namespace Orchard.Email.Models
 
         public bool IsValid()
         {
-            var section = (SmtpSection)ConfigurationManager.GetSection("system.net/mailSettings/smtp");
+            var section = SmtpSection.Load();
             if (section != null && !string.IsNullOrWhiteSpace(section.Network.Host))
             {
                 return true;

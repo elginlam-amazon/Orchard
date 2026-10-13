@@ -1,5 +1,7 @@
 using System;
-using System.Web;
+using System.IO;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Html;
 
 namespace Orchard.Localization
 {
@@ -7,7 +9,7 @@ namespace Orchard.Localization
     /// <summary>
     /// An HTML-encoded localized string
     /// </summary>
-    public class LocalizedString : MarshalByRefObject, IHtmlString
+    public class LocalizedString : IHtmlContent
     {
         public LocalizedString(string languageNeutral)
         {
@@ -52,9 +54,12 @@ namespace Orchard.Localization
             return Text;
         }
 
-        string IHtmlString.ToHtmlString()
+        /// <summary>
+        /// Writes the HTML-encoded localized text, as is.
+        /// </summary>
+        public void WriteTo(TextWriter writer, HtmlEncoder encoder)
         {
-            return Text;
+            writer.Write(Text);
         }
 
         public override int GetHashCode()
@@ -72,12 +77,6 @@ namespace Orchard.Localization
 
             var that = (LocalizedString)obj;
             return string.Equals(Text, that.Text);
-        }
-
-        public override object InitializeLifetimeService()
-        {
-            // never expire the cross-AppDomain lease on this object
-            return null;
         }
     }
 }

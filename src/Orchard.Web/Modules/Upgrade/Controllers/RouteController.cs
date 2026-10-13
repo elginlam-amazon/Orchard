@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Transactions;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard;
 using Orchard.Autoroute.Models;
 using Orchard.Autoroute.Services;
@@ -14,6 +14,7 @@ using Orchard.Data;
 using Orchard.Environment.Configuration;
 using Orchard.Localization;
 using Orchard.Logging;
+using Orchard.Mvc.Extensions;
 using Orchard.Security;
 using Orchard.UI.Admin;
 using Orchard.UI.Notify;
@@ -73,11 +74,11 @@ namespace Upgrade.Controllers
         public ActionResult IndexPOST()
         {
             if (!_orchardServices.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to migrate routes.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new MigrateViewModel { ContentTypes = new List<ContentTypeEntry>() };
 
-            if (TryUpdateModel(viewModel))
+            if (this.TryUpdateModel(viewModel))
             {
 
                 var contentTypeNames = string.Join(" ,", viewModel.ContentTypes.Where(x => x.IsChecked).Select(x => x.ContentTypeName).ToArray());

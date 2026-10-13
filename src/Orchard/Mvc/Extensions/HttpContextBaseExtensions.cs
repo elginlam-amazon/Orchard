@@ -1,12 +1,12 @@
-using System.Web;
+using Microsoft.AspNetCore.Http;
 
 namespace Orchard.Mvc.Extensions
 {
     public static class HttpContextBaseExtensions
     {
-        public static bool IsBackgroundContext(this HttpContextBase httpContextBase)
+        public static bool IsBackgroundContext(this HttpContext httpContextBase)
         {
-            return httpContextBase == null || httpContextBase is MvcModule.HttpContextPlaceholder;
+            return httpContextBase == null || httpContextBase.Items.ContainsKey(MvcModule.IsBackgroundHttpContextKey);
         }
     }
 

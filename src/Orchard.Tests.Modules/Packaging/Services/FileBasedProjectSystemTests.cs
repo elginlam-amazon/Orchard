@@ -1,7 +1,7 @@
 using System.IO;
 using Autofac;
 using Moq;
-using NuGet;
+using Orchard.Packaging.Packages;
 using NUnit.Framework;
 using Orchard.Caching;
 using Orchard.Environment;

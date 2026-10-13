@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.Core.Title.Models;
 using Orchard.DisplayManagement;
 using Orchard.Forms.Services;
 using Orchard.Localization;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.Projections.Descriptors.Filter;
 using Orchard.Projections.Descriptors.Layout;
 using Orchard.Projections.Descriptors.SortCriterion;
@@ -21,7 +24,6 @@ using Orchard.UI.Notify;
 
 namespace Orchard.Projections.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller, IUpdateModel
     {
         private readonly IOrchardServices _services;
@@ -53,7 +55,7 @@ namespace Orchard.Projections.Controllers
         public ActionResult Index(AdminIndexOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to list queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(_siteService.GetSiteSettings(), pagerParameters);
 
@@ -114,13 +116,13 @@ namespace Orchard.Projections.Controllers
 
         [HttpPost]
         [FormValueRequired("submit.BulkEdit")]
-        public ActionResult Index(FormCollection input)
+        public ActionResult Index(IFormCollection input)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new AdminIndexViewModel { Queries = new List<QueryEntry>(), Options = new AdminIndexOptions() };
-            UpdateModel(viewModel);
+            this.UpdateModel(viewModel);
 
             var checkedItems = viewModel.Queries.Where(c => c.IsChecked);
 
@@ -145,7 +147,7 @@ namespace Orchard.Projections.Controllers
         public ActionResult Edit(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to edit queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var query = _queryService.GetQuery(id);
             var viewModel = new AdminEditViewModel
@@ -176,7 +178,7 @@ namespace Orchard.Projections.Controllers
                                 Category = f.Category,
                                 Type = f.Type,
                                 FilterRecordId = filter.Id,
-                                DisplayText = string.IsNullOrWhiteSpace(filter.Description) ? f.Display(new FilterContext { State = FormParametersHelper.ToDynamic(filter.State) }).Text : filter.Description
+                                DisplayText = string.IsNullOrWhiteSpace(filter.Description) ? f.Display(new Orchard.Projections.Descriptors.Filter.FilterContext { State = FormParametersHelper.ToDynamic(filter.State) }).Text : filter.Description
                             });
                     }
                 }
@@ -255,13 +257,13 @@ namespace Orchard.Projections.Controllers
         public ActionResult Delete(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var query = _queryService.GetQuery(id);
 
             if (query == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             Services.ContentManager.Remove(query.ContentItem);
@@ -273,7 +275,7 @@ namespace Orchard.Projections.Controllers
         public ActionResult Preview(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var contentItems = _projectionManager.GetContentItems(id, 0, 20);
             var contentShapes = contentItems.Select(item => _services.ContentManager.BuildDisplay(item, "Summary"));
@@ -286,7 +288,7 @@ namespace Orchard.Projections.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         public void AddModelError(string key, LocalizedString errorMessage)

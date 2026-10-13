@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Handlers;
@@ -76,7 +76,7 @@ namespace Upgrade.Controllers
         //[HttpPost, ActionName("Index")]
         //public ActionResult IndexPOST() {
         //    if (!_orchardServices.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to update fields' indexes.")))
-        //        return new HttpUnauthorizedResult();
+        //        return new UnauthorizedResult();
 
         //    // Get all ContentTypes with fields and Updates the LatestValue if necessary
         //    var contentTypesWithFields = _contentDefinitionManager.ListTypeDefinitions().OrderBy(c => c.Name).Where(w => w.Parts.Any(x => x.PartDefinition.Fields.Any()));
@@ -117,7 +117,7 @@ namespace Upgrade.Controllers
                 lastContentItemId = content.Id;
             }
 
-            return new JsonResult { Data = lastContentItemId };
+            return new JsonResult(lastContentItemId);
         }
 
     }

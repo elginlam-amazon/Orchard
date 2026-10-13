@@ -1,6 +1,7 @@
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Orchard.Mvc.Html;
 
 namespace Orchard.DisplayManagement.Shapes
 {
@@ -13,11 +14,11 @@ namespace Orchard.DisplayManagement.Shapes
     {
         public OrchardTagBuilder(string tagName) : base(tagName) { }
 
-        public IHtmlString StartElement => new HtmlString(ToString(TagRenderMode.StartTag));
-        public IHtmlString EndElement => new HtmlString(ToString(TagRenderMode.EndTag));
-        public IHtmlString ToHtmlString(TagRenderMode renderMode = TagRenderMode.Normal)
+        public IHtmlContent StartElement => new HtmlString(this.ToString(TagRenderMode.StartTag));
+        public IHtmlContent EndElement => new HtmlString(this.ToString(TagRenderMode.EndTag));
+        public IHtmlContent ToHtmlString(TagRenderMode renderMode = TagRenderMode.Normal)
         {
-            return new HtmlString(ToString(renderMode));
+            return new HtmlString(this.ToString(renderMode));
         }
     }
 
@@ -30,7 +31,7 @@ namespace Orchard.DisplayManagement.Shapes
             foreach (var cssClass in shape.Classes ?? Enumerable.Empty<string>())
                 tagBuilder.AddCssClass(cssClass);
             if (!string.IsNullOrEmpty(shape.Id))
-                tagBuilder.GenerateId(shape.Id);
+                tagBuilder.GenerateId((string)shape.Id, "_");
             return tagBuilder;
         }
     }

@@ -7,14 +7,17 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac;
 using Autofac.Core;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.CSharp.RuntimeBinder;
 using Orchard.DisplayManagement.Implementation;
 using Orchard.Mvc.Spooling;
+using Orchard.Environment.AutofacUtil;
+using Orchard.Mvc.Html;
 
 namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
 {
@@ -22,17 +25,14 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
     {
         private readonly IEnumerable<ShapeAttributeOccurrence> _shapeAttributeOccurrences;
         private readonly IComponentContext _componentContext;
-        private readonly RouteCollection _routeCollection;
 
         public ShapeAttributeBindingStrategy(
             IEnumerable<ShapeAttributeOccurrence> shapeAttributeOccurrences,
-            IComponentContext componentContext,
-            RouteCollection routeCollection)
+            IComponentContext componentContext)
         {
             _shapeAttributeOccurrences = shapeAttributeOccurrences;
             // todo: using a component context won't work when this is singleton
             _componentContext = componentContext;
-            _routeCollection = routeCollection;
         }
 
         public void Discover(ShapeTableBuilder builder)
@@ -50,7 +50,7 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
         }
 
         [DebuggerStepThrough]
-        private Func<DisplayContext, IHtmlString> CreateDelegate(
+        private Func<DisplayContext, IHtmlContent> CreateDelegate(
             ShapeAttributeOccurrence attributeOccurrence,
             ShapeDescriptor descriptor)
         {
@@ -63,7 +63,7 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
             };
         }
 
-        private IHtmlString PerformInvoke(DisplayContext displayContext, MethodInfo methodInfo, object serviceInstance)
+        private IHtmlContent PerformInvoke(DisplayContext displayContext, MethodInfo methodInfo, object serviceInstance)
         {
             var output = new HtmlStringWriter();
             var arguments = methodInfo.GetParameters()
@@ -85,9 +85,9 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
             }
         }
 
-        private static IHtmlString CoerceHtmlString(object invoke)
+        private static IHtmlContent CoerceHtmlString(object invoke)
         {
-            return invoke as IHtmlString ?? (invoke != null ? new HtmlString(invoke.ToString()) : null);
+            return invoke as IHtmlContent ?? (invoke != null ? new HtmlString(invoke.ToString()) : null);
         }
 
         private object BindParameter(DisplayContext displayContext, ParameterInfo parameter, TextWriter output)
@@ -107,15 +107,14 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
             // meh--
             if (parameter.Name == "Html")
             {
-                return new HtmlHelper(
+                return HtmlHelperFactory.CreateHtmlHelper(
                     displayContext.ViewContext,
-                    displayContext.ViewDataContainer,
-                    _routeCollection);
+                    displayContext.ViewDataContainer);
             }
 
-            if (parameter.Name == "Url" && parameter.ParameterType.IsAssignableFrom(typeof(UrlHelper)))
+            if (parameter.Name == "Url" && parameter.ParameterType.IsAssignableFrom(typeof(IUrlHelper)))
             {
-                return new UrlHelper(displayContext.ViewContext.RequestContext, _routeCollection);
+                return HtmlHelperFactory.CreateUrlHelper(displayContext.ViewContext);
             }
 
             var getter = _getters.GetOrAdd(parameter.Name, n =>

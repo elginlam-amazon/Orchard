@@ -1,10 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Orchard.Specs.Hosting
 {
-    public class MessageSink : MarshalByRefObject
+    public class MessageSink
     {
         readonly IList<string> _messages = new List<string>();
 

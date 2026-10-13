@@ -1,6 +1,6 @@
 using System;
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.Layouts.Elements;
 using Orchard.Layouts.Models;
 using Orchard.Localization;
@@ -10,7 +10,7 @@ namespace Orchard.Layouts.Helpers
     public static class SnippetHtmlExtensions
     {
 
-        public static SnippetFieldDescriptorBuilder SnippetField(this HtmlHelper htmlHelper, string name, string type = null)
+        public static SnippetFieldDescriptorBuilder SnippetField(this IHtmlHelper htmlHelper, string name, string type = null)
         {
             var shape = (dynamic)htmlHelper.ViewData.Model;
 
@@ -19,7 +19,7 @@ namespace Orchard.Layouts.Helpers
                 .WithType(type);
         }
 
-        public class SnippetFieldDescriptorBuilder : IHtmlString
+        public class SnippetFieldDescriptorBuilder : IHtmlContent
         {
             private readonly dynamic _shape;
 
@@ -35,6 +35,11 @@ namespace Orchard.Layouts.Helpers
             {
                 Descriptor.Name = value;
                 return this;
+            }
+
+            public void WriteTo(System.IO.TextWriter writer, System.Text.Encodings.Web.HtmlEncoder encoder)
+            {
+                writer.Write(ToHtmlString());
             }
 
             public SnippetFieldDescriptorBuilder WithType(string value)

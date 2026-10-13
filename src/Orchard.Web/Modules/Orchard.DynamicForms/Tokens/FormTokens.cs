@@ -44,7 +44,7 @@ namespace Orchard.DynamicForms.Tokens
 
         private object GetFieldValidationStatus(string fieldName, FormSubmissionTokenContext context)
         {
-            return context.ModelState.IsValidField(fieldName);
+            return context.ModelState.GetFieldValidationState(fieldName) != Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid;
         }
 
         private object GetCreatedContent(FormSubmissionTokenContext context)

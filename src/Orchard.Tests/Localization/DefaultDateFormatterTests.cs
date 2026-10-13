@@ -17,6 +17,18 @@ namespace Orchard.Tests.Localization
     [Category("longrunning")]
     public class DefaultDateFormatterTests
     {
+        /// <summary>
+        /// Compares the results of a case (NUnit 3 records the failed assertions of the test even when the
+        /// AssertionException is caught, and doesn't support assertions from parallel threads).
+        /// </summary>
+        private static void CheckEqual<T>(T expected, T actual)
+        {
+            if (!Equals(expected, actual))
+            {
+                throw new Exception(string.Format("Expected: {0} But was: {1}", expected, actual));
+            }
+        }
+
 
         [SetUp]
         public void Init()
@@ -65,7 +77,7 @@ namespace Orchard.Tests.Localization
                         {
                             var result = target.ParseDateTime(dateTimeString, dateTimeFormat);
                             var expected = GetExpectedDateTimeParts(dateTime, dateTimeFormat, TimeZoneInfo.Utc);
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {
@@ -129,7 +141,7 @@ namespace Orchard.Tests.Localization
                         {
                             var result = target.ParseDateTime(dateTimeString, dateTimeFormat);
                             var expected = GetExpectedDateTimeParts(dateTime, dateTimeFormat, TimeZoneInfo.Utc);
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {
@@ -208,7 +220,7 @@ namespace Orchard.Tests.Localization
                         {
                             var result = target.ParseDateTime(dateTimeString, dateTimeFormat);
                             var expected = GetExpectedDateTimeParts(dateTime, dateTimeFormat, timeZone);
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {
@@ -265,7 +277,7 @@ namespace Orchard.Tests.Localization
                         {
                             var result = target.ParseDateTime(dateTimeString, dateTimeFormat);
                             var expected = GetExpectedDateTimeParts(dateTime, dateTimeFormat, TimeZoneInfo.Utc);
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {
@@ -331,7 +343,7 @@ namespace Orchard.Tests.Localization
                         {
                             var result = target.ParseDate(dateString, dateFormat);
                             var expected = GetExpectedDateParts(date, dateFormat);
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {
@@ -400,7 +412,7 @@ namespace Orchard.Tests.Localization
                         {
                             var result = target.ParseTime(timeString, timeFormat);
                             var expected = GetExpectedTimeParts(time, timeFormat, TimeZoneInfo.Utc);
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {
@@ -481,7 +493,7 @@ namespace Orchard.Tests.Localization
                                     expected = expected.Replace(monthNameGenitive, monthName);
                                 }
                             }
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {
@@ -554,7 +566,7 @@ namespace Orchard.Tests.Localization
                                     expected = expected.Replace(monthNameGenitive, monthName);
                                 }
                             }
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {
@@ -658,7 +670,7 @@ namespace Orchard.Tests.Localization
                                 }
                             }
 
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {
@@ -731,7 +743,7 @@ namespace Orchard.Tests.Localization
                                     expected = expected.Replace(monthNameGenitive, monthName);
                                 }
                             }
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {
@@ -804,7 +816,7 @@ namespace Orchard.Tests.Localization
                                     expected = expected.Replace(monthNameGenitive, monthName);
                                 }
                             }
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {
@@ -857,7 +869,7 @@ namespace Orchard.Tests.Localization
                         {
                             var result = target.FormatTime(timeParts, timeFormat);
                             var expected = date.ToString(timeFormat, culture);
-                            Assert.AreEqual(expected, result);
+                            CheckEqual(expected, result);
                         }
                         catch (Exception ex)
                         {

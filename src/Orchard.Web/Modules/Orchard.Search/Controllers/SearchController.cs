@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Collections;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement;
@@ -19,7 +19,7 @@ using Orchard.UI.Notify;
 namespace Orchard.Search.Controllers
 {
 
-    [ValidateInput(false), Themed]
+    [Themed]
     public class SearchController : Controller
     {
         private readonly ISearchService _searchService;
@@ -58,7 +58,7 @@ namespace Orchard.Search.Controllers
             if (string.IsNullOrEmpty(index))
             {
                 Services.Notifier.Error(T("Please define a default search index."));
-                return HttpNotFound();
+                return NotFound();
             }
 
             IPageOfItems<ISearchHit> searchHits = new PageOfItems<ISearchHit>(new ISearchHit[] { });

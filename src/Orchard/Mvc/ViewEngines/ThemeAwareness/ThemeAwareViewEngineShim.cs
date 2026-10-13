@@ -1,10 +1,15 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Orchard.Environment;
 
 namespace Orchard.Mvc.ViewEngines.ThemeAwareness
 {
+    /// <summary>
+    /// The application wide view engine (registered in the MVC view options) forwarding to the
+    /// theme aware view engine of the current tenant work context.
+    /// </summary>
     public class ThemeAwareViewEngineShim : IViewEngine, IShim
     {
         public ThemeAwareViewEngineShim()
@@ -14,28 +19,23 @@ namespace Orchard.Mvc.ViewEngines.ThemeAwareness
 
         public IOrchardHostContainer HostContainer { get; set; }
 
-        public ViewEngineResult FindPartialView(ControllerContext controllerContext, string partialViewName, bool useCache)
+        public ViewEngineResult FindView(ActionContext context, string viewName, bool isMainPage)
         {
             return Forward(
-                controllerContext,
-                dve => dve.FindPartialView(controllerContext, partialViewName, useCache, false /*useDeepPaths*/),
-                EmptyViewEngineResult);
+                context,
+                dve => isMainPage
+                    ? dve.FindView(context, viewName, null, true, false /*useDeepPaths*/)
+                    : dve.FindPartialView(context, viewName, true, false /*useDeepPaths*/),
+                () => EmptyViewEngineResult(viewName));
         }
 
-        public ViewEngineResult FindView(ControllerContext controllerContext, string viewName, string masterName, bool useCache)
+        public ViewEngineResult GetView(string executingFilePath, string viewPath, bool isMainPage)
         {
-            return Forward(
-                controllerContext,
-                dve => dve.FindView(controllerContext, viewName, masterName, useCache, false /*useDeepPaths*/),
-                EmptyViewEngineResult);
+            // The views are resolved from the action context, see FindView.
+            return EmptyViewEngineResult(viewPath);
         }
 
-        public void ReleaseView(ControllerContext controllerContext, IView view)
-        {
-            throw new NotImplementedException();
-        }
-
-        static TResult Forward<TResult>(ControllerContext controllerContext, Func<IThemeAwareViewEngine, TResult> forwardAction, Func<TResult> defaultAction)
+        static TResult Forward<TResult>(ActionContext controllerContext, Func<IThemeAwareViewEngine, TResult> forwardAction, Func<TResult> defaultAction)
         {
             var workContext = controllerContext.GetWorkContext();
             if (workContext != null)
@@ -49,9 +49,9 @@ namespace Orchard.Mvc.ViewEngines.ThemeAwareness
             return defaultAction();
         }
 
-        static ViewEngineResult EmptyViewEngineResult()
+        static ViewEngineResult EmptyViewEngineResult(string viewName)
         {
-            return new ViewEngineResult(Enumerable.Empty<string>());
+            return ViewEngineResult.NotFound(viewName, Enumerable.Empty<string>());
         }
     }
 }

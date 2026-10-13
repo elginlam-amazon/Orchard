@@ -1,5 +1,5 @@
 using System;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Core.Feeds.Models;
 
 namespace Orchard.Core.Feeds

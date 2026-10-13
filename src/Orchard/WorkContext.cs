@@ -1,5 +1,5 @@
 using System;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Environment.Extensions.Models;
 using Orchard.Security;
 using Orchard.Settings;
@@ -47,9 +47,9 @@ namespace Orchard
         /// <summary>
         /// The http context corresponding to the work context
         /// </summary>
-        public HttpContextBase HttpContext
+        public HttpContext HttpContext
         {
-            get { return GetState<HttpContextBase>("HttpContext"); }
+            get { return GetState<HttpContext>("HttpContext"); }
             set { SetState("HttpContext", value); }
         }
 

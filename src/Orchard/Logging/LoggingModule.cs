@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using Autofac;
 using Autofac.Core;
+using Autofac.Core.Registration;
+using Orchard.Environment.AutofacUtil;
 using Module = Autofac.Module;
 
 namespace Orchard.Logging
@@ -29,7 +31,7 @@ namespace Orchard.Logging
             moduleBuilder.Register(CreateLogger).As<ILogger>().InstancePerDependency();
         }
 
-        protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
+        protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistry, IComponentRegistration registration)
         {
             var implementationType = registration.Activator.LimitType;
 
@@ -41,11 +43,11 @@ namespace Orchard.Logging
                 return;
 
             // otherwise, whan an instance of this component is activated, inject the loggers on the instance
-            registration.Activated += (s, e) =>
+            registration.OnActivatedDeferred((context, instance) =>
             {
                 foreach (var injector in injectors)
-                    injector(e.Context, e.Instance);
-            };
+                    injector(context, instance);
+            });
         }
 
         private IEnumerable<Action<IComponentContext, object>> BuildLoggerInjectors(Type componentType)

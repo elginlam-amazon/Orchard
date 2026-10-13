@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Blogs.Routing;
 using Orchard.Mvc.Routes;
+using Route = Orchard.Mvc.Routes.Route;
 
 namespace Orchard.Blogs
 {

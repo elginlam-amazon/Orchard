@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Orchard.ContentManagement.Handlers;
 using Orchard.DisplayManagement;
 using Orchard.Logging;
@@ -106,15 +107,15 @@ namespace Orchard.Forms.Services
             if (name != null)
             {
                 ValueProviderResult value = valueProvider.GetValue(prefix + name);
-                if (value != null)
+                if (value != ValueProviderResult.None)
                 {
                     if (shape.Metadata.Type == "Checkbox" || shape.Metadata.Type == "Radio")
                     {
-                        shape.Checked = Convert.ToString(shape.Value) == Convert.ToString(value.AttemptedValue);
+                        shape.Checked = Convert.ToString(shape.Value) == Convert.ToString(value.FirstValue);
                     }
                     else
                     {
-                        shape.Value = value.AttemptedValue;
+                        shape.Value = value.FirstValue;
                     }
 
                 }

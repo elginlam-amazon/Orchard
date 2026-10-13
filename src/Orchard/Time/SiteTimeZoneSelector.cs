@@ -1,5 +1,5 @@
 using System;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Exceptions;
 using Orchard.Logging;
 
@@ -21,7 +21,7 @@ namespace Orchard.Time
 
         public ILogger Logger { get; set; }
 
-        public TimeZoneSelectorResult GetTimeZone(HttpContextBase context)
+        public TimeZoneSelectorResult GetTimeZone(HttpContext context)
         {
 
             try

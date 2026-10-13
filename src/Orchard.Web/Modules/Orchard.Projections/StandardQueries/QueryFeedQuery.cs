@@ -1,12 +1,13 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Core.Feeds;
 using Orchard.Core.Feeds.Models;
 using Orchard.Core.Feeds.StandardBuilders;
 using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
 using Orchard.Projections.Models;
 using Orchard.Projections.Services;
 using Orchard.Services;
@@ -32,7 +33,7 @@ namespace Orchard.Projections.StandardQueries
         public FeedQueryMatch Match(FeedContext context)
         {
             var containerIdValue = context.ValueProvider.GetValue("projection");
-            if (containerIdValue == null)
+            if (containerIdValue == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
                 return null;
 
             return new FeedQueryMatch { FeedQuery = this, Priority = 0 };
@@ -41,17 +42,17 @@ namespace Orchard.Projections.StandardQueries
         public void Execute(FeedContext context)
         {
             var projectionId = context.ValueProvider.GetValue("projection");
-            if (projectionId == null || string.IsNullOrEmpty(projectionId.AttemptedValue))
+            if (projectionId == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None || string.IsNullOrEmpty(projectionId.FirstValue))
                 return;
 
             var limitValue = context.ValueProvider.GetValue("limit");
             var limit = 20;
-            if (limitValue != null)
+            if (limitValue != Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
             {
                 int.TryParse(Convert.ToString(limitValue), out limit);
             }
 
-            var containerId = (int)projectionId.ConvertTo(typeof(int));
+            var containerId = (int)System.Convert.ChangeType(projectionId.FirstValue, typeof(int), System.Globalization.CultureInfo.InvariantCulture);
             var container = _contentManager.Get<ProjectionPart>(containerId);
 
             if (container == null)
@@ -69,7 +70,7 @@ namespace Orchard.Projections.StandardQueries
 
                 context.Response.Contextualize(requestContext =>
                 {
-                    var urlHelper = new UrlHelper(requestContext);
+                    var urlHelper = HtmlHelperFactory.CreateUrlHelper(requestContext);
                     var uriBuilder = new UriBuilder(urlHelper.MakeAbsolute("/")) { Path = urlHelper.RouteUrl(inspector.Link) };
                     link.Add(uriBuilder.Uri.OriginalString);
                 });
@@ -80,7 +81,7 @@ namespace Orchard.Projections.StandardQueries
                 context.Builder.AddProperty(context, null, "description", inspector.Description);
                 context.Response.Contextualize(requestContext =>
                 {
-                    var urlHelper = new UrlHelper(requestContext);
+                    var urlHelper = HtmlHelperFactory.CreateUrlHelper(requestContext);
                     context.Builder.AddProperty(context, null, "link", urlHelper.RouteUrl(inspector.Link));
                 });
             }

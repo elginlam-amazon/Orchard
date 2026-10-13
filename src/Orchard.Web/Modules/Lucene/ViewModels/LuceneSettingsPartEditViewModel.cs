@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
 using Lucene.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Lucene.ViewModels
 {

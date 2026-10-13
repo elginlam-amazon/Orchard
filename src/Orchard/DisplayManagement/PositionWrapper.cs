@@ -1,14 +1,17 @@
+using System.IO;
+using System.Text.Encodings.Web;
 using System.Web;
+using Microsoft.AspNetCore.Html;
 
 namespace Orchard.DisplayManagement
 {
-    public class PositionWrapper : IHtmlString, IPositioned
+    public class PositionWrapper : IHtmlContent, IPositioned
     {
 
-        private IHtmlString _value;
+        private IHtmlContent _value;
         public string Position { get; private set; }
 
-        public PositionWrapper(IHtmlString value, string position)
+        public PositionWrapper(IHtmlContent value, string position)
         {
             _value = value;
             Position = position;
@@ -19,9 +22,9 @@ namespace Orchard.DisplayManagement
         {
         }
 
-        public string ToHtmlString()
+        public void WriteTo(TextWriter writer, HtmlEncoder encoder)
         {
-            return _value.ToHtmlString();
+            _value.WriteTo(writer, encoder);
         }
 
         public override string ToString()

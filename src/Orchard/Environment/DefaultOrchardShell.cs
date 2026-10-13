@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autofac.Features.OwnedInstances;
-using Microsoft.Owin.Builder;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting.Builder;
+using Microsoft.AspNetCore.Http.Features;
 using Orchard.Environment.Configuration;
 using Orchard.Exceptions;
 using Orchard.Logging;
@@ -25,6 +27,7 @@ namespace Orchard.Environment
         private readonly IEnumerable<IModelBinderProvider> _modelBinderProviders;
         private readonly IModelBinderPublisher _modelBinderPublisher;
         private readonly IEnumerable<IOwinMiddlewareProvider> _owinMiddlewareProviders;
+        private readonly IEnumerable<IApplicationBuilderFactory> _applicationBuilderFactories;
         private readonly ShellSettings _shellSettings;
 
         public DefaultOrchardShell(
@@ -36,7 +39,8 @@ namespace Orchard.Environment
             IModelBinderPublisher modelBinderPublisher,
             ISweepGenerator sweepGenerator,
             IEnumerable<IOwinMiddlewareProvider> owinMiddlewareProviders,
-            ShellSettings shellSettings)
+            ShellSettings shellSettings,
+            IEnumerable<IApplicationBuilderFactory> applicationBuilderFactories)
         {
             _workContextAccessor = workContextAccessor;
             _routeProviders = routeProviders;
@@ -47,6 +51,7 @@ namespace Orchard.Environment
             Sweep = sweepGenerator;
             _owinMiddlewareProviders = owinMiddlewareProviders;
             _shellSettings = shellSettings;
+            _applicationBuilderFactories = applicationBuilderFactories;
 
             Logger = NullLogger.Instance;
         }
@@ -56,7 +61,12 @@ namespace Orchard.Environment
 
         public void Activate()
         {
-            var appBuilder = new AppBuilder();
+            // The application builder factory is provided by the ASP.NET Core host, so that tenant middlewares
+            // can use the application services (authentication, data protection...).
+            var applicationBuilderFactory = _applicationBuilderFactories.FirstOrDefault();
+            var appBuilder = applicationBuilderFactory != null
+                ? applicationBuilderFactory.CreateBuilder(new FeatureCollection())
+                : new ApplicationBuilder(new NullServiceProvider());
             appBuilder.Properties["host.AppName"] = _shellSettings.Name;
 
             using (var scope = _workContextAccessor.CreateWorkContextScope())
@@ -110,6 +120,11 @@ namespace Orchard.Environment
             });
 
             SafelyTerminate(() => Sweep.Terminate());
+        }
+
+        private class NullServiceProvider : IServiceProvider
+        {
+            public object GetService(Type serviceType) => null;
         }
 
         private void SafelyTerminate(Action action)

@@ -1,4 +1,4 @@
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Caching;
 
 namespace Orchard.Localization.Services
@@ -20,7 +20,7 @@ namespace Orchard.Localization.Services
             _signals = signals;
         }
 
-        public CultureSelectorResult GetCulture(HttpContextBase context)
+        public CultureSelectorResult GetCulture(HttpContext context)
         {
             var cacheKey = "Orchard.Localization.Services.SiteCultureSelector.GetCulture";
             return _cacheManager.Get(cacheKey, true, ctx =>

@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
-using Microsoft.Azure;
 using Orchard.Azure.Services.FileSystems;
 using Orchard.Environment.Configuration;
 using Orchard.FileSystems.Media;
@@ -26,18 +26,15 @@ namespace Orchard.Azure.Services.Environment.Configuration
             _events = events;
             Logger = NullLogger.Instance;
 
-            var connectionString = CloudConfigurationManager.GetSetting(Constants.ShellSettingsStorageConnectionStringSettingName);
+            var connectionString = DefaultPlatformConfigurationAccessor.GetPlatformSetting(Constants.ShellSettingsStorageConnectionStringSettingName);
 
-            var containerName = CloudConfigurationManager.GetSetting(Constants.ShellSettingsContainerNameSettingName);
+            var containerName = DefaultPlatformConfigurationAccessor.GetPlatformSetting(Constants.ShellSettingsContainerNameSettingName);
             if (string.IsNullOrEmpty(containerName))
                 containerName = Constants.ShellSettingsDefaultContainerName;
 
             _fileSystem = new AzureFileSystem(connectionString, containerName, string.Empty, true, mimeTypeProvider);
 
-            if (!_fileSystem.Container.Exists())
-            {
-                _fileSystem.Container.Create();
-            }
+            _fileSystem.Container.CreateIfNotExists();
         }
 
         public ILogger Logger { get; set; }

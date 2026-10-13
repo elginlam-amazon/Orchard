@@ -1,6 +1,6 @@
 using System;
-using System.Web;
 using Autofac;
+using Microsoft.AspNetCore.Http;
 using Moq;
 using Orchard.Localization.Services;
 using Orchard.Services;
@@ -91,12 +91,12 @@ namespace Orchard.Tests.Localization
             _workContext = workContext;
         }
 
-        public WorkContext GetContext(HttpContextBase httpContext)
+        public WorkContext GetContext(HttpContext httpContext)
         {
             throw new NotImplementedException();
         }
 
-        public IWorkContextScope CreateWorkContextScope(HttpContextBase httpContext)
+        public IWorkContextScope CreateWorkContextScope(HttpContext httpContext)
         {
             throw new NotImplementedException();
         }

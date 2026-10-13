@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Email.Models;
 using Orchard.Email.Services;
@@ -26,7 +26,6 @@ namespace Orchard.Email.Controllers
         public Localizer T { get; set; }
 
         [HttpPost]
-        [ValidateInput(false)]
         public ActionResult TestSettings(TestSmtpSettings testSettings)
         {
             ILogger logger = null;

@@ -12,6 +12,7 @@ using Orchard.Layouts.Framework.Drivers;
 using Orchard.Layouts.ViewModels;
 using Orchard.UI.Navigation;
 using Orchard.Utility.Extensions;
+using Orchard.Mvc.Extensions;
 
 namespace Orchard.Layouts.Drivers
 {
@@ -86,7 +87,7 @@ namespace Orchard.Layouts.Drivers
 
             var shapeHelper = New;
             var request = _workContextAccessor.GetContext().HttpContext.Request;
-            var routeData = request.RequestContext.RouteData;
+            var routeData = request.HttpContext.GetActionContext().RouteData;
             var selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, routeData);
             var menuShape = shapeHelper.Menu();
 

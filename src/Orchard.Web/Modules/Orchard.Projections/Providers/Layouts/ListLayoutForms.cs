@@ -78,7 +78,7 @@ namespace Orchard.Projections.Providers.Layouts
         {
             if (context.FormName == "ListLayout")
             {
-                if (context.ValueProvider.GetValue("Order") == null)
+                if (context.ValueProvider.GetValue("Order") == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
                 {
                     context.ModelState.AddModelError("Order", T("You must provide an Order").Text);
                 }

@@ -2,12 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Web;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Caching;
 using Orchard.Data;
 using Orchard.OutputCache.Models;
 using Orchard.Utility.Extensions;
+using Route = Orchard.Mvc.Routes.Route;
 
 namespace Orchard.OutputCache.Services
 {
@@ -51,9 +52,7 @@ namespace Orchard.OutputCache.Services
 
         public IEnumerable<CacheItem> GetCacheItems()
         {
-            var workContext = _workContextAccessor.GetContext();
-
-            foreach (DictionaryEntry cacheEntry in workContext.HttpContext.Cache)
+            foreach (var cacheEntry in ApplicationCache.Instance)
             {
                 var cacheItem = cacheEntry.Value as CacheItem;
                 if (cacheItem != null)
@@ -65,11 +64,10 @@ namespace Orchard.OutputCache.Services
 
         public void Evict(string cacheKey)
         {
-            var workContext = _workContextAccessor.GetContext();
-            workContext.HttpContext.Cache.Remove(cacheKey);
+            ApplicationCache.Instance.Remove(cacheKey);
         }
 
-        public string GetRouteDescriptorKey(HttpContextBase httpContext, RouteBase routeBase)
+        public string GetRouteDescriptorKey(HttpContext httpContext, IRouter routeBase)
         {
             var route = routeBase as Route;
             var dataTokens = new RouteValueDictionary();
@@ -80,11 +78,18 @@ namespace Orchard.OutputCache.Services
             }
             else
             {
-                var routeData = routeBase.GetRouteData(httpContext);
+                // the data tokens of the matched route (the route infrastructure data tokens are ignored)
+                var routeData = httpContext.GetRouteData();
 
                 if (routeData != null)
                 {
-                    dataTokens = routeData.DataTokens;
+                    foreach (var dataToken in routeData.DataTokens)
+                    {
+                        if (dataToken.Value is string)
+                        {
+                            dataTokens[dataToken.Key] = dataToken.Value;
+                        }
+                    }
                 }
             }
 

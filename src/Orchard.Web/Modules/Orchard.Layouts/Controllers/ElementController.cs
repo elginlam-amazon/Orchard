@@ -1,5 +1,6 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.ContentManagement;
 using Orchard.Data;
 using Orchard.DisplayManagement;
@@ -11,6 +12,7 @@ using Orchard.Layouts.Models;
 using Orchard.Layouts.Services;
 using Orchard.Layouts.ViewModels;
 using Orchard.Localization;
+using Orchard.Mvc.Extensions;
 using Orchard.UI.Admin;
 
 namespace Orchard.Layouts.Controllers
@@ -49,7 +51,6 @@ namespace Orchard.Layouts.Controllers
         }
 
         [HttpPost]
-        [ValidateInput(false)]
         public RedirectToRouteResult Edit(string session, string typeName, string elementData, string elementEditorData, int? contentId = null, string contentType = null)
         {
             var state = new ElementSessionState
@@ -63,7 +64,7 @@ namespace Orchard.Layouts.Controllers
 
             _objectStore.Set(session, state);
 
-            return RedirectToAction("Edit", new { session });
+            return RedirectToRoute(new { action = "Edit", session });
         }
 
         public ViewResult Edit(string session)
@@ -96,7 +97,6 @@ namespace Orchard.Layouts.Controllers
         }
 
         [HttpPost]
-        [ValidateInput(false)]
         public ViewResult Update(string session)
         {
             var sessionState = _objectStore.Get<ElementSessionState>(session);
@@ -135,7 +135,7 @@ namespace Orchard.Layouts.Controllers
             return View("Edit", viewModel);
         }
 
-        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             var workContext = filterContext.GetWorkContext();
             workContext.Layout.Metadata.Alternates.Add("Layout__Dialog");
@@ -156,7 +156,7 @@ namespace Orchard.Layouts.Controllers
                 Element = element,
                 Updater = updater,
                 ElementData = elementData ?? new ElementDataDictionary(),
-                ValueProvider = ValueProvider,
+                ValueProvider = this.GetValueProvider(),
                 ShapeFactory = _shapeFactory
             };
             return context;
@@ -182,7 +182,7 @@ namespace Orchard.Layouts.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

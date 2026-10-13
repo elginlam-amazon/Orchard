@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace Orchard.UI.Navigation
 {
@@ -78,7 +78,7 @@ namespace Orchard.UI.Navigation
         /// <param name="currentRequest">The currently executed request if any</param>
         /// <param name="currentRouteData">The current route data.</param>
         /// <returns>A stack with the selection path being the last node the currently selected one.</returns>
-        public static Stack<MenuItem> SetSelectedPath(IEnumerable<MenuItem> menuItems, HttpRequestBase currentRequest, RouteData currentRouteData)
+        public static Stack<MenuItem> SetSelectedPath(IEnumerable<MenuItem> menuItems, HttpRequest currentRequest, RouteData currentRouteData)
         {
             return SetSelectedPath(menuItems, currentRequest, currentRouteData.Values);
         }
@@ -90,7 +90,7 @@ namespace Orchard.UI.Navigation
         /// <param name="currentRequest">The currently executed request if any</param>
         /// <param name="currentRouteData">The current route data.</param>
         /// <returns>A stack with the selection path being the last node the currently selected one.</returns>
-        public static Stack<MenuItem> SetSelectedPath(IEnumerable<MenuItem> menuItems, HttpRequestBase currentRequest, RouteValueDictionary currentRouteData)
+        public static Stack<MenuItem> SetSelectedPath(IEnumerable<MenuItem> menuItems, HttpRequest currentRequest, RouteValueDictionary currentRouteData)
         {
             // doing route data comparison first and if that fails, fallback to string-based URL lookup
             var path = GetSelectedPath(menuItems, currentRequest, currentRouteData, false)
@@ -115,7 +115,7 @@ namespace Orchard.UI.Navigation
         /// <param name="currentRouteData">The current route data.</param>
         /// <param name="compareUrls">Should compare raw string URLs instead of route data.</param>
         /// <returns>A stack with the selection path being the last node the currently selected one.</returns>
-        private static Stack<MenuItem> GetSelectedPath(IEnumerable<MenuItem> menuItems, HttpRequestBase currentRequest, RouteValueDictionary currentRouteData, bool compareUrls)
+        private static Stack<MenuItem> GetSelectedPath(IEnumerable<MenuItem> menuItems, HttpRequest currentRequest, RouteValueDictionary currentRouteData, bool compareUrls)
         {
             var selectedPaths = new List<Stack<MenuItem>>();
             foreach (MenuItem menuItem in menuItems)
@@ -141,8 +141,9 @@ namespace Orchard.UI.Navigation
                 // if route match failed, try comparing URL strings, if
                 if (currentRequest != null && !match && compareUrls)
                 {
-                    string appPath = currentRequest.ApplicationPath ?? "/";
-                    string requestUrl = currentRequest.Path.StartsWith(appPath) ? currentRequest.Path.Substring(appPath.Length) : currentRequest.Path;
+                    string appPath = currentRequest.PathBase.HasValue ? currentRequest.PathBase.Value.TrimEnd('/') + "/" : "/";
+                    string requestPath = currentRequest.PathBase.Add(currentRequest.Path).Value ?? "/";
+                    string requestUrl = requestPath.StartsWith(appPath) ? requestPath.Substring(appPath.Length) : requestPath;
 
                     string modelUrl = menuItem.Href?.Replace("~/", appPath) ?? "";
                     modelUrl = modelUrl.StartsWith(appPath) ? modelUrl.Substring(appPath.Length) : modelUrl;

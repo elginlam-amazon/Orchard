@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using System.Web;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
 using Orchard.OutputCache.Models;
+using Microsoft.AspNetCore.Routing;
 
 namespace Orchard.OutputCache.Services
 {
@@ -23,7 +23,7 @@ namespace Orchard.OutputCache.Services
         /// <summary>
         /// Returns the key representing a specific route in the DB.
         /// </summary>
-        string GetRouteDescriptorKey(HttpContextBase httpContext, RouteBase route);
+        string GetRouteDescriptorKey(HttpContext httpContext, IRouter route);
 
         /// <summary>
         /// Saves a set of <see cref="CacheRouteConfig"/> to the database.

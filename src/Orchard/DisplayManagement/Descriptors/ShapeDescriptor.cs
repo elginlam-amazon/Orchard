@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Orchard.DisplayManagement.Implementation;
 
 namespace Orchard.DisplayManagement.Descriptors
@@ -35,7 +36,7 @@ namespace Orchard.DisplayManagement.Descriptors
             }
         }
 
-        public Func<DisplayContext, IHtmlString> Binding => Bindings[ShapeType].Binding;
+        public Func<DisplayContext, IHtmlContent> Binding => Bindings[ShapeType].Binding;
 
         public IDictionary<string, ShapeBinding> Bindings { get; set; }
 
@@ -57,6 +58,6 @@ namespace Orchard.DisplayManagement.Descriptors
         public ShapeDescriptor ShapeDescriptor { get; set; }
         public string BindingName { get; set; }
         public string BindingSource { get; set; }
-        public Func<DisplayContext, IHtmlString> Binding { get; set; }
+        public Func<DisplayContext, IHtmlContent> Binding { get; set; }
     }
 }

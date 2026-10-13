@@ -108,7 +108,7 @@ namespace Orchard.Templates.Drivers
             if (shapeElement != null)
             {
                 part.Template = shapeElement.Value;
-                context.ImportAttribute(part.PartDefinition.Name, "RenderingMode", value => part.RenderingMode = (RenderingMode)Enum.Parse(typeof(RenderingMode), value));
+                context.ImportAttribute(part.PartDefinition.Name, "RenderingMode", value => part.RenderingMode = Enum.Parse<RenderingMode>(value));
             }
         }
 

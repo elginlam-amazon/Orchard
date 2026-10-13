@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac;
 using Autofac.Core;
+using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
 using Orchard.ContentManagement.Records;
@@ -15,6 +14,7 @@ using Orchard.Environment.ShellBuilders;
 using Orchard.Tests.Environment.Utility;
 using Orchard.Tests.Records;
 using Orchard.Tests.Utility;
+using Autofac.Core.Registration;
 
 namespace Orchard.Tests.Environment
 {
@@ -175,7 +175,7 @@ namespace Orchard.Tests.Environment
 
         public class BetaModule : IModule
         {
-            public void Configure(IComponentRegistry componentRegistry)
+            public void Configure(IComponentRegistryBuilder componentRegistry)
             {
                 throw new NotImplementedException();
             }
@@ -223,15 +223,11 @@ namespace Orchard.Tests.Environment
 
         public class DeltaController : ControllerBase
         {
-            protected override void ExecuteCore()
-            {
-                throw new NotImplementedException();
-            }
         }
 
-        public class EpsilonController : IController
+        public class EpsilonController : Controller
         {
-            public void Execute(RequestContext requestContext)
+            public void Execute(ActionContext requestContext)
             {
                 throw new NotImplementedException();
             }

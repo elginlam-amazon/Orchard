@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Web;
-using Glimpse.Core.Extensibility;
-using Glimpse.Core.Framework;
-using Glimpse.Core.Message;
+using System.Diagnostics;
+using Microsoft.AspNetCore.Http;
 using Orchard.Glimpse.Interceptors;
 using Orchard.Glimpse.Models;
 using Orchard.Glimpse.Tabs;
 using Orchard.Localization;
+using Orchard.Logging;
 using ILogger = Orchard.Logging.ILogger;
 using NullLogger = Orchard.Logging.NullLogger;
 
@@ -15,11 +14,19 @@ namespace Orchard.Glimpse.Services
 {
     public class DefaultGlimpseService : IGlimpseService
     {
-        private readonly IEnumerable<IGlimpseMessageInterceptor> _messageInterceptors;
+        /// <summary>
+        /// The key of the list of the messages published during the request, in the request items.
+        /// </summary>
+        public const string MessagesKey = "Orchard.Glimpse.Messages";
+        private const string RequestStartKey = "Orchard.Glimpse.RequestStart";
 
-        public DefaultGlimpseService(IEnumerable<IGlimpseMessageInterceptor> messageInterceptors)
+        private readonly IEnumerable<IGlimpseMessageInterceptor> _messageInterceptors;
+        private readonly Orchard.Mvc.IHttpContextAccessor _httpContextAccessor;
+
+        public DefaultGlimpseService(IEnumerable<IGlimpseMessageInterceptor> messageInterceptors, Orchard.Mvc.IHttpContextAccessor httpContextAccessor)
         {
             _messageInterceptors = messageInterceptors;
+            _httpContextAccessor = httpContextAccessor;
             Logger = NullLogger.Instance;
             T = NullLocalizer.Instance;
         }
@@ -29,29 +36,25 @@ namespace Orchard.Glimpse.Services
 
         public TimerResult Time(Action action)
         {
-            var executionTimer = GetTimer();
+            var startTime = DateTime.UtcNow;
+            var offset = GetRequestElapsed();
+            var stopwatch = Stopwatch.StartNew();
 
-            if (executionTimer == null)
+            action();
+
+            return new TimerResult
             {
-                action();
-                return new TimerResult();
-            }
-
-            return executionTimer.Time(action);
+                StartTime = startTime,
+                Offset = offset,
+                Duration = stopwatch.Elapsed
+            };
         }
 
         public TimedActionResult<T> Time<T>(Func<T> action)
         {
             var result = default(T);
 
-            var executionTimer = GetTimer();
-
-            if (executionTimer == null)
-            {
-                return new TimedActionResult<T> { ActionResult = action() };
-            }
-
-            var duration = executionTimer.Time(() => { result = action(); });
+            var duration = Time(() => { result = action(); });
 
             return new TimedActionResult<T>
             {
@@ -140,37 +143,37 @@ namespace Orchard.Glimpse.Services
 
         public void PublishMessage<T>(T message) where T : class
         {
-            var broker = GetMessageBroker();
-
             _messageInterceptors.Invoke(i => i.MessageReceived(message), Logger);
 
-            broker?.Publish(message);
+            // The Glimpse panel isn't available on ASP.NET Core: the messages are kept in the request items and logged.
+            var httpContext = _httpContextAccessor.Current();
+            if (httpContext != null)
+            {
+                if (!(httpContext.Items[MessagesKey] is List<object> messages))
+                {
+                    httpContext.Items[MessagesKey] = messages = new List<object>();
+                }
+
+                messages.Add(message);
+            }
+
+            Logger.Debug("{0}: {1}", typeof(T).Name, message);
         }
 
-        private IExecutionTimer GetTimer()
+        private TimeSpan GetRequestElapsed()
         {
-            var context = HttpContext.Current;
+            var httpContext = _httpContextAccessor.Current();
+            if (httpContext == null)
+            {
+                return TimeSpan.Zero;
+            }
 
-            return ((GlimpseRuntime)context?.Application.Get("__GlimpseRuntime"))?.Configuration.TimerStrategy.Invoke();
+            if (!(httpContext.Items[RequestStartKey] is Stopwatch requestStopwatch))
+            {
+                httpContext.Items[RequestStartKey] = requestStopwatch = Stopwatch.StartNew();
+            }
+
+            return requestStopwatch.Elapsed;
         }
-
-        private IMessageBroker GetMessageBroker()
-        {
-            var context = HttpContext.Current;
-
-            return ((GlimpseRuntime)context?.Application.Get("__GlimpseRuntime"))?.Configuration.MessageBroker;
-        }
-    }
-
-    public class NullMessageBroker : IMessageBroker
-    {
-        public void Publish<T>(T message) { }
-
-        public Guid Subscribe<T>(Action<T> action)
-        {
-            return Guid.NewGuid();
-        }
-
-        public void Unsubscribe<T>(Guid subscriptionId) { }
     }
 }

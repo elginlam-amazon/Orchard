@@ -1,4 +1,5 @@
 using System;
+using SkiaSharp;
 using System.IO;
 using System.Linq;
 using Orchard.ContentManagement;
@@ -77,20 +78,26 @@ namespace Orchard.MediaLibrary.Handlers
 
                 using (var stream = file.OpenRead())
                 {
-                    try
+                    // The image is decoded with SkiaSharp (System.Drawing is only supported on Windows).
+                    var buffer = new MemoryStream();
+                    stream.CopyTo(buffer);
+                    buffer.Seek(0, SeekOrigin.Begin);
+
+                    using (var codec = SKCodec.Create(buffer))
                     {
-                        using (var image = System.Drawing.Image.FromStream(stream))
+                        if (codec != null)
                         {
-                            part.Width = image.Width;
-                            part.Height = image.Height;
+                            part.Width = codec.Info.Width;
+                            part.Height = codec.Info.Height;
                         }
-                    }
-                    catch (ArgumentException)
-                    {
-                        // Still trying to get .ico dimensions when it's blocked in System.Drawing, see: https://github.com/OrchardCMS/Orchard/issues/4473
-                        if (mediaPart.MimeType != "image/x-icon" && mediaPart.MimeType != "image/vnd.microsoft.icon")
-                            throw;
-                        TryFillDimensionsForIco(stream, part);
+                        else
+                        {
+                            // Still trying to get .ico dimensions, see: https://github.com/OrchardCMS/Orchard/issues/4473
+                            if (mediaPart.MimeType != "image/x-icon" && mediaPart.MimeType != "image/vnd.microsoft.icon")
+                                throw new ArgumentException("The image format is not supported.");
+                            buffer.Seek(0, SeekOrigin.Begin);
+                            TryFillDimensionsForIco(buffer, part);
+                        }
                     }
                 }
             });

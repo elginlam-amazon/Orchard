@@ -1,5 +1,6 @@
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Routing;
 
 namespace Orchard.Core.Feeds
 {
@@ -7,7 +8,7 @@ namespace Orchard.Core.Feeds
     {
         void Register(string title, string format, RouteValueDictionary values);
         void Register(string title, string format, string url);
-        MvcHtmlString GetRegisteredLinks(HtmlHelper html);
+        IHtmlContent GetRegisteredLinks(IHtmlHelper html);
 
         // Currently implemented in FeedController action... tbd
         //ActionResult Execute(string format, IValueProvider values);

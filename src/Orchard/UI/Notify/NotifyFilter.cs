@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.DisplayManagement;
 using Orchard.Localization;
 using Orchard.Mvc.Filters;
+using Orchard.Mvc.Extensions;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.UI.Notify
 {
@@ -28,7 +30,7 @@ namespace Orchard.UI.Notify
 
         public void OnActionExecuting(ActionExecutingContext filterContext)
         {
-            var messages = Convert.ToString(filterContext.Controller.TempData[TempDataMessages]);
+            var messages = Convert.ToString(filterContext.GetTempData()[TempDataMessages]);
             if (string.IsNullOrEmpty(messages))
                 return;
 
@@ -79,7 +81,7 @@ namespace Orchard.UI.Notify
 
             var messageEntries = _notifier.List().ToList();
 
-            if (filterContext.Result is ViewResultBase)
+            if ((filterContext.Result is ViewResult || filterContext.Result is PartialViewResult))
             {
                 // Assign values to the Items collection instead of TempData and 
                 // combine any existing entries added by the previous request with new ones.
@@ -90,7 +92,7 @@ namespace Orchard.UI.Notify
                 return;
             }
 
-            var tempData = filterContext.Controller.TempData;
+            var tempData = filterContext.GetTempData();
 
             // Initialize writer with current data.
             var sb = new StringBuilder();
@@ -115,7 +117,7 @@ namespace Orchard.UI.Notify
 
         public void OnResultExecuting(ResultExecutingContext filterContext)
         {
-            if (!(filterContext.Result is ViewResultBase))
+            if (!((filterContext.Result is ViewResult || filterContext.Result is PartialViewResult)))
                 return;
 
             var messageEntries = filterContext.HttpContext.Items[TempDataMessages] as IList<NotifyEntry> ?? new List<NotifyEntry>();

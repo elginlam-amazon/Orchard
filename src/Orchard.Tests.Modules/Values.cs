@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Orchard.Mvc.ModelBinders;
 
 namespace Orchard.Tests.Modules
 {
@@ -37,11 +38,10 @@ namespace Orchard.Tests.Modules
             {
                 var property = typeof(T).GetProperty(key);
                 if (property == null)
-                    return null;
+                    return ValueProviderResult.None;
                 return new ValueProviderResult(
-                    property.GetValue(_obj, null),
-                    Convert.ToString(property.GetValue(_obj, null)),
-                    null);
+                    Convert.ToString(property.GetValue(_obj, null), CultureInfo.InvariantCulture),
+                    CultureInfo.InvariantCulture);
             }
         }
     }

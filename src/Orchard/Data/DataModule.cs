@@ -12,7 +12,7 @@ namespace Orchard.Data
             builder.RegisterGeneric(typeof(Repository<>)).As(typeof(IRepository<>)).InstancePerDependency();
 
         }
-        protected override void AttachToComponentRegistration(Autofac.Core.IComponentRegistry componentRegistry, Autofac.Core.IComponentRegistration registration)
+        protected override void AttachToComponentRegistration(Autofac.Core.Registration.IComponentRegistryBuilder componentRegistry, Autofac.Core.IComponentRegistration registration)
         {
             if (typeof(IDataServicesProvider).IsAssignableFrom(registration.Activator.LimitType))
             {

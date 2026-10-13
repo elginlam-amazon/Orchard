@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using TechTalk.SpecFlow;
+using Reqnroll;
 
 namespace Orchard.Specs.Bindings
 {

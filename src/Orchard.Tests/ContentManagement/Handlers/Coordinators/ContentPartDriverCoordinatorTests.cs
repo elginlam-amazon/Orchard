@@ -41,11 +41,13 @@ namespace Orchard.Tests.ContentManagement.Handlers.Coordinators
         {
             var driver1 = new Mock<IContentPartDriver>();
             var driver2 = new Mock<IContentPartDriver>();
-            var builder = new ContainerBuilder();
-            builder.RegisterInstance(driver1.Object);
-            builder.RegisterInstance(driver2.Object);
-            builder.Update(_container);
-            var contentHandler = _container.Resolve<IContentHandler>();
+            // the container is immutable: the drivers are registered in a child lifetime scope
+            var scope = _container.BeginLifetimeScope(builder =>
+            {
+                builder.RegisterInstance(driver1.Object);
+                builder.RegisterInstance(driver2.Object);
+            });
+            var contentHandler = scope.Resolve<IContentHandler>();
 
             var contentItem = new ContentItem();
             var context = new BuildDisplayContext(null, contentItem, "", "", new Mock<IShapeFactory>().Object);
@@ -61,11 +63,13 @@ namespace Orchard.Tests.ContentManagement.Handlers.Coordinators
         public void TestDriverCanAddDisplay()
         {
             var driver = new StubPartDriver();
-            var builder = new ContainerBuilder();
-            builder.RegisterInstance(driver).As<IContentPartDriver>();
-            builder.Update(_container);
-            var contentHandler = _container.Resolve<IContentHandler>();
-            dynamic shapeFactory = _container.Resolve<IShapeFactory>();
+            // the container is immutable: the drivers are registered in a child lifetime scope
+            var scope = _container.BeginLifetimeScope(builder =>
+            {
+                builder.RegisterInstance(driver).As<IContentPartDriver>();
+            });
+            var contentHandler = scope.Resolve<IContentHandler>();
+            dynamic shapeFactory = scope.Resolve<IShapeFactory>();
 
             var contentItem = new ContentItem();
             contentItem.Weld(new StubPart { Foo = new[] { "a", "b", "c" } });

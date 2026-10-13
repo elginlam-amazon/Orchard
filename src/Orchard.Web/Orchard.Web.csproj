@@ -1,313 +1,243 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets" Condition="Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets')" />
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{50B779EA-EC00-4699-84C0-03B395C365D2}</ProjectGuid>
-    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Orchard.Web</RootNamespace>
-    <AssemblyName>Orchard.Web</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <LangVersion>7.3</LangVersion>
-    <RoslynCopyToOutDir>true</RoslynCopyToOutDir>
-    <RoslynToolPath>$(MSBuildThisFileDirectory)..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\tools\roslyn-4.1.0</RoslynToolPath>
-    <UseIISExpress>true</UseIISExpress>
-    <IISExpressSSLPort>44300</IISExpressSSLPort>
-    <IISExpressAnonymousAuthentication>enabled</IISExpressAnonymousAuthentication>
-    <IISExpressWindowsAuthentication>disabled</IISExpressWindowsAuthentication>
-    <IISExpressUseClassicPipelineMode>false</IISExpressUseClassicPipelineMode>
-    <TargetFrameworkProfile />
-    <UseGlobalApplicationHostFile>true</UseGlobalApplicationHostFile>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-    <Use64BitIISExpress />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
+    <TargetFramework>net10.0</TargetFramework>
+    <DisableTransitiveProjectReferences>true</DisableTransitiveProjectReferences>
+    <OutputType>Exe</OutputType>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RazorCompileOnBuild>false</RazorCompileOnBuild>
+    <RazorCompileOnPublish>false</RazorCompileOnPublish>
+    <!-- The modules and the command line expect the application assemblies in .\bin -->
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>..\OrchardBasicCorrectness.ruleset</CodeAnalysisRuleSet>
-    <FilesToIncludeForPublish>AllFilesInProjectFolder</FilesToIncludeForPublish>
-    <PackageAsSingleFile>false</PackageAsSingleFile>
-    <ExcludeGeneratedDebugSymbol>false</ExcludeGeneratedDebugSymbol>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <FilesToIncludeForPublish>AllFilesInProjectFolder</FilesToIncludeForPublish>
-    <PackageAsSingleFile>false</PackageAsSingleFile>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- Single TFM: ASP.NET Core application (see summary.md). -->
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Autofac, Version=3.5.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
-      <HintPath>..\packages\Autofac.3.5.2\lib\net40\Autofac.dll</HintPath>
-    </Reference>
-    <Reference Include="Glimpse.AspNet, Version=1.9.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Glimpse.AspNet.1.9.2\lib\net45\Glimpse.AspNet.dll</HintPath>
-    </Reference>
-    <Reference Include="Glimpse.Core, Version=1.8.6.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Glimpse.1.8.6\lib\net45\Glimpse.Core.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Glimpse.Mvc5, Version=1.5.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Glimpse.Mvc5.1.5.3\lib\net45\Glimpse.Mvc5.dll</HintPath>
-    </Reference>
-    <Reference Include="log4net, Version=3.3.1.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
-      <HintPath>..\packages\log4net.3.3.1\lib\net462\log4net.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\lib\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.Owin, Version=4.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Owin.4.2.3\lib\net45\Microsoft.Owin.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Owin.Host.SystemWeb, Version=4.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Owin.Host.SystemWeb.4.2.3\lib\net45\Microsoft.Owin.Host.SystemWeb.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
-    </Reference>
-    <Reference Include="MySql.Data, Version=6.10.9.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
-      <HintPath>..\packages\MySql.Data.6.10.9\lib\net452\MySql.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="Npgsql, Version=4.0.17.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
-      <HintPath>..\packages\Npgsql.4.0.17\lib\net451\Npgsql.dll</HintPath>
-    </Reference>
-    <Reference Include="NuGet.Core, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Orchard.NuGet.Core.1.1.0.0\lib\NuGet.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Owin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f0ebd12fd5e55cc5, processorArchitecture=MSIL">
-      <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Buffers.4.6.1\lib\net462\System.Buffers.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ComponentModel" />
-    <Reference Include="System.Configuration.Install" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.ComponentModel.DataAnnotations">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data.SqlServerCe, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
-      <HintPath>..\..\lib\sqlce\System.Data.SqlServerCe.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Drawing.Design" />
-    <Reference Include="System.Management" />
-    <Reference Include="System.Memory, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Memory.4.6.3\lib\net462\System.Memory.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Numerics.Vectors.4.6.1\lib\net462\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.1.2\lib\net462\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ServiceModel" />
-    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.4.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.6.3\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Transactions" />
-    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.ApplicationServices" />
-    <Reference Include="System.Web.DynamicData" />
-    <Reference Include="System.Web.Entity" />
-    <Reference Include="System.Web" />
-    <Reference Include="System.Web.Abstractions" />
-    <Reference Include="System.Web.Extensions" />
-    <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.3.0\lib\net45\System.Web.Helpers.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.Mvc, Version=5.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.Mvc.5.3.0\lib\net45\System.Web.Mvc.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.Razor.3.3.0\lib\net45\System.Web.Razor.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.Routing" />
-    <Reference Include="System.Web.WebPages, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.3.0\lib\net45\System.Web.WebPages.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.WebPages.Deployment, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.3.0\lib\net45\System.Web.WebPages.Deployment.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.WebPages.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.3.0\lib\net45\System.Web.WebPages.Razor.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Web.Services" />
-    <Reference Include="System.EnterpriseServices" />
-    <Reference Include="System.Web.Mobile" />
-    <Reference Include="System.Xml.Linq" />
+    <Compile Remove="Core\**" />
+    <Compile Remove="Modules\Lucene\**" />
+    <Compile Remove="Modules\Markdown\**" />
+    <Compile Remove="Modules\Orchard.Alias\**" />
+    <Compile Remove="Modules\Orchard.AntiSpam\**" />
+    <Compile Remove="Modules\Orchard.ArchiveLater\**" />
+    <Compile Remove="Modules\Orchard.AuditTrail\**" />
+    <Compile Remove="Modules\Orchard.Autoroute\**" />
+    <Compile Remove="Modules\Orchard.Azure\**" />
+    <Compile Remove="Modules\Orchard.Blogs\**" />
+    <Compile Remove="Modules\Orchard.Caching\**" />
+    <Compile Remove="Modules\Orchard.CodeGeneration\**" />
+    <Compile Remove="Modules\Orchard.Comments\**" />
+    <Compile Remove="Modules\Orchard.Conditions\**" />
+    <Compile Remove="Modules\Orchard.ContentPermissions\**" />
+    <Compile Remove="Modules\Orchard.ContentPicker\**" />
+    <Compile Remove="Modules\Orchard.ContentPreview\**" />
+    <Compile Remove="Modules\Orchard.ContentTypes\**" />
+    <Compile Remove="Modules\Orchard.CustomForms\**" />
+    <Compile Remove="Modules\Orchard.Dashboards\**" />
+    <Compile Remove="Modules\Orchard.DesignerTools\**" />
+    <Compile Remove="Modules\Orchard.DynamicForms\**" />
+    <Compile Remove="Modules\Orchard.Email\**" />
+    <Compile Remove="Modules\Orchard.Fields\**" />
+    <Compile Remove="Modules\Orchard.Forms\**" />
+    <Compile Remove="Modules\Orchard.Glimpse\**" />
+    <Compile Remove="Modules\Orchard.ImageEditor\**" />
+    <Compile Remove="Modules\Orchard.ImportExport\**" />
+    <Compile Remove="Modules\Orchard.Indexing\**" />
+    <Compile Remove="Modules\Orchard.JobsQueue\**" />
+    <Compile Remove="Modules\Orchard.Layouts\**" />
+    <Compile Remove="Modules\Orchard.Lists\**" />
+    <Compile Remove="Modules\Orchard.Localization\**" />
+    <Compile Remove="Modules\Orchard.Media\**" />
+    <Compile Remove="Modules\Orchard.MediaLibrary\**" />
+    <Compile Remove="Modules\Orchard.MediaLibrary.WebSearch\**" />
+    <Compile Remove="Modules\Orchard.MediaPicker\**" />
+    <Compile Remove="Modules\Orchard.MediaProcessing\**" />
+    <Compile Remove="Modules\Orchard.MessageBus\**" />
+    <Compile Remove="Modules\Orchard.Migrations\**" />
+    <Compile Remove="Modules\Orchard.Modules\**" />
+    <Compile Remove="Modules\Orchard.MultiTenancy\**" />
+    <Compile Remove="Modules\Orchard.OpenId\**" />
+    <Compile Remove="Modules\Orchard.OutputCache\**" />
+    <Compile Remove="Modules\Orchard.Packaging\**" />
+    <Compile Remove="Modules\Orchard.Pages\**" />
+    <Compile Remove="Modules\Orchard.Projections\**" />
+    <Compile Remove="Modules\Orchard.PublishLater\**" />
+    <Compile Remove="Modules\Orchard.Recipes\**" />
+    <Compile Remove="Modules\Orchard.Redis\**" />
+    <Compile Remove="Modules\Orchard.Resources\**" />
+    <Compile Remove="Modules\Orchard.Roles\**" />
+    <Compile Remove="Modules\Orchard.Rules\**" />
+    <Compile Remove="Modules\Orchard.Scripting\**" />
+    <Compile Remove="Modules\Orchard.Scripting.CSharp\**" />
+    <Compile Remove="Modules\Orchard.Scripting.Dlr\**" />
+    <Compile Remove="Modules\Orchard.Search\**" />
+    <Compile Remove="Modules\Orchard.SecureSocketsLayer\**" />
+    <Compile Remove="Modules\Orchard.Setup\**" />
+    <Compile Remove="Modules\Orchard.Tags\**" />
+    <Compile Remove="Modules\Orchard.Taxonomies\**" />
+    <Compile Remove="Modules\Orchard.Templates\**" />
+    <Compile Remove="Modules\Orchard.Themes\**" />
+    <Compile Remove="Modules\Orchard.Tokens\**" />
+    <Compile Remove="Modules\Orchard.Users\**" />
+    <Compile Remove="Modules\Orchard.Warmup\**" />
+    <Compile Remove="Modules\Orchard.Widgets\**" />
+    <Compile Remove="Modules\Orchard.Workflows\**" />
+    <Compile Remove="Modules\SysCache\**" />
+    <Compile Remove="Modules\TinyMce\**" />
+    <Compile Remove="Modules\Upgrade\**" />
+    <Compile Remove="Themes\**" />
+    <Content Remove="Core\**" />
+    <None Remove="Core\**" />
+    <Content Remove="Modules\Lucene\**" />
+    <None Remove="Modules\Lucene\**" />
+    <Content Remove="Modules\Markdown\**" />
+    <None Remove="Modules\Markdown\**" />
+    <Content Remove="Modules\Orchard.Alias\**" />
+    <None Remove="Modules\Orchard.Alias\**" />
+    <Content Remove="Modules\Orchard.AntiSpam\**" />
+    <None Remove="Modules\Orchard.AntiSpam\**" />
+    <Content Remove="Modules\Orchard.ArchiveLater\**" />
+    <None Remove="Modules\Orchard.ArchiveLater\**" />
+    <Content Remove="Modules\Orchard.AuditTrail\**" />
+    <None Remove="Modules\Orchard.AuditTrail\**" />
+    <Content Remove="Modules\Orchard.Autoroute\**" />
+    <None Remove="Modules\Orchard.Autoroute\**" />
+    <Content Remove="Modules\Orchard.Azure\**" />
+    <None Remove="Modules\Orchard.Azure\**" />
+    <Content Remove="Modules\Orchard.Blogs\**" />
+    <None Remove="Modules\Orchard.Blogs\**" />
+    <Content Remove="Modules\Orchard.Caching\**" />
+    <None Remove="Modules\Orchard.Caching\**" />
+    <Content Remove="Modules\Orchard.CodeGeneration\**" />
+    <None Remove="Modules\Orchard.CodeGeneration\**" />
+    <Content Remove="Modules\Orchard.Comments\**" />
+    <None Remove="Modules\Orchard.Comments\**" />
+    <Content Remove="Modules\Orchard.Conditions\**" />
+    <None Remove="Modules\Orchard.Conditions\**" />
+    <Content Remove="Modules\Orchard.ContentPermissions\**" />
+    <None Remove="Modules\Orchard.ContentPermissions\**" />
+    <Content Remove="Modules\Orchard.ContentPicker\**" />
+    <None Remove="Modules\Orchard.ContentPicker\**" />
+    <Content Remove="Modules\Orchard.ContentPreview\**" />
+    <None Remove="Modules\Orchard.ContentPreview\**" />
+    <Content Remove="Modules\Orchard.ContentTypes\**" />
+    <None Remove="Modules\Orchard.ContentTypes\**" />
+    <Content Remove="Modules\Orchard.CustomForms\**" />
+    <None Remove="Modules\Orchard.CustomForms\**" />
+    <Content Remove="Modules\Orchard.Dashboards\**" />
+    <None Remove="Modules\Orchard.Dashboards\**" />
+    <Content Remove="Modules\Orchard.DesignerTools\**" />
+    <None Remove="Modules\Orchard.DesignerTools\**" />
+    <Content Remove="Modules\Orchard.DynamicForms\**" />
+    <None Remove="Modules\Orchard.DynamicForms\**" />
+    <Content Remove="Modules\Orchard.Email\**" />
+    <None Remove="Modules\Orchard.Email\**" />
+    <Content Remove="Modules\Orchard.Fields\**" />
+    <None Remove="Modules\Orchard.Fields\**" />
+    <Content Remove="Modules\Orchard.Forms\**" />
+    <None Remove="Modules\Orchard.Forms\**" />
+    <Content Remove="Modules\Orchard.Glimpse\**" />
+    <None Remove="Modules\Orchard.Glimpse\**" />
+    <Content Remove="Modules\Orchard.ImageEditor\**" />
+    <None Remove="Modules\Orchard.ImageEditor\**" />
+    <Content Remove="Modules\Orchard.ImportExport\**" />
+    <None Remove="Modules\Orchard.ImportExport\**" />
+    <Content Remove="Modules\Orchard.Indexing\**" />
+    <None Remove="Modules\Orchard.Indexing\**" />
+    <Content Remove="Modules\Orchard.JobsQueue\**" />
+    <None Remove="Modules\Orchard.JobsQueue\**" />
+    <Content Remove="Modules\Orchard.Layouts\**" />
+    <None Remove="Modules\Orchard.Layouts\**" />
+    <Content Remove="Modules\Orchard.Lists\**" />
+    <None Remove="Modules\Orchard.Lists\**" />
+    <Content Remove="Modules\Orchard.Localization\**" />
+    <None Remove="Modules\Orchard.Localization\**" />
+    <Content Remove="Modules\Orchard.Media\**" />
+    <None Remove="Modules\Orchard.Media\**" />
+    <Content Remove="Modules\Orchard.MediaLibrary\**" />
+    <None Remove="Modules\Orchard.MediaLibrary\**" />
+    <Content Remove="Modules\Orchard.MediaLibrary.WebSearch\**" />
+    <None Remove="Modules\Orchard.MediaLibrary.WebSearch\**" />
+    <Content Remove="Modules\Orchard.MediaPicker\**" />
+    <None Remove="Modules\Orchard.MediaPicker\**" />
+    <Content Remove="Modules\Orchard.MediaProcessing\**" />
+    <None Remove="Modules\Orchard.MediaProcessing\**" />
+    <Content Remove="Modules\Orchard.MessageBus\**" />
+    <None Remove="Modules\Orchard.MessageBus\**" />
+    <Content Remove="Modules\Orchard.Migrations\**" />
+    <None Remove="Modules\Orchard.Migrations\**" />
+    <Content Remove="Modules\Orchard.Modules\**" />
+    <None Remove="Modules\Orchard.Modules\**" />
+    <Content Remove="Modules\Orchard.MultiTenancy\**" />
+    <None Remove="Modules\Orchard.MultiTenancy\**" />
+    <Content Remove="Modules\Orchard.OpenId\**" />
+    <None Remove="Modules\Orchard.OpenId\**" />
+    <Content Remove="Modules\Orchard.OutputCache\**" />
+    <None Remove="Modules\Orchard.OutputCache\**" />
+    <Content Remove="Modules\Orchard.Packaging\**" />
+    <None Remove="Modules\Orchard.Packaging\**" />
+    <Content Remove="Modules\Orchard.Pages\**" />
+    <None Remove="Modules\Orchard.Pages\**" />
+    <Content Remove="Modules\Orchard.Projections\**" />
+    <None Remove="Modules\Orchard.Projections\**" />
+    <Content Remove="Modules\Orchard.PublishLater\**" />
+    <None Remove="Modules\Orchard.PublishLater\**" />
+    <Content Remove="Modules\Orchard.Recipes\**" />
+    <None Remove="Modules\Orchard.Recipes\**" />
+    <Content Remove="Modules\Orchard.Redis\**" />
+    <None Remove="Modules\Orchard.Redis\**" />
+    <Content Remove="Modules\Orchard.Resources\**" />
+    <None Remove="Modules\Orchard.Resources\**" />
+    <Content Remove="Modules\Orchard.Roles\**" />
+    <None Remove="Modules\Orchard.Roles\**" />
+    <Content Remove="Modules\Orchard.Rules\**" />
+    <None Remove="Modules\Orchard.Rules\**" />
+    <Content Remove="Modules\Orchard.Scripting\**" />
+    <None Remove="Modules\Orchard.Scripting\**" />
+    <Content Remove="Modules\Orchard.Scripting.CSharp\**" />
+    <None Remove="Modules\Orchard.Scripting.CSharp\**" />
+    <Content Remove="Modules\Orchard.Scripting.Dlr\**" />
+    <None Remove="Modules\Orchard.Scripting.Dlr\**" />
+    <Content Remove="Modules\Orchard.Search\**" />
+    <None Remove="Modules\Orchard.Search\**" />
+    <Content Remove="Modules\Orchard.SecureSocketsLayer\**" />
+    <None Remove="Modules\Orchard.SecureSocketsLayer\**" />
+    <Content Remove="Modules\Orchard.Setup\**" />
+    <None Remove="Modules\Orchard.Setup\**" />
+    <Content Remove="Modules\Orchard.Tags\**" />
+    <None Remove="Modules\Orchard.Tags\**" />
+    <Content Remove="Modules\Orchard.Taxonomies\**" />
+    <None Remove="Modules\Orchard.Taxonomies\**" />
+    <Content Remove="Modules\Orchard.Templates\**" />
+    <None Remove="Modules\Orchard.Templates\**" />
+    <Content Remove="Modules\Orchard.Themes\**" />
+    <None Remove="Modules\Orchard.Themes\**" />
+    <Content Remove="Modules\Orchard.Tokens\**" />
+    <None Remove="Modules\Orchard.Tokens\**" />
+    <Content Remove="Modules\Orchard.Users\**" />
+    <None Remove="Modules\Orchard.Users\**" />
+    <Content Remove="Modules\Orchard.Warmup\**" />
+    <None Remove="Modules\Orchard.Warmup\**" />
+    <Content Remove="Modules\Orchard.Widgets\**" />
+    <None Remove="Modules\Orchard.Widgets\**" />
+    <Content Remove="Modules\Orchard.Workflows\**" />
+    <None Remove="Modules\Orchard.Workflows\**" />
+    <Content Remove="Modules\SysCache\**" />
+    <None Remove="Modules\SysCache\**" />
+    <Content Remove="Modules\TinyMce\**" />
+    <None Remove="Modules\TinyMce\**" />
+    <Content Remove="Modules\Upgrade\**" />
+    <None Remove="Modules\Upgrade\**" />
+    <Content Remove="Themes\**" />
+    <None Remove="Themes\**" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Global.asax.cs">
-      <DependentUpon>Global.asax</DependentUpon>
-    </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <PackageReference Include="MySql.Data" Version="6.10.9" />
+    <PackageReference Include="Npgsql" Version="4.0.17" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Global.asax" />
-    <Content Include="Refresh.html" />
-    <Content Include="Web.config">
-      <SubType>Designer</SubType>
-    </Content>
+    <ProjectReference Include="..\Orchard.WarmupStarter\Orchard.WarmupStarter.csproj" />
+    <ProjectReference Include="..\Orchard\Orchard.Framework.csproj" />
+    <ProjectReference Include="..\Tools\Orchard\Orchard.csproj" />
+    <ProjectReference Include="Core\Orchard.Core.csproj" />
+    <ProjectReference Include="Modules\Orchard.Glimpse\Orchard.Glimpse.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Orchard.WarmupStarter\Orchard.WarmupStarter.csproj">
-      <Project>{5C0D5249-AEF5-4BB6-8F5F-057B91AC2D7A}</Project>
-      <Name>Orchard.WarmupStarter</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Orchard\Orchard.Framework.csproj">
-      <Project>{2D1D92BB-4555-4CBE-8D0E-63563D6CE4C6}</Project>
-      <Name>Orchard.Framework</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Tools\Orchard\Orchard.csproj">
-      <Project>{33B1BC8D-E292-4972-A363-22056B207156}</Project>
-      <Name>Orchard</Name>
-    </ProjectReference>
-    <ProjectReference Include="Core\Orchard.Core.csproj">
-      <Project>{9916839C-39FC-4CEB-A5AF-89CA7E87119F}</Project>
-      <Name>Orchard.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="Modules\Orchard.Glimpse\Orchard.Glimpse.csproj">
-      <Project>{71e17466-d937-49d7-8c7d-77ccbab8ccf4}</Project>
-      <Name>Orchard.Glimpse</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Config\Host.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Config\Sites.config" />
-    <None Include="packages.config" />
-    <None Include="Web.Debug.config">
-      <DependentUpon>Web.config</DependentUpon>
-    </None>
-    <None Include="Web.Release.config">
-      <DependentUpon>Web.config</DependentUpon>
-    </None>
-  </ItemGroup>
-  <PropertyGroup>
-    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
-    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-  </PropertyGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
-  <ItemGroup>
-    <WebConfigsToTransform Include="Config\log4net.config">
-      <DestinationRelativePath>Config\log4net.config</DestinationRelativePath>
-      <Exclude>False</Exclude>
-      <TransformFileFolder>$(TransformWebConfigIntermediateLocation)\original</TransformFileFolder>
-      <TransformFile>Config\log4net.$(Configuration).config</TransformFile>
-      <TransformOriginalFolder>$(TransformWebConfigIntermediateLocation)\original</TransformOriginalFolder>
-      <TransformOriginalFile>$(TransformWebConfigIntermediateLocation)\original\%(DestinationRelativePath)</TransformOriginalFile>
-      <TransformOutputFile>$(TransformWebConfigIntermediateLocation)\transformed\%(DestinationRelativePath)</TransformOutputFile>
-      <TransformScope>$(_PackageTempDir)\%(DestinationRelativePath)</TransformScope>
-      <SubType>Designer</SubType>
-    </WebConfigsToTransform>
-    <None Include="Config\log4net.Debug.config">
-      <DependentUpon>log4net.config</DependentUpon>
-    </None>
-    <None Include="Config\log4net.Release.config">
-      <DependentUpon>log4net.config</DependentUpon>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <WebConfigsToTransform Include="Config\HostComponents.config">
-      <DestinationRelativePath>Config\HostComponents.config</DestinationRelativePath>
-      <Exclude>False</Exclude>
-      <TransformFileFolder>$(TransformWebConfigIntermediateLocation)\original</TransformFileFolder>
-      <TransformFile>Config\HostComponents.$(Configuration).config</TransformFile>
-      <TransformOriginalFolder>$(TransformWebConfigIntermediateLocation)\original</TransformOriginalFolder>
-      <TransformOriginalFile>$(TransformWebConfigIntermediateLocation)\original\%(DestinationRelativePath)</TransformOriginalFile>
-      <TransformOutputFile>$(TransformWebConfigIntermediateLocation)\transformed\%(DestinationRelativePath)</TransformOutputFile>
-      <TransformScope>$(_PackageTempDir)\%(DestinationRelativePath)</TransformScope>
-      <SubType>Designer</SubType>
-    </WebConfigsToTransform>
-    <None Include="Config\HostComponents.Debug.config">
-      <DependentUpon>HostComponents.config</DependentUpon>
-    </None>
-    <None Include="Config\HostComponents.Release.config">
-      <DependentUpon>HostComponents.config</DependentUpon>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="App_Data\" />
-  </ItemGroup>
-  <ProjectExtensions>
-    <VisualStudio>
-      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
-        <WebProjectProperties>
-          <SaveServerSettingsInUserFile>True</SaveServerSettingsInUserFile>
-        </WebProjectProperties>
-      </FlavorProperties>
-    </VisualStudio>
-  </ProjectExtensions>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. Other similar extension points exist, see Microsoft.Common.targets. -->
-  <Target Name="BeforeBuild">
-    <CallTarget Targets="CopySqlCeBinaries" />
-  </Target>
-  <Target Name="ExcludeRootBinariesDeployment">
-    <ItemGroup>
-      <RootBinFiles Include="bin\*">
-        <InProject>false</InProject>
-      </RootBinFiles>
-    </ItemGroup>
-    <PropertyGroup>
-      <ExcludeFilesFromDeployment>@(RootBinFiles->'Modules\**\bin\%(Filename)%(Extension)');@(RootBinFiles->'Themes\**\%(Filename)%(Extension)');@(RootBinFiles->'Core\**\bin\%(Filename)%(Extension)');**\*.Debug.config;**\*.Release.config;**\obj\**;**\bin\*.xml;**\bin\*.pdb;**\bin\*.dll.config;**\*.cs;**\*.csproj;Modules\**\Tests\**;Modules\**\Specs\**;Themes\bin\**;**\.hgignore;**\.hgtags;**\.hg\**;**\.gitignore;**\.git\**;**\*.csproj.user;Properties\**\*;App_Data\Dependencies\*;App_Data\RecipeQueue\*;App_Data\Logs\*;App_Data\**\mappings.bin;App_Data\**\cache.dat;App_Data\**\hrestart.txt</ExcludeFilesFromDeployment>
-    </PropertyGroup>
-  </Target>
-  <Target Name="ExcludeRootBinariesPackage" DependsOnTargets="ExcludeRootBinariesDeployment" BeforeTargets="ExcludeFilesFromPackage">
-    <ItemGroup>
-      <ExcludeFromPackageFiles Include="$(ExcludeFilesFromDeployment)" />
-    </ItemGroup>
-  </Target>
-  <Target Name="CopySqlCeBinaries">
-    <ItemGroup>
-      <SqlCeBinariesx86 Include="$(ProjectDir)..\..\lib\sqlce\x86\**\*" />
-      <SqlCeBinariesx64 Include="$(ProjectDir)..\..\lib\sqlce\amd64\**\*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(SqlCeBinariesx86)" DestinationFolder="$(OutputPath)\x86\%(RecursiveDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="@(SqlCeBinariesx64)" DestinationFolder="$(OutputPath)\amd64\%(RecursiveDir)" SkipUnchangedFiles="true" />
-  </Target>
-  <Target Name="AfterBuild">
-    <PropertyGroup>
-      <AreasManifestDir>$(ProjectDir)\..\Manifests</AreasManifestDir>
-    </PropertyGroup>
-    <CallTarget Targets="ExcludeRootBinariesDeployment" />
-  </Target>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets'))" />
-  </Target>
 </Project>

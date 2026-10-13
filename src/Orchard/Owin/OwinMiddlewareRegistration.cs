@@ -1,19 +1,19 @@
 using System;
-using Owin;
+using Microsoft.AspNetCore.Builder;
 
 namespace Orchard.Owin
 {
     /// <summary>
-    /// An Owin middleware registration that can make changes to the Owin pipeline, like registering middlewares to be injected into the Orchard 
-    /// Owin pipeline.
+    /// A middleware registration that can make changes to the tenant request pipeline, like registering middlewares to be injected into the Orchard 
+    /// pipeline.
     /// </summary>
     public class OwinMiddlewareRegistration
     {
         /// <summary>
-        /// Gets or sets the delegate that you can use to make changes to the Owin pipeline, like registering middlewares to be injected into
-        /// the Orchard Owin pipeline.
+        /// Gets or sets the delegate that you can use to make changes to the tenant pipeline, like registering middlewares to be injected into
+        /// the Orchard pipeline.
         /// </summary>
-        public Action<IAppBuilder> Configure { get; set; }
+        public Action<IApplicationBuilder> Configure { get; set; }
 
         /// <summary>
         /// Gets or sets the priority value that decides the order in which such objects are processed. I.e. "0" will run before "10", 

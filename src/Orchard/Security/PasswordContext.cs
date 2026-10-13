@@ -1,5 +1,3 @@
-using System.Web.Security;
-
 namespace Orchard.Security
 {
     public class PasswordContext

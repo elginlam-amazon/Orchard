@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
-using System.Web.Mvc;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Orchard;
 using Orchard.Caching;
 using Orchard.ContentManagement;
@@ -336,7 +336,7 @@ namespace Upgrade.Controllers
                 lastContentItemId = part.Record.Id;
             }
 
-            return new JsonResult { Data = lastContentItemId };
+            return new JsonResult(lastContentItemId);
         }
 
         [HttpPost]
@@ -363,7 +363,7 @@ namespace Upgrade.Controllers
                 lastContentItemId = part.Record.Id;
             }
 
-            return new JsonResult { Data = lastContentItemId };
+            return new JsonResult(lastContentItemId);
         }
 
         [HttpPost]
@@ -404,7 +404,7 @@ namespace Upgrade.Controllers
                 }
             }
 
-            return new JsonResult { Data = lastContentItemId };
+            return new JsonResult(lastContentItemId);
         }
 
         [HttpPost]
@@ -431,7 +431,7 @@ namespace Upgrade.Controllers
                     });
             }
 
-            return new JsonResult { Data = lastContentItemId };
+            return new JsonResult(lastContentItemId);
         }
 
         [HttpPost]
@@ -466,7 +466,7 @@ namespace Upgrade.Controllers
                     });
             }
 
-            return new JsonResult { Data = lastContentItemId };
+            return new JsonResult(lastContentItemId);
         }
 
         [HttpPost]
@@ -497,7 +497,7 @@ namespace Upgrade.Controllers
                     });
             }
 
-            return new JsonResult { Data = lastContentItemId };
+            return new JsonResult(lastContentItemId);
         }
 
         [HttpPost]
@@ -526,7 +526,7 @@ namespace Upgrade.Controllers
                     });
             }
 
-            return new JsonResult { Data = lastContentItemId };
+            return new JsonResult(lastContentItemId);
         }
 
         [HttpPost]
@@ -564,7 +564,7 @@ namespace Upgrade.Controllers
                 }
             }
 
-            return new JsonResult { Data = lastContentItemId };
+            return new JsonResult(lastContentItemId);
         }
 
         [HttpPost]
@@ -594,7 +594,7 @@ namespace Upgrade.Controllers
                 }
             }
 
-            return new JsonResult { Data = lastContentItemId };
+            return new JsonResult(lastContentItemId);
         }
 
 
@@ -628,7 +628,7 @@ namespace Upgrade.Controllers
                 }
             }
 
-            return new JsonResult { Data = lastContentItemId };
+            return new JsonResult(lastContentItemId);
         }
 
         [HttpPost]
@@ -687,7 +687,7 @@ namespace Upgrade.Controllers
                 }
             }
 
-            return new JsonResult { Data = lastContentItemVersionId };
+            return new JsonResult(lastContentItemVersionId);
         }
 
         private static string ConvertToString(object readerValue)

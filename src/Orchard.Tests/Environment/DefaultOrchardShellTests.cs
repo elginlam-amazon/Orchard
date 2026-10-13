@@ -1,8 +1,9 @@
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using NUnit.Framework;
 using Orchard.Mvc.ModelBinders;
 using Orchard.Mvc.Routes;
@@ -71,8 +72,9 @@ namespace Orchard.Tests.Environment
                 Routes = routes;
             }
             public IEnumerable<RouteDescriptor> Routes { get; set; }
-            public void Publish(IEnumerable<RouteDescriptor> routes, Func<IDictionary<string, object>, Task> pipeline)
+            public void Publish(IEnumerable<RouteDescriptor> routes, RequestDelegate pipeline)
             {
+                Routes = routes;
             }
         }
 

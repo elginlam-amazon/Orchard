@@ -2,6 +2,7 @@ using Orchard.Blogs.Services;
 using Orchard.Localization;
 using Orchard.Security;
 using Orchard.UI.Navigation;
+using Microsoft.AspNetCore.Routing;
 
 namespace Orchard.Blogs
 {
@@ -30,7 +31,7 @@ namespace Orchard.Blogs
         public void GetNavigation(NavigationBuilder builder)
         {
             var blogId = 0;
-            int.TryParse(_workContextAccessor.GetContext().HttpContext.Request.RequestContext.RouteData.Values["blogId"]?.ToString(), out blogId);
+            int.TryParse(_workContextAccessor.GetContext().HttpContext.Request.HttpContext.GetRouteData().Values["blogId"]?.ToString(), out blogId);
             if (blogId > 0)
             {
                 builder.Add(T("Blog posts"),

@@ -1,6 +1,8 @@
 using System;
-using System.Web.Mvc;
-using System.Web.Mvc.Html;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Orchard.ContentManagement;
 using Orchard.Utility.Extensions;
 
@@ -9,42 +11,42 @@ namespace Orchard.Mvc.Html
     public static class ContentItemExtensions
     {
 
-        public static MvcHtmlString ItemDisplayText(this HtmlHelper html, IContent content)
+        public static IHtmlContent ItemDisplayText(this IHtmlHelper html, IContent content)
         {
             return ItemDisplayText(html, content, true);
         }
 
-        public static MvcHtmlString ItemDisplayText(this HtmlHelper html, IContent content, bool encode)
+        public static IHtmlContent ItemDisplayText(this IHtmlHelper html, IContent content, bool encode)
         {
             var metadata = content.ContentItem.ContentManager.GetItemMetadata(content);
             if (metadata.DisplayText == null)
                 return null;
             if (encode)
             {
-                return MvcHtmlString.Create(html.Encode(metadata.DisplayText));
+                return new HtmlString(html.Encode(metadata.DisplayText));
             }
             else
             {
-                return MvcHtmlString.Create(metadata.DisplayText);
+                return new HtmlString(metadata.DisplayText);
             }
         }
 
-        public static MvcHtmlString ItemDisplayLink(this HtmlHelper html, IContent content)
+        public static IHtmlContent ItemDisplayLink(this IHtmlHelper html, IContent content)
         {
             return ItemDisplayLink(html, null, content, null);
         }
 
-        public static MvcHtmlString ItemDisplayLink(this HtmlHelper html, IContent content, object htmlAttributes)
+        public static IHtmlContent ItemDisplayLink(this IHtmlHelper html, IContent content, object htmlAttributes)
         {
             return ItemDisplayLink(html, null, content, htmlAttributes);
         }
 
-        public static MvcHtmlString ItemDisplayLink(this HtmlHelper html, string linkText, IContent content)
+        public static IHtmlContent ItemDisplayLink(this IHtmlHelper html, string linkText, IContent content)
         {
             return ItemDisplayLink(html, linkText, content, null);
         }
 
-        public static MvcHtmlString ItemDisplayLink(this HtmlHelper html, string linkText, IContent content, object htmlAttributes = null)
+        public static IHtmlContent ItemDisplayLink(this IHtmlHelper html, string linkText, IContent content, object htmlAttributes = null)
         {
             var metadata = content.ContentItem.ContentManager.GetItemMetadata(content);
             if (metadata.DisplayRouteValues == null)
@@ -57,7 +59,7 @@ namespace Orchard.Mvc.Html
                 HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes));
         }
 
-        public static string ItemDisplayUrl(this UrlHelper urlHelper, IContent content)
+        public static string ItemDisplayUrl(this IUrlHelper urlHelper, IContent content)
         {
             var metadata = content.ContentItem.ContentManager.GetItemMetadata(content);
             if (metadata.DisplayRouteValues == null)
@@ -68,12 +70,12 @@ namespace Orchard.Mvc.Html
                 metadata.DisplayRouteValues);
         }
 
-        public static MvcHtmlString ItemRemoveLink(this HtmlHelper html, IContent content)
+        public static IHtmlContent ItemRemoveLink(this IHtmlHelper html, IContent content)
         {
             return ItemRemoveLink(html, null, content, null);
         }
 
-        public static MvcHtmlString ItemRemoveLink(this HtmlHelper html, string linkText, IContent content, object additionalRouteValues)
+        public static IHtmlContent ItemRemoveLink(this IHtmlHelper html, string linkText, IContent content, object additionalRouteValues)
         {
             var metadata = content.ContentItem.ContentManager.GetItemMetadata(content);
             if (metadata.RemoveRouteValues == null)
@@ -85,7 +87,7 @@ namespace Orchard.Mvc.Html
                 metadata.RemoveRouteValues.Merge(additionalRouteValues));
         }
 
-        public static string ItemRemoveUrl(this UrlHelper urlHelper, IContent content, object additionalRouteValues)
+        public static string ItemRemoveUrl(this IUrlHelper urlHelper, IContent content, object additionalRouteValues)
         {
             var metadata = content.ContentItem.ContentManager.GetItemMetadata(content);
             if (metadata.RemoveRouteValues == null)
@@ -96,17 +98,17 @@ namespace Orchard.Mvc.Html
                 metadata.RemoveRouteValues.Merge(additionalRouteValues));
         }
 
-        public static MvcHtmlString ItemEditLinkWithReturnUrl(this HtmlHelper html, string linkText, IContent content)
+        public static IHtmlContent ItemEditLinkWithReturnUrl(this IHtmlHelper html, string linkText, IContent content)
         {
-            return html.ItemEditLink(linkText, content, new { ReturnUrl = html.ViewContext.HttpContext.Request.RawUrl });
+            return html.ItemEditLink(linkText, content, new { ReturnUrl = html.ViewContext.HttpContext.Request.GetRawUrl() });
         }
 
-        public static MvcHtmlString ItemEditLink(this HtmlHelper html, string linkText, IContent content)
+        public static IHtmlContent ItemEditLink(this IHtmlHelper html, string linkText, IContent content)
         {
             return html.ItemEditLink(linkText, content, null);
         }
 
-        public static MvcHtmlString ItemEditLink(this HtmlHelper html, string linkText, IContent content, object additionalRouteValues)
+        public static IHtmlContent ItemEditLink(this IHtmlHelper html, string linkText, IContent content, object additionalRouteValues)
         {
             var metadata = content.ContentItem.ContentManager.GetItemMetadata(content);
             if (metadata.EditorRouteValues == null)
@@ -118,7 +120,7 @@ namespace Orchard.Mvc.Html
                 metadata.EditorRouteValues.Merge(additionalRouteValues));
         }
 
-        public static MvcHtmlString ItemEditLink(this HtmlHelper html, string linkText, IContent content, object additionalRouteValues, object htmlAttributes = null)
+        public static IHtmlContent ItemEditLink(this IHtmlHelper html, string linkText, IContent content, object additionalRouteValues, object htmlAttributes = null)
         {
             var metadata = content.ContentItem.ContentManager.GetItemMetadata(content);
             if (metadata.EditorRouteValues == null)
@@ -131,17 +133,17 @@ namespace Orchard.Mvc.Html
                 HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes));
         }
 
-        public static MvcHtmlString ItemAdminLink(this HtmlHelper html, IContent content)
+        public static IHtmlContent ItemAdminLink(this IHtmlHelper html, IContent content)
         {
             return ItemAdminLink(html, null, content);
         }
 
-        public static MvcHtmlString ItemAdminLink(this HtmlHelper html, string linkText, IContent content)
+        public static IHtmlContent ItemAdminLink(this IHtmlHelper html, string linkText, IContent content)
         {
             return html.ItemAdminLink(linkText, content, null);
         }
 
-        public static MvcHtmlString ItemAdminLink(this HtmlHelper html, string linkText, IContent content, object additionalRouteValues)
+        public static IHtmlContent ItemAdminLink(this IHtmlHelper html, string linkText, IContent content, object additionalRouteValues)
         {
             var metadata = content.ContentItem.ContentManager.GetItemMetadata(content);
             if (metadata.AdminRouteValues == null)
@@ -153,7 +155,7 @@ namespace Orchard.Mvc.Html
                 metadata.AdminRouteValues.Merge(additionalRouteValues));
         }
 
-        public static string ItemEditUrl(this UrlHelper urlHelper, IContent content, object additionalRouteValues = null)
+        public static string ItemEditUrl(this IUrlHelper urlHelper, IContent content, object additionalRouteValues = null)
         {
             var metadata = content.ContentItem.ContentManager.GetItemMetadata(content);
             if (metadata.EditorRouteValues == null)
@@ -164,7 +166,7 @@ namespace Orchard.Mvc.Html
                 metadata.EditorRouteValues.Merge(additionalRouteValues ?? new { }));
         }
 
-        public static string ItemAdminUrl(this UrlHelper urlHelper, IContent content, object additionalRouteValues = null)
+        public static string ItemAdminUrl(this IUrlHelper urlHelper, IContent content, object additionalRouteValues = null)
         {
             var metadata = content.ContentItem.ContentManager.GetItemMetadata(content);
             return metadata.AdminRouteValues == null ? null : urlHelper.RouteUrl(metadata.AdminRouteValues.Merge(additionalRouteValues ?? new { }));
@@ -180,7 +182,7 @@ namespace Orchard.Mvc.Html
             return null;
         }
 
-        public static MvcHtmlString ItemEditLink(this HtmlHelper html, IContent content)
+        public static IHtmlContent ItemEditLink(this IHtmlHelper html, IContent content)
         {
             return ItemEditLink(html, null, content);
         }

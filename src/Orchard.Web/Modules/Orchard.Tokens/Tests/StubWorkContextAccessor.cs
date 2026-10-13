@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Web;
 using Autofac;
+using Microsoft.AspNetCore.Http;
 using Orchard.ContentManagement;
 using Orchard.Security;
 using Orchard.Settings;
@@ -145,7 +145,10 @@ namespace Orchard.Tokens.Tests
 
             public override bool TryResolve<T>(out T service)
             {
-                return _lifetimeScope.TryResolve<T>(out service);
+                // Autofac only supports reference types in the generic TryResolve
+                var resolved = _lifetimeScope.TryResolve(typeof(T), out var instance);
+                service = resolved ? (T)instance : default(T);
+                return resolved;
             }
 
             public override bool TryResolve(Type serviceType, out object service)
@@ -164,12 +167,12 @@ namespace Orchard.Tokens.Tests
             }
         }
 
-        public WorkContext GetContext(HttpContextBase httpContext)
+        public WorkContext GetContext(HttpContext httpContext)
         {
             return _workContext;
         }
 
-        public IWorkContextScope CreateWorkContextScope(HttpContextBase httpContext)
+        public IWorkContextScope CreateWorkContextScope(HttpContext httpContext)
         {
             throw new NotSupportedException();
         }

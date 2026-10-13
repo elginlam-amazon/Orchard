@@ -68,7 +68,6 @@ namespace Orchard.Recipes.Services
             var httpContext = _httpContextAccessor.Current();
             if (httpContext != null)
             {
-                httpContext.Server.ScriptTimeout = RecipeExecutionTimeout;
             }
 
             var executionId = Guid.NewGuid().ToString("n");

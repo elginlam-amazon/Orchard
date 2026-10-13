@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Aspects;
 using Orchard.ContentManagement.MetaData;
@@ -24,8 +24,6 @@ using Orchard.Utility.Extensions;
 
 namespace Orchard.Taxonomies.Controllers
 {
-
-    [ValidateInput(false)]
     public class AdminController : Controller, IUpdateModel
     {
         private readonly ITaxonomyService _taxonomyService;
@@ -81,7 +79,7 @@ namespace Orchard.Taxonomies.Controllers
         {
             var viewModel = new TaxonomyAdminIndexViewModel { Taxonomies = new List<TaxonomyEntry>(), BulkAction = new TaxonomiesAdminIndexBulkAction() };
 
-            if (!TryUpdateModel(viewModel))
+            if (!this.TryUpdateModel(viewModel))
             {
                 return View(viewModel);
             }
@@ -93,7 +91,7 @@ namespace Orchard.Taxonomies.Controllers
                     break;
                 case TaxonomiesAdminIndexBulkAction.Delete:
                     if (!Services.Authorizer.Authorize(Permissions.ManageTaxonomies, T("Couldn't delete taxonomy")))
-                        return new HttpUnauthorizedResult();
+                        return new UnauthorizedResult();
 
                     foreach (var entry in checkedEntries)
                     {
@@ -120,7 +118,7 @@ namespace Orchard.Taxonomies.Controllers
             var contentItem = _contentManager.New(_contentType);
 
             if (!Services.Authorizer.Authorize(Permissions.CreateTaxonomy, contentItem, T("Cannot create taxonomies")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             var model = _contentManager.BuildEditor(contentItem);
             return View(model);
         }
@@ -145,7 +143,7 @@ namespace Orchard.Taxonomies.Controllers
             var dummyContent = _contentManager.New(_contentType);
 
             if (!Services.Authorizer.Authorize(Permissions.CreateTaxonomy, dummyContent, T("Couldn't create taxonomies")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return CreatePOST(returnUrl, contentItem => _contentManager.Publish(contentItem));
         }
@@ -155,7 +153,7 @@ namespace Orchard.Taxonomies.Controllers
             var contentItem = _contentManager.New(_contentType);
 
             if (!Services.Authorizer.Authorize(Permissions.CreateTaxonomy, contentItem, T("Couldn't create taxonomies")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             _contentManager.Create(contentItem, VersionOptions.Draft);
 
@@ -185,10 +183,10 @@ namespace Orchard.Taxonomies.Controllers
             var contentItem = _contentManager.Get(id, VersionOptions.Latest);
 
             if (contentItem == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!Services.Authorizer.Authorize(Permissions.CreateTaxonomy, contentItem, T("Cannot edit content")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var model = _contentManager.BuildEditor(contentItem);
             return View(model);
@@ -212,10 +210,10 @@ namespace Orchard.Taxonomies.Controllers
             var content = _contentManager.Get(id, VersionOptions.Latest);
 
             if (content == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!Services.Authorizer.Authorize(Permissions.CreateTaxonomy, content, T("Couldn't publish content")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return EditPOST(id, returnUrl, contentItem => _contentManager.Publish(contentItem));
         }
@@ -225,10 +223,10 @@ namespace Orchard.Taxonomies.Controllers
             var contentItem = _contentManager.Get(id, VersionOptions.DraftRequired);
 
             if (contentItem == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!Services.Authorizer.Authorize(Permissions.CreateTaxonomy, contentItem, T("Couldn't edit content")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             string previousRoute = null;
             if (contentItem.Has<IAliasAspect>()
@@ -272,12 +270,12 @@ namespace Orchard.Taxonomies.Controllers
         public ActionResult Delete(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageTaxonomies, T("Couldn't delete taxonomy")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var taxonomy = _taxonomyService.GetTaxonomy(id);
             if (taxonomy == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             _taxonomyService.DeleteTaxonomy(taxonomy);
@@ -290,13 +288,13 @@ namespace Orchard.Taxonomies.Controllers
         public ActionResult Import(int id, string terms)
         {
             if (!Services.Authorizer.Authorize(Permissions.CreateTaxonomy, T("Couldn't import terms")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var taxonomy = _taxonomyService.GetTaxonomy(id);
 
             if (taxonomy == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             return View(new ImportViewModel { Taxonomy = taxonomy, Terms = terms });
@@ -306,13 +304,13 @@ namespace Orchard.Taxonomies.Controllers
         public ActionResult ImportPost(int id, string terms)
         {
             if (!Services.Authorizer.Authorize(Permissions.CreateTaxonomy, T("Couldn't import terms")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var taxonomy = _taxonomyService.GetTaxonomy(id);
 
             if (taxonomy == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var topTerm = new TermPosition();
@@ -424,7 +422,7 @@ namespace Orchard.Taxonomies.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

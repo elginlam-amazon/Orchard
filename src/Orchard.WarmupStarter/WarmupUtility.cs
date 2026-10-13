@@ -1,44 +1,49 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Web;
-using System.Web.Hosting;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Orchard.WarmupStarter
 {
     public static class WarmupUtility
     {
         public static readonly string WarmupFilesPath = "~/App_Data/Warmup/";
+
         /// <summary>
-        /// return true to put request on hold (until call to Signal()) - return false to allow pipeline to execute immediately
+        /// return true if the request can be processed while the application is warming up (the warmup copy
+        /// of the page has been served, or the request is for a static file) - return false to put the request on hold
         /// </summary>
-        /// <param name="httpApplication"></param>
-        /// <returns></returns>
-        public static bool DoBeginRequest(HttpApplication httpApplication)
+        public static async Task<bool> DoBeginRequestAsync(HttpContext context)
         {
+            var contentRoot = context.RequestServices.GetRequiredService<IWebHostEnvironment>().ContentRootPath;
+
             // use the url as it was requested by the client
             // the real url might be different if it has been translated (proxy, load balancing, ...)
-            var url = ToUrlString(httpApplication.Request);
-            var virtualFileCopy = WarmupUtility.EncodeUrl(url.Trim('/'));
-            var localCopy = Path.Combine(HostingEnvironment.MapPath(WarmupFilesPath), virtualFileCopy);
+            var url = ToUrlString(context.Request);
+            var virtualFileCopy = EncodeUrl(url.Trim('/'));
+            var localCopy = Path.Combine(contentRoot, WarmupFilesPath.TrimStart('~', '/'), virtualFileCopy);
 
             if (File.Exists(localCopy))
             {
                 // result should not be cached, even on proxies
-                httpApplication.Response.Cache.SetExpires(DateTime.UtcNow.AddDays(-1));
-                httpApplication.Response.Cache.SetValidUntilExpires(false);
-                httpApplication.Response.Cache.SetRevalidation(HttpCacheRevalidation.AllCaches);
-                httpApplication.Response.Cache.SetCacheability(HttpCacheability.NoCache);
-                httpApplication.Response.Cache.SetNoStore();
+                var response = context.Response;
+                response.Headers.Expires = DateTime.UtcNow.AddDays(-1).ToString("R");
+                response.Headers.CacheControl = "no-cache, no-store, must-revalidate, proxy-revalidate";
+                response.Headers.Pragma = "no-cache";
 
-                httpApplication.Response.WriteFile(localCopy);
-                httpApplication.Response.End();
+                await response.SendFileAsync(localCopy);
                 return true;
             }
 
             // there is no local copy and the file exists
             // serve the static file
-            if (File.Exists(httpApplication.Request.PhysicalPath))
+            var path = context.Request.PathBase.Add(context.Request.Path).Value ?? string.Empty;
+            var physicalPath = Path.Combine(contentRoot, path.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (path.Length > 1 && File.Exists(physicalPath))
             {
                 return true;
             }
@@ -48,7 +53,7 @@ namespace Orchard.WarmupStarter
 
         public static string ToUrlString(HttpRequest request)
         {
-            return string.Format("{0}://{1}{2}", request.Url.Scheme, request.Headers["Host"], request.RawUrl);
+            return string.Format("{0}://{1}{2}", request.Scheme, request.Headers["Host"], request.GetEncodedPathAndQuery());
         }
 
         public static string EncodeUrl(string url)

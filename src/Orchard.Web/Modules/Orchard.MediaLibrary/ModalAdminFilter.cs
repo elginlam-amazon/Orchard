@@ -1,4 +1,5 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.Mvc.Filters;
 using Orchard.UI.Resources;
 
@@ -16,7 +17,7 @@ namespace Orchard.MediaLibrary
         public void OnResultExecuting(ResultExecutingContext filterContext)
         {
             // should only run on a full view rendering result
-            if (!(filterContext.Result is ViewResult) || !UI.Admin.AdminFilter.IsApplied(filterContext.RequestContext))
+            if (!(filterContext.Result is ViewResult) || !UI.Admin.AdminFilter.IsApplied(filterContext))
                 return;
             _resourceManager.Include("stylesheet", "~/Modules/Orchard.MediaLibrary/Styles/dialog-mode.css", null);
             _resourceManager.Include("script", "~/Modules/Orchard.MediaLibrary/Scripts/modal-window.js", null).AtFoot();

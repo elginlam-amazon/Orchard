@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Mvc.Routes;
+using Route = Orchard.Mvc.Routes.Route;
 
 namespace Orchard.Core.Settings
 {
@@ -36,7 +36,7 @@ namespace Orchard.Core.Settings
 
     public class SettingsActionConstraint : IRouteConstraint
     {
-        public bool Match(HttpContextBase httpContext, Route route, string parameterName, RouteValueDictionary values, RouteDirection routeDirection)
+        public bool Match(HttpContext httpContext, IRouter route, string parameterName, RouteValueDictionary values, RouteDirection routeDirection)
         {
             if (routeDirection == RouteDirection.UrlGeneration)
                 return true;

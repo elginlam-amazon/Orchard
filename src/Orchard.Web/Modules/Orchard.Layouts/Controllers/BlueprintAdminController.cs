@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Caching;
 using Orchard.ContentManagement;
 using Orchard.Data;
@@ -12,6 +12,7 @@ using Orchard.Layouts.Services;
 using Orchard.Layouts.ViewModels;
 using Orchard.Localization;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.UI.Admin;
 using Orchard.UI.Notify;
 
@@ -58,7 +59,7 @@ namespace Orchard.Layouts.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageLayouts, T("Not authorized to manage layouts.")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var blueprints = _elementBlueprintService.GetBlueprints().ToArray();
@@ -73,7 +74,7 @@ namespace Orchard.Layouts.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageLayouts, T("Not authorized to manage layouts.")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var categories = RemoveBlueprints(_elementManager.GetCategories(DescribeElementsContext.Empty)).ToArray();
@@ -88,7 +89,7 @@ namespace Orchard.Layouts.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageLayouts, T("Not authorized to manage layouts.")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             if (string.IsNullOrWhiteSpace(id))
@@ -110,7 +111,7 @@ namespace Orchard.Layouts.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageLayouts, T("Not authorized to manage layouts.")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var describeContext = DescribeElementsContext.Empty;
@@ -138,7 +139,7 @@ namespace Orchard.Layouts.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageLayouts, T("Not authorized to manage layouts.")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var blueprint = _elementBlueprintService.GetBlueprint(id);
@@ -164,12 +165,11 @@ namespace Orchard.Layouts.Controllers
         }
 
         [HttpPost]
-        [ValidateInput(false)]
         public ActionResult Edit(int id, ElementDataViewModel model)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageLayouts, T("Not authorized to manage layouts.")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var blueprint = _elementBlueprintService.GetBlueprint(id);
@@ -206,7 +206,7 @@ namespace Orchard.Layouts.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageLayouts, T("Not authorized to manage layouts.")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var blueprint = _elementBlueprintService.GetBlueprint(id);
@@ -230,7 +230,7 @@ namespace Orchard.Layouts.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageLayouts, T("Not authorized to manage layouts.")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var blueprint = _elementBlueprintService.GetBlueprint(id);
@@ -259,17 +259,17 @@ namespace Orchard.Layouts.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageLayouts, T("Not authorized to manage layouts.")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var blueprint = _elementBlueprintService.GetBlueprint(id);
 
             if (blueprint == null)
-                return HttpNotFound();
+                return NotFound();
 
             _elementBlueprintService.DeleteBlueprint(blueprint);
             _notifier.Success(T("That blueprint has been deleted."));
-            return Redirect(Request.UrlReferrer.ToString());
+            return Redirect(Request.GetUrlReferrer().ToString());
         }
 
         [FormValueRequired("submit.BulkEdit")]
@@ -279,7 +279,7 @@ namespace Orchard.Layouts.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageLayouts, T("Not authorized to manage layouts.")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             if (blueprintIds == null || !blueprintIds.Any())
@@ -292,7 +292,7 @@ namespace Orchard.Layouts.Controllers
                 _notifier.Success(T("{0} blueprints have been deleted.", numDeletedBlueprints));
             }
 
-            return Redirect(Request.UrlReferrer.ToString());
+            return Redirect(Request.GetUrlReferrer().ToString());
         }
 
         private ElementEditorContext CreateEditorContext(Element element, ElementDataDictionary elementData = null)
@@ -305,7 +305,7 @@ namespace Orchard.Layouts.Controllers
                 ValueProvider = elementData.ToValueProvider(_cultureAccessor.CurrentCulture),
                 ShapeFactory = _shapeFactory
             };
-            ValueProvider = context.ValueProvider;
+            this.SetValueProvider(context.ValueProvider);
             return context;
         }
 
@@ -330,7 +330,7 @@ namespace Orchard.Layouts.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

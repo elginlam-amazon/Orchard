@@ -1,4 +1,4 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using NUnit.Framework;
 using Orchard.DynamicForms.Services.Models;
 using Orchard.DynamicForms.ValidationRules;

@@ -1,9 +1,9 @@
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Environment.Extensions;
 using Orchard.Events;
 using Orchard.Localization;
+using Orchard.Mvc.Html;
 using Orchard.UI.Notify;
 
 namespace Orchard.Widgets.Handlers
@@ -17,13 +17,13 @@ namespace Orchard.Widgets.Handlers
     [OrchardFeature("Orchard.Widgets.PageLayerHinting")]
     public class LayerHintHandler : IRouteEvents
     {
-        public LayerHintHandler(IOrchardServices services, RequestContext requestContext)
+        public LayerHintHandler(IOrchardServices services, ActionContext requestContext)
         {
             T = NullLocalizer.Instance;
             _requestContext = requestContext;
             Services = services;
         }
-        private readonly RequestContext _requestContext;
+        private readonly ActionContext _requestContext;
         public IOrchardServices Services { get; set; }
         public Localizer T { get; set; }
 
@@ -39,7 +39,7 @@ namespace Orchard.Widgets.Handlers
             if (!Services.Authorizer.Authorize(Permissions.ManageWidgets))
                 return;
 
-            var urlHelper = new UrlHelper(_requestContext);
+            var urlHelper = HtmlHelperFactory.CreateUrlHelper(_requestContext);
             var pathForLayer = "~/" + path;
             var title = content.ContentItem.ContentManager.GetItemMetadata(content).DisplayText;
 

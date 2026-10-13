@@ -1,5 +1,5 @@
+using System;
 using System.Configuration;
-using Microsoft.Azure;
 
 namespace Orchard.Azure.Services.Environment.Configuration
 {
@@ -9,11 +9,10 @@ namespace Orchard.Azure.Services.Environment.Configuration
     /// from cloud service role configuration, app settings and connection strings.
     /// </summary>
     /// <remarks>
-    /// Settings are read first using the <c>CloudConfigurationManager</c> class, which looks first in cloud service role
-    /// configuration if running in a Microsoft Azure Cloud Service and secondly in app settings (either in Web.config or in
-    /// Microsoft Azure Web Site app settings configuration). If the setting is not found using CloudConfigurationManager
-    /// then connection strings (either in Web.config or in Microsoft Azure Web Site connection strings configuration) is
-    /// checked. Both the tenant-specific name and the tenant-neutral name are checked within each configuration source
+    /// Settings are read first from the environment variables (which is how Microsoft Azure App Service exposes its
+    /// app settings), secondly in the app settings of the application configuration file (the former
+    /// <c>CloudConfigurationManager</c> behavior, cloud service role configuration is not supported on .NET).
+    /// If the setting is not found, the connection strings of the application configuration file are checked. Both the tenant-specific name and the tenant-neutral name are checked within each configuration source
     /// before proceeding to the next one.
     /// </remarks>
     public class DefaultPlatformConfigurationAccessor : IPlatformConfigurationAccessor
@@ -24,7 +23,7 @@ namespace Orchard.Azure.Services.Environment.Configuration
             var tenantName = string.Format("{0}:{1}{2}", tenant, namePrefix, name);
             var fallbackName = string.Format("{0}{1}", namePrefix, name);
 
-            var cloudConfigurationValue = CloudConfigurationManager.GetSetting(tenantName) ?? CloudConfigurationManager.GetSetting(fallbackName);
+            var cloudConfigurationValue = GetPlatformSetting(tenantName) ?? GetPlatformSetting(fallbackName);
             if (!string.IsNullOrEmpty(cloudConfigurationValue))
                 return cloudConfigurationValue;
 
@@ -33,6 +32,18 @@ namespace Orchard.Azure.Services.Environment.Configuration
                 return connectionStringValue.ConnectionString;
 
             return null;
+        }
+
+        /// <summary>
+        /// Reads a setting from the environment variables or the app settings (the former CloudConfigurationManager.GetSetting).
+        /// </summary>
+        public static string GetPlatformSetting(string name)
+        {
+            var value = System.Environment.GetEnvironmentVariable(name)
+                ?? System.Environment.GetEnvironmentVariable("APPSETTING_" + name)
+                ?? ConfigurationManager.AppSettings[name];
+
+            return string.IsNullOrEmpty(value) ? null : value;
         }
     }
 }

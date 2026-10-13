@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Orchard.Mvc;
 
 namespace Orchard.ContentManagement.Handlers
 {

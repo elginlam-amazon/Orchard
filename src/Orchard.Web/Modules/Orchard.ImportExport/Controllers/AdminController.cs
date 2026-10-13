@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ImportExport.Models;
 using Orchard.ImportExport.Services;
 using Orchard.ImportExport.ViewModels;
 using Orchard.Localization;
+using Orchard.Mvc.Extensions;
 using Orchard.Recipes.Services;
 
 namespace Orchard.ImportExport.Controllers
@@ -58,7 +59,7 @@ namespace Orchard.ImportExport.Controllers
         public ActionResult ImportPOST()
         {
             if (!Services.Authorizer.Authorize(Permissions.Import, T("Not allowed to import.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var actions = _importActions.OrderByDescending(x => x.Priority).ToList();
             var viewModel = new ImportViewModel
@@ -113,7 +114,7 @@ namespace Orchard.ImportExport.Controllers
         public ActionResult ExportPOST(ExportViewModel viewModel)
         {
             if (!Services.Authorizer.Authorize(Permissions.Export, T("Not allowed to export.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var actions = _exportActions.OrderByDescending(x => x.Priority).ToList();
 
@@ -135,7 +136,7 @@ namespace Orchard.ImportExport.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

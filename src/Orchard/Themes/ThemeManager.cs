@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Environment.Extensions;
 using Orchard.Environment.Extensions.Models;
 
@@ -18,7 +18,7 @@ namespace Orchard.Themes
             _extensionManager = extensionManager;
         }
 
-        public ExtensionDescriptor GetRequestTheme(RequestContext requestContext)
+        public ExtensionDescriptor GetRequestTheme(ActionContext requestContext)
         {
             var requestTheme = _themeSelectors
                 .Select(x => x.GetTheme(requestContext))

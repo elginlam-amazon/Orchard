@@ -1,4 +1,4 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Environment.Extensions;
 using Orchard.Localization.Providers;
 using Orchard.Mvc.Extensions;

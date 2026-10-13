@@ -1,9 +1,10 @@
 using System.Collections.Generic;
-using System.Web;
+using Microsoft.AspNetCore.Html;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement;
 using Orchard.DisplayManagement.Descriptors;
 using Orchard.Environment;
+using Orchard.Mvc.Extensions;
 using Orchard.UI.Navigation;
 
 // ReSharper disable InconsistentNaming
@@ -40,7 +41,7 @@ namespace Orchard.ContentPicker.Services
         }
 
         [Shape]
-        public IHtmlString ContentPickerNavigation(dynamic Display)
+        public IHtmlContent ContentPickerNavigation(dynamic Display)
         {
 
             IEnumerable<MenuItem> menuItems = _navigationManager.Value.BuildMenu("content-picker");
@@ -48,7 +49,7 @@ namespace Orchard.ContentPicker.Services
             var request = _workContext.Value.HttpContext.Request;
 
             // Set the currently selected path
-            Stack<MenuItem> selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, request.RequestContext.RouteData);
+            Stack<MenuItem> selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, request.HttpContext.GetActionContext().RouteData);
 
             dynamic shapeFactory = _shapeFactory.Value;
 

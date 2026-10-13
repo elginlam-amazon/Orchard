@@ -1,7 +1,8 @@
-using System.Web.Mvc;
-using System.Web.Mvc.Filters;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Mvc.Filters;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Users.Services
 {
@@ -10,28 +11,29 @@ namespace Orchard.Users.Services
     /// This class is responsible for redirecting the user to the authentication page 
     /// of the current tenant.
     /// </summary>
-    public class AuthenticationRedirectionFilter : FilterProvider, IAuthenticationFilter
+    /// <remarks>
+    /// Formerly an MVC authentication filter (authentication challenge), now a result filter which also runs
+    /// when an authorization filter short-circuits the action with an unauthorized result.
+    /// </remarks>
+    public class AuthenticationRedirectionFilter : FilterProvider, IAlwaysRunResultFilter
     {
-
-        public void OnAuthentication(AuthenticationContext filterContext)
+        public void OnResultExecuting(ResultExecutingContext filterContext)
         {
-        }
-
-        public void OnAuthenticationChallenge(AuthenticationChallengeContext filterContext)
-        {
-            if (filterContext.Result is HttpUnauthorizedResult)
+            if (filterContext.Result is UnauthorizedResult)
             {
-                filterContext.HttpContext.Response.SuppressFormsAuthenticationRedirect = true;
-
                 filterContext.Result = new RedirectToRouteResult(
                     new RouteValueDictionary
                 {
                     { "controller", "Account" },
                     { "action", "AccessDenied" },
                     { "area", "Orchard.Users"},
-                    { "ReturnUrl", filterContext.HttpContext.Request.RawUrl }
+                    { "ReturnUrl", filterContext.HttpContext.Request.GetRawUrl() }
                 });
             }
+        }
+
+        public void OnResultExecuted(ResultExecutedContext filterContext)
+        {
         }
     }
 }

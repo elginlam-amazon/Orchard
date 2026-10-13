@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
 using Orchard.DisplayManagement;
 using Orchard.Mvc.Filters;
 using Orchard.UI.Admin;
@@ -35,7 +36,7 @@ namespace Orchard.UI.Navigation
             WorkContext workContext = _workContextAccessor.GetContext(filterContext);
 
             const string menuName = "admin";
-            if (!AdminFilter.IsApplied(filterContext.RequestContext))
+            if (!AdminFilter.IsApplied(filterContext))
             {
                 return;
             }
@@ -44,12 +45,12 @@ namespace Orchard.UI.Navigation
 
             // adding query string parameters
             var routeData = new RouteValueDictionary(filterContext.RouteData.Values);
-            var queryString = workContext.HttpContext.Request.QueryString;
+            var queryString = workContext.HttpContext.Request.Query;
             if (queryString != null)
             {
-                foreach (var key in from string key in queryString.Keys where key != null && !routeData.ContainsKey(key) let value = queryString[key] select key)
+                foreach (var key in from string key in queryString.Keys where key != null && !routeData.ContainsKey(key) select key)
                 {
-                    routeData[key] = queryString[key];
+                    routeData[key] = queryString[key].ToString();
                 }
             }
 

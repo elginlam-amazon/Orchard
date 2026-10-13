@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Mvc.Routes;
+using Route = Orchard.Mvc.Routes.Route;
 
 namespace Orchard.Layouts
 {
@@ -15,7 +15,7 @@ namespace Orchard.Layouts
                     "Admin/Layouts/{controller}/{action}/{id}",
                     new RouteValueDictionary {
                         {"area", "Orchard.Layouts"},
-                        {"id", UrlParameter.Optional}
+                        {"id", ""}
                     },
                     new RouteValueDictionary(),
                     new RouteValueDictionary() {

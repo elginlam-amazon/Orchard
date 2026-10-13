@@ -1,6 +1,6 @@
 using System;
-using System.Web.Security;
 using Orchard.ContentManagement.Drivers;
+using Orchard.Security;
 using Orchard.Users.Models;
 
 namespace Orchard.Users.Drivers

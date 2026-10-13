@@ -1,4 +1,7 @@
 using System;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Mvc;
 
 namespace Orchard.Themes
@@ -20,7 +23,7 @@ namespace Orchard.Themes
             {
                 var context = _httpContextAccessor.Current();
                 var currentTheme = context != null && context.Request != null
-                    ? _themeManager.GetRequestTheme(context.Request.RequestContext)
+                    ? _themeManager.GetRequestTheme(new ActionContext(context, context.GetRouteData(), new ActionDescriptor()))
                     : null;
 
                 return ctx => (T)(object)currentTheme;

@@ -1,10 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
+using System.Diagnostics;
 using Autofac;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Moq;
 using NUnit.Framework;
 using Orchard.Caching;
@@ -40,6 +45,8 @@ using Orchard.Users.Events;
 using Orchard.Users.Handlers;
 using Orchard.Users.Models;
 using Orchard.Users.Services;
+using Orchard.Utility.Extensions;
+using Orchard.Mvc.Routes;
 
 namespace Orchard.Tests.Modules.Users.Controllers
 {
@@ -138,16 +145,9 @@ namespace Orchard.Tests.Modules.Users.Controllers
 
             _controller = _container.Resolve<AccountController>();
 
-            var mockHttpContext = new Mock<HttpContextBase>();
-            mockHttpContext.SetupGet(x => x.Request.Url).Returns(new Uri("http://www.orchardproject.net"));
-            mockHttpContext.SetupGet(x => x.Request).Returns(new HttpRequestStub());
-
-            _controller.ControllerContext = new ControllerContext(
-                mockHttpContext.Object,
-                new RouteData(
-                    new Route("foo", new MvcRouteHandler()),
-                    new MvcRouteHandler()),
-                _controller);
+            var routeData = new RouteData();
+            routeData.Routers.Add(new Orchard.Mvc.Routes.Route("foo", new Orchard.Mvc.Routes.MvcRouteHandler()));
+            _controller.ControllerContext = new ControllerContext(new ActionContext(CreateHttpContext(), routeData, new ControllerActionDescriptor()));
         }
 
         [Test]
@@ -159,10 +159,10 @@ namespace Orchard.Tests.Modules.Users.Controllers
             _session.Flush();
 
             var result = _controller.Register();
-            Assert.That(result, Is.TypeOf<HttpNotFoundResult>());
+            Assert.That(result, Is.TypeOf<NotFoundResult>());
 
             result = _controller.Register("bar", "bar@baz.com", "66554321", "66554321");
-            Assert.That(result, Is.TypeOf<HttpNotFoundResult>());
+            Assert.That(result, Is.TypeOf<NotFoundResult>());
         }
 
         [Test]
@@ -315,7 +315,7 @@ namespace Orchard.Tests.Modules.Users.Controllers
 
             _controller.Register("bar", "bar@baz.com", "66554321", "66554321");
 
-            _controller.Url = new UrlHelper(new RequestContext(new HttpContextStub(), new RouteData()));
+            _controller.Url = new UrlHelper(new ActionContext(CreateHttpContext(), CreateRouteData(), new ControllerActionDescriptor()));
 
             var result = _controller.LostPassword("foo");
 
@@ -336,7 +336,7 @@ namespace Orchard.Tests.Modules.Users.Controllers
             _controller.Register("bar", "bar@baz.com", "66554321", "66554321");
             _session.Flush();
 
-            _controller.Url = new UrlHelper(new RequestContext(new HttpContextStub(), new RouteData()));
+            _controller.Url = new UrlHelper(new ActionContext(CreateHttpContext(), CreateRouteData(), new ControllerActionDescriptor()));
             var result = _controller.RequestLostPassword("bar");
             Assert.That(result, Is.TypeOf<RedirectToRouteResult>());
 
@@ -356,34 +356,37 @@ namespace Orchard.Tests.Modules.Users.Controllers
         {
         }
 
-        class HttpContextStub : HttpContextBase
+        /// <summary>
+        /// An anonymous request for http://orchardproject.net/ (the services are the MVC services).
+        /// </summary>
+        private static HttpContext CreateHttpContext()
         {
-            public override HttpRequestBase Request => new HttpRequestStub();
+            var services = new ServiceCollection();
+            services.AddLogging();
+            services.AddSingleton(new DiagnosticListener("Orchard.Tests"));
+            services.AddSingleton<DiagnosticSource>(sp => sp.GetRequiredService<DiagnosticListener>());
+            services.AddSingleton(Mock.Of<IWebHostEnvironment>(e =>
+                e.ApplicationName == "Orchard.Tests.Modules" &&
+                e.ContentRootFileProvider == new NullFileProvider() &&
+                e.WebRootFileProvider == new NullFileProvider()));
+            services.AddControllersWithViews();
 
-            public override IHttpHandler Handler { get; set; }
+            var httpContext = new DefaultHttpContext { RequestServices = services.BuildServiceProvider() };
+            httpContext.Request.Scheme = "http";
+            httpContext.Request.Host = new HostString("orchardproject.net");
+            httpContext.Request.ContentType = "application/x-www-form-urlencoded";
+            httpContext.Request.Form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>());
+            return httpContext;
         }
 
-        class HttpRequestStub : HttpRequestBase
+        /// <summary>
+        /// The route data of a request without any matching route (the generated urls are null).
+        /// </summary>
+        private static RouteData CreateRouteData()
         {
-            public override bool IsAuthenticated => false;
-
-            public override NameValueCollection Form => new NameValueCollection();
-
-            public override Uri Url => new Uri("http://orchardproject.net");
-
-            public override NameValueCollection Headers
-            {
-                get
-                {
-                    var nv = new NameValueCollection
-                    {
-                        ["Host"] = "orchardproject.net"
-                    };
-                    return nv;
-                }
-            }
-
-            public override string ApplicationPath => "/";
+            var routeData = new RouteData();
+            routeData.Routers.Add(new OrchardRouteCollection());
+            return routeData;
         }
     }
 }

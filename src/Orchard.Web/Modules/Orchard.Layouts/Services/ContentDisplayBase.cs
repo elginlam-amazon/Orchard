@@ -1,6 +1,5 @@
 using System;
-using System.Web;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Handlers;
 using Orchard.DisplayManagement;
@@ -8,6 +7,7 @@ using Orchard.DisplayManagement.Descriptors;
 using Orchard.FileSystems.VirtualPath;
 using Orchard.Mvc.Routes;
 using Orchard.UI.Zones;
+using Orchard.Utility;
 
 namespace Orchard.Layouts.Services
 {
@@ -17,14 +17,14 @@ namespace Orchard.Layouts.Services
     {
         private readonly IShapeFactory _shapeFactory;
         private readonly Lazy<IShapeTableLocator> _shapeTableLocator;
-        private readonly RequestContext _requestContext;
+        private readonly ActionContext _requestContext;
         private readonly IVirtualPathProvider _virtualPathProvider;
         private readonly IWorkContextAccessor _workContextAccessor;
 
         protected ContentDisplayBase(
             IShapeFactory shapeFactory,
             Lazy<IShapeTableLocator> shapeTableLocator,
-            RequestContext requestContext,
+            ActionContext requestContext,
             IVirtualPathProvider virtualPathProvider,
             IWorkContextAccessor workContextAccessor)
         {

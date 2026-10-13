@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Caching;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
@@ -19,7 +19,7 @@ namespace Orchard.Templates.Services
         private IContentManager _contentManager;
         private IContentDefinitionManager _contentDefinitionManager;
         private ITemplateService _templateService;
-        private readonly RequestContext _requestContext;
+        private readonly ActionContext _requestContext;
 
         public TemplateShapeBindingResolver(
             ICacheManager cacheManager,
@@ -27,7 +27,7 @@ namespace Orchard.Templates.Services
             IContentManager contentManager,
             IContentDefinitionManager contentDefinitionManager,
             ITemplateService templateService,
-            RequestContext requestContext)
+            ActionContext requestContext)
         {
             _cacheManager = cacheManager;
             _signals = signals;
@@ -108,9 +108,9 @@ namespace Orchard.Templates.Services
             });
         }
 
-        private static IHtmlString CoerceHtmlString(object invoke)
+        private static IHtmlContent CoerceHtmlString(object invoke)
         {
-            return invoke as IHtmlString ?? (invoke != null ? new HtmlString(invoke.ToString()) : null);
+            return invoke as IHtmlContent ?? (invoke != null ? new HtmlString(invoke.ToString()) : null);
         }
 
         private class TemplateResult

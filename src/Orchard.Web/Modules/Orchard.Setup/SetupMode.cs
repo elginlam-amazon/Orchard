@@ -1,6 +1,6 @@
 using System;
-using System.Web.Routing;
 using Autofac;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Caching;
 using Orchard.Commands;
 using Orchard.Commands.Builtin;
@@ -131,7 +131,7 @@ namespace Orchard.Setup
                 Location = "~/Themes",
             };
 
-            public ExtensionDescriptor GetRequestTheme(RequestContext requestContext) { return _theme; }
+            public ExtensionDescriptor GetRequestTheme(ActionContext requestContext) { return _theme; }
         }
 
         class SafeModeSiteWorkContextProvider : IWorkContextStateProvider

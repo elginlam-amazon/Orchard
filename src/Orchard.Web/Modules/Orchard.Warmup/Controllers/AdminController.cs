@@ -1,10 +1,11 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Localization;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.Security;
 using Orchard.UI.Notify;
 using Orchard.Warmup.Models;
@@ -13,7 +14,6 @@ using Orchard.Warmup.ViewModels;
 
 namespace Orchard.Warmup.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller, IUpdateModel
     {
         private readonly IWarmupUpdater _warmupUpdater;
@@ -37,7 +37,7 @@ namespace Orchard.Warmup.Controllers
         public ActionResult Index()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage settings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var warmupPart = Services.WorkContext.CurrentSite.As<WarmupSettingsPart>();
 
@@ -55,7 +55,7 @@ namespace Orchard.Warmup.Controllers
         public ActionResult IndexPost()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage settings")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new WarmupViewModel
             {
@@ -63,7 +63,7 @@ namespace Orchard.Warmup.Controllers
                 ReportEntries = Enumerable.Empty<ReportEntry>()
             };
 
-            if (TryUpdateModel(viewModel))
+            if (this.TryUpdateModel(viewModel))
             {
                 if (!string.IsNullOrEmpty(viewModel.Settings.Urls))
                 {
@@ -108,7 +108,7 @@ namespace Orchard.Warmup.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

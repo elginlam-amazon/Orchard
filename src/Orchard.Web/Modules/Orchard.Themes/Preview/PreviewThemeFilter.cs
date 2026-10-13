@@ -1,5 +1,7 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.DisplayManagement;
 using Orchard.Environment.Extensions.Models;
 using Orchard.Environment.Features;

@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Alias.Implementation.Holder;
 using Orchard.Alias.Implementation.Storage;
 using Orchard.Mvc.Routes;
@@ -149,7 +149,7 @@ namespace Orchard.Alias.Implementation
             return _aliasStorage.List(sourceStartsWith).Select(item => Tuple.Create(item.Item1, item.Item3.ToRouteValueDictionary(), item.Item4));
         }
 
-        public IEnumerable<VirtualPathData> LookupVirtualPaths(RouteValueDictionary routeValues, HttpContextBase httpContext)
+        public IEnumerable<VirtualPathData> LookupVirtualPaths(RouteValueDictionary routeValues, HttpContext httpContext)
         {
             return Utils.LookupVirtualPaths(httpContext, _routeDescriptors.Value, routeValues);
         }
@@ -159,7 +159,7 @@ namespace Orchard.Alias.Implementation
             if (routePath == null)
                 return null;
 
-            return Utils.LookupRouteValues(new StubHttpContext(), _routeDescriptors.Value, routePath);
+            return Utils.LookupRouteValues(new DefaultHttpContext(), _routeDescriptors.Value, routePath);
         }
 
         private static IDictionary<string, string> ToDictionary(IEnumerable<KeyValuePair<string, object>> routeValues)
@@ -181,13 +181,6 @@ namespace Orchard.Alias.Implementation
                 })
                 .Where(routeDescriptor => !(routeDescriptor.Route is AliasRoute))
                 .OrderByDescending(routeDescriptor => routeDescriptor.Priority);
-        }
-
-        private class StubHttpContext : HttpContextBase
-        {
-            public override HttpRequestBase Request => new StubHttpRequest();
-
-            private class StubHttpRequest : HttpRequestBase { }
         }
     }
 }

@@ -5,7 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Security.Authentication;
 using System.Threading;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
@@ -51,10 +52,30 @@ namespace Upgrade.Controllers
         public Localizer T { get; set; }
         public ILogger Logger { get; set; }
 
+        private Queue<MediaEntry> _mediaList;
+
+        // The queue is stored as JSON in the session, SaveMediaList() must be called once it has been changed.
         private Queue<MediaEntry> MediaList
         {
-            get { return Session["MediaList"] as Queue<MediaEntry>; }
-            set { Session["MediaList"] = value; }
+            get
+            {
+                if (_mediaList == null)
+                {
+                    var json = HttpContext.Session.GetString("MediaList");
+                    _mediaList = json == null ? null : System.Text.Json.JsonSerializer.Deserialize<Queue<MediaEntry>>(json);
+                }
+                return _mediaList;
+            }
+            set
+            {
+                _mediaList = value;
+                SaveMediaList();
+            }
+        }
+
+        private void SaveMediaList()
+        {
+            HttpContext.Session.SetString("MediaList", System.Text.Json.JsonSerializer.Serialize(_mediaList));
         }
 
         public ActionResult Index()
@@ -116,6 +137,8 @@ namespace Upgrade.Controllers
                 }
             }
 
+            SaveMediaList();
+
             if (hasMore)
             {
                 _orchardServices.Notifier.Warning(T("Some media files need to be migrated."));
@@ -143,7 +166,9 @@ namespace Upgrade.Controllers
                 ImportMediaFile(media.FolderName, media.FileName);
             }
 
-            return new JsonResult { Data = MediaList.Count };
+            SaveMediaList();
+
+            return new JsonResult(MediaList.Count);
         }
 
         private void ImportMediaFolder(IMediaFolder mediaFolder, Action<MediaFile> action, CancellationTokenSource cts)

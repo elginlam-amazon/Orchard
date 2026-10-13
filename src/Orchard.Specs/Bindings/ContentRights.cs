@@ -5,7 +5,7 @@ using Orchard.Core.Contents;
 using Orchard.Security;
 using Orchard.Security.Permissions;
 using Orchard.Specs.Hosting.Orchard.Web;
-using TechTalk.SpecFlow;
+using Reqnroll;
 
 namespace Orchard.Specs.Bindings
 {

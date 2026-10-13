@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.Data;
 using Orchard.DisplayManagement;
 using Orchard.Forms.Services;
@@ -12,10 +14,11 @@ using Orchard.Projections.Services;
 using Orchard.Projections.ViewModels;
 using Orchard.UI.Admin;
 using Orchard.UI.Notify;
+using Orchard.Mvc.ModelBinders;
 
 namespace Orchard.Projections.Controllers
 {
-    [ValidateInput(false), Admin]
+    [Admin]
     public class LayoutController : Controller
     {
         public LayoutController(
@@ -45,7 +48,7 @@ namespace Orchard.Projections.Controllers
         public ActionResult Add(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new LayoutAddViewModel { Id = id, Layouts = _projectionManager.DescribeLayouts() };
             return View(viewModel);
@@ -55,12 +58,12 @@ namespace Orchard.Projections.Controllers
         public ActionResult Delete(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var layout = _repository.Get(id);
             if (layout == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var queryId = layout.QueryPartRecord.Id;
@@ -76,13 +79,13 @@ namespace Orchard.Projections.Controllers
         public ActionResult Create(int id, string category, string type)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var layout = _projectionManager.DescribeLayouts().SelectMany(x => x.Descriptors).FirstOrDefault(x => x.Category == category && x.Type == type);
 
             if (layout == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             // build the form, and let external components alter it
@@ -99,17 +102,17 @@ namespace Orchard.Projections.Controllers
         }
 
         [HttpPost, ActionName("Create")]
-        public ActionResult CreatePost(LayoutEditViewModel model, FormCollection formCollection)
+        public ActionResult CreatePost(LayoutEditViewModel model, IFormCollection formCollection)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             // Validating form values.
             model.Layout = _projectionManager.DescribeLayouts().SelectMany(x => x.Descriptors).FirstOrDefault(x => x.Category == model.Category && x.Type == model.Type);
-            _formManager.Validate(new ValidatingContext { FormName = model.Layout.Form, ModelState = ModelState, ValueProvider = ValueProvider });
+            _formManager.Validate(new ValidatingContext { FormName = model.Layout.Form, ModelState = ModelState, ValueProvider = this.GetValueProvider() });
 
             var form = _formManager.Build(model.Layout.Form) ?? Services.New.EmptyForm();
-            _formManager.Bind(form, formCollection);
+            _formManager.Bind(form, formCollection.ToValueProvider());
 
             model.Form = form;
 
@@ -119,7 +122,7 @@ namespace Orchard.Projections.Controllers
                 var query = _queryService.GetQuery(model.QueryId);
                 query.Layouts.Add(layoutRecord);
 
-                var dictionary = formCollection.AllKeys.ToDictionary(key => key, formCollection.Get);
+                var dictionary = formCollection.Keys.ToDictionary(key => key, key => formCollection[key].ToString());
 
                 // Save form parameters.
                 layoutRecord.State = FormParametersHelper.ToString(dictionary);
@@ -139,13 +142,13 @@ namespace Orchard.Projections.Controllers
         public ActionResult Edit(int id)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageQueries, T("Not authorized to manage queries")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var layoutRecord = _repository.Get(id);
 
             if (layoutRecord == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var layoutDescriptor = _projectionManager.DescribeLayouts().SelectMany(x => x.Descriptors).FirstOrDefault(x => x.Category == layoutRecord.Category && x.Type == layoutRecord.Type);
@@ -204,15 +207,15 @@ namespace Orchard.Projections.Controllers
         }
 
         [HttpPost, ActionName("Edit")]
-        public ActionResult EditPost(LayoutEditViewModel model, FormCollection formCollection)
+        public ActionResult EditPost(LayoutEditViewModel model, IFormCollection formCollection)
         {
 
             // Validating form values.
             var layout = _projectionManager.DescribeLayouts().SelectMany(x => x.Descriptors).FirstOrDefault(x => x.Category == model.Category && x.Type == model.Type);
-            _formManager.Validate(new ValidatingContext { FormName = layout.Form, ModelState = ModelState, ValueProvider = ValueProvider });
+            _formManager.Validate(new ValidatingContext { FormName = layout.Form, ModelState = ModelState, ValueProvider = this.GetValueProvider() });
 
             var form = _formManager.Build(layout.Form) ?? Services.New.EmptyForm();
-            _formManager.Bind(form, formCollection);
+            _formManager.Bind(form, formCollection.ToValueProvider());
 
             model.Layout = layout;
             model.Form = form;
@@ -221,7 +224,7 @@ namespace Orchard.Projections.Controllers
             if (ModelState.IsValid)
             {
 
-                var dictionary = formCollection.AllKeys.ToDictionary(key => key, formCollection.Get);
+                var dictionary = formCollection.Keys.ToDictionary(key => key, key => formCollection[key].ToString());
 
                 // Save form parameters.
                 layoutRecord.State = FormParametersHelper.ToString(dictionary);

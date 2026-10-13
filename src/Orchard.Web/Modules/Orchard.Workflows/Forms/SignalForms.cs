@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using Orchard.Data;
 using Orchard.DisplayManagement;

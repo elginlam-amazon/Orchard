@@ -1,8 +1,10 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.Logging;
 using Orchard.Mvc.Filters;
 using Orchard.UI.Admin;
+using Orchard.Mvc.Extensions;
 
 namespace Orchard.Security
 {
@@ -18,19 +20,19 @@ namespace Orchard.Security
 
         public ILogger Logger { get; set; }
 
-        public void OnAuthorization(AuthorizationContext filterContext)
+        public void OnAuthorization(AuthorizationFilterContext filterContext)
         {
 
             var accessFrontEnd = filterContext.ActionDescriptor.GetCustomAttributes(typeof(AlwaysAccessibleAttribute), true).Any();
 
-            if (!accessFrontEnd && filterContext.ActionDescriptor.ControllerDescriptor.ControllerType.GetCustomAttributes(typeof(AlwaysAccessibleAttribute), true).Any())
+            if (!accessFrontEnd && filterContext.ActionDescriptor.GetControllerType().GetCustomAttributes(typeof(AlwaysAccessibleAttribute), true).Any())
             {
                 accessFrontEnd = true;
             }
 
-            if (!AdminFilter.IsApplied(filterContext.RequestContext) && !accessFrontEnd && !_authorizer.Authorize(StandardPermissions.AccessFrontEnd))
+            if (!AdminFilter.IsApplied(filterContext) && !accessFrontEnd && !_authorizer.Authorize(StandardPermissions.AccessFrontEnd))
             {
-                filterContext.Result = new HttpUnauthorizedResult();
+                filterContext.Result = new UnauthorizedResult();
             }
         }
 
@@ -48,7 +50,7 @@ namespace Orchard.Security
                 //a logger exception can't be allowed to interrupt this process
             }
 
-            filterContext.Result = new HttpUnauthorizedResult();
+            filterContext.Result = new UnauthorizedResult();
             filterContext.ExceptionHandled = true;
         }
     }

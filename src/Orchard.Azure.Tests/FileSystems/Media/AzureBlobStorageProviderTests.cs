@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Web;
 using NUnit.Framework;
 using Orchard.Azure.Services.FileSystems.Media;
 using Orchard.Environment.Configuration;
@@ -274,7 +273,7 @@ namespace Orchard.Azure.Tests.FileSystems.Media
 
             foreach (var _ in _azureBlobStorageProvider.ListFiles(""))
             {
-                Assert.That(HttpContext.Current, Is.Null);
+                Assert.That(new Microsoft.AspNetCore.Http.HttpContextAccessor().HttpContext, Is.Null);
             }
         }
 
@@ -282,18 +281,18 @@ namespace Orchard.Azure.Tests.FileSystems.Media
         public void MimeTypeShouldBeSet()
         {
             _azureBlobStorageProvider.CreateFile("foo1.txt");
-            var file = _azureBlobStorageProvider.Container.GetBlockBlobReference("default/foo1.txt");
-            file.FetchAttributes();
-            Assert.That(file.Properties.ContentType, Is.EqualTo("text/plain"));
+            var file = _azureBlobStorageProvider.Container.GetBlobClient("default/foo1.txt");
+            var properties = file.GetProperties().Value;
+            Assert.That(properties.ContentType, Is.EqualTo("text/plain"));
         }
 
         [Test]
         public void DefaultMimeTypeShouldBeAssigned()
         {
             _azureBlobStorageProvider.CreateFile("foo1.xyz");
-            var file = _azureBlobStorageProvider.Container.GetBlockBlobReference("default/foo1.xyz");
-            file.FetchAttributes();
-            Assert.That(file.Properties.ContentType, Is.EqualTo("application/octet-stream"));
+            var file = _azureBlobStorageProvider.Container.GetBlobClient("default/foo1.xyz");
+            var properties = file.GetProperties().Value;
+            Assert.That(properties.ContentType, Is.EqualTo("application/octet-stream"));
         }
 
 

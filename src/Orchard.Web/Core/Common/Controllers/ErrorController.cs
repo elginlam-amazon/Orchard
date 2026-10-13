@@ -1,4 +1,4 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Themes;
 
 namespace Orchard.Core.Common.Controllers
@@ -9,7 +9,7 @@ namespace Orchard.Core.Common.Controllers
 
         public ActionResult NotFound(string url)
         {
-            return HttpNotFound();
+            return NotFound();
         }
     }
 }

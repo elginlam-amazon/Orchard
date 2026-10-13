@@ -1,4 +1,4 @@
-using System.Web;
+using Microsoft.AspNetCore.Html;
 using Orchard.DisplayManagement.Shapes;
 
 namespace Orchard.DisplayManagement.Implementation
@@ -13,14 +13,14 @@ namespace Orchard.DisplayManagement.Implementation
     {
         public dynamic Shape { get; set; }
         public ShapeMetadata ShapeMetadata { get; set; }
-        public IHtmlString ChildContent { get; set; }
+        public IHtmlContent ChildContent { get; set; }
     }
 
     public class ShapeDisplayedContext
     {
         public dynamic Shape { get; set; }
         public ShapeMetadata ShapeMetadata { get; set; }
-        public IHtmlString ChildContent { get; set; }
+        public IHtmlContent ChildContent { get; set; }
     }
 
     public abstract class ShapeDisplayEvents : IShapeDisplayEvents

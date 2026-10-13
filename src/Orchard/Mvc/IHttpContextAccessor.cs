@@ -1,10 +1,10 @@
-using System.Web;
+using Microsoft.AspNetCore.Http;
 
 namespace Orchard.Mvc
 {
     public interface IHttpContextAccessor
     {
-        HttpContextBase Current();
-        void Set(HttpContextBase httpContext);
+        HttpContext Current();
+        void Set(HttpContext httpContext);
     }
 }

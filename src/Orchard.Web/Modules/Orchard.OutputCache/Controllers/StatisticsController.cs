@@ -1,5 +1,5 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Environment.Configuration;
 using Orchard.Localization;
 using Orchard.OutputCache.Services;
@@ -39,7 +39,7 @@ namespace Orchard.OutputCache.Controllers
         public ActionResult Index(PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You do not have permission to manage output cache.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(_siteService.GetSiteSettings(), pagerParameters);
             var pagerShape = Services.New.Pager(pager).TotalItemCount(_cacheStorageProvider.GetCacheItemsCount());
@@ -58,7 +58,7 @@ namespace Orchard.OutputCache.Controllers
         public ActionResult Evict(string cacheKey)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You do not have permission to manage output cache.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             _cacheStorageProvider.Remove(cacheKey);
 
@@ -69,7 +69,7 @@ namespace Orchard.OutputCache.Controllers
         public ActionResult EvictAll()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You do not have permission to manage output cache.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             _cacheStorageProvider.RemoveAll();
 

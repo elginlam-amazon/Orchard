@@ -1,7 +1,6 @@
 using System;
 using System.IO;
-using System.Web.Mvc;
-using ImageResizer;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.DisplayManagement;
 using Orchard.Forms.Services;
 using Orchard.Localization;
@@ -34,19 +33,12 @@ namespace Orchard.MediaProcessing.Providers.Filters
             string format = context.State.Format;
             int quality = context.State.Quality;
 
-            var settings = new ResizeSettings
-            {
-                Quality = quality,
-                Format = format
-            };
-
-            var result = new MemoryStream();
             if (context.Media.CanSeek)
             {
                 context.Media.Seek(0, SeekOrigin.Begin);
             }
 
-            ImageBuilder.Current.Build(context.Media, result, settings);
+            var result = SkiaImageProcessor.ChangeFormat(context.Media, format, quality);
 
             context.FilePath = Path.ChangeExtension(context.FilePath, format);
             context.Media = result;

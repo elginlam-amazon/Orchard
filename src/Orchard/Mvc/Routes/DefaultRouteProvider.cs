@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 
 namespace Orchard.Mvc.Routes
 {
@@ -32,7 +32,7 @@ namespace Orchard.Mvc.Routes
         //TEMP: this is hardcoded to allow base web app controllers to pass
         public class HomeOrAccount : IRouteConstraint
         {
-            public bool Match(HttpContextBase httpContext, Route route, string parameterName, RouteValueDictionary values, RouteDirection routeDirection)
+            public bool Match(HttpContext httpContext, IRouter route, string parameterName, RouteValueDictionary values, RouteDirection routeDirection)
             {
                 object value;
                 if (values.TryGetValue(parameterName, out value))

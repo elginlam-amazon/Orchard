@@ -1,7 +1,11 @@
 using System.Collections.Generic;
 using System.Text;
-using System.Web.Mvc;
-using System.Web.Routing;
+using System.Web;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Routing;
+using Orchard.Mvc.Html;
 
 namespace Orchard.Core.Feeds.Services
 {
@@ -39,9 +43,9 @@ namespace Orchard.Core.Feeds.Services
             _links.Add(new Link { Title = title, Url = url });
         }
 
-        public MvcHtmlString GetRegisteredLinks(HtmlHelper html)
+        public IHtmlContent GetRegisteredLinks(IHtmlHelper html)
         {
-            var urlHelper = new UrlHelper(html.ViewContext.RequestContext, html.RouteCollection);
+            var urlHelper = HtmlHelperFactory.CreateUrlHelper(html.ViewContext);
 
             var sb = new StringBuilder();
             foreach (var link in _links)
@@ -53,15 +57,15 @@ namespace Orchard.Core.Feeds.Services
                 {
                     sb
                         .Append(@" title=""")
-                        .Append(html.AttributeEncode(link.Title))
+                        .Append(HttpUtility.HtmlAttributeEncode(link.Title))
                         .Append(@"""");
                 }
                 sb.Append(@" href=""")
-                    .Append(html.AttributeEncode(linkUrl))
+                    .Append(HttpUtility.HtmlAttributeEncode(linkUrl))
                     .AppendLine(@""" />");
             }
 
-            return MvcHtmlString.Create(sb.ToString());
+            return new HtmlString(sb.ToString());
         }
 
         //public ActionResult Execute(string format, IValueProvider values) {

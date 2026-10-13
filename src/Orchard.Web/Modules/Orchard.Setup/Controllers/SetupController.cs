@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Environment;
 using Orchard.Environment.Configuration;
 using Orchard.Localization;
@@ -13,7 +14,7 @@ using Orchard.UI.Notify;
 
 namespace Orchard.Setup.Controllers
 {
-    [ValidateInput(false), Themed]
+    [Themed]
     public class SetupController : Controller
     {
         private readonly IViewsBackgroundCompilation _viewsBackgroundCompilation;
@@ -82,8 +83,6 @@ namespace Orchard.Setup.Controllers
         public ActionResult IndexPOST(SetupViewModel model)
         {
             // Sets the setup request timeout to a configurable amount of seconds to give enough time to execute custom recipes.
-            HttpContext.Server.ScriptTimeout = RecipeExecutionTimeout;
-
             var recipes = _setupService.Recipes().ToList();
 
             // If no builtin provider, a connection string is mandatory.

@@ -14,6 +14,7 @@ using Orchard.MediaProcessing.Descriptors.Filter;
 using Orchard.MediaProcessing.Media;
 using Orchard.MediaProcessing.Models;
 using Orchard.Tokens;
+using Orchard.Utility;
 using Orchard.Utility.Extensions;
 
 namespace Orchard.MediaProcessing.Services
@@ -270,7 +271,7 @@ namespace Orchard.MediaProcessing.Services
             if (VirtualPathUtility.IsAppRelative(path))
             {
                 var request = _services.WorkContext.HttpContext.Request;
-                return new WebClient().OpenRead(new Uri(request.Url, VirtualPathUtility.ToAbsolute(path)));
+                return new WebClient().OpenRead(new Uri(request.GetUrl(), VirtualPathUtility.ToAbsolute(path)));
             }
 
             return null;

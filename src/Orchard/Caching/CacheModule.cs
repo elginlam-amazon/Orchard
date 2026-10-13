@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Autofac;
+using Autofac.Core.Resolving.Pipeline;
 
 namespace Orchard.Caching
 {
@@ -13,7 +14,7 @@ namespace Orchard.Caching
                 .InstancePerDependency();
         }
 
-        protected override void AttachToComponentRegistration(Autofac.Core.IComponentRegistry componentRegistry, Autofac.Core.IComponentRegistration registration)
+        protected override void AttachToComponentRegistration(Autofac.Core.Registration.IComponentRegistryBuilder componentRegistry, Autofac.Core.IComponentRegistration registration)
         {
             var needsCacheManager = registration.Activator.LimitType
                 .GetConstructors()
@@ -22,12 +23,16 @@ namespace Orchard.Caching
 
             if (needsCacheManager)
             {
-                registration.Preparing += (sender, e) =>
+                registration.PipelineBuilding += (sender, pipeline) =>
                 {
-                    var parameter = new TypedParameter(
-                        typeof(ICacheManager),
-                        e.Context.Resolve<ICacheManager>(new TypedParameter(typeof(Type), registration.Activator.LimitType)));
-                    e.Parameters = e.Parameters.Concat(new[] { parameter });
+                    pipeline.Use(PipelinePhase.ParameterSelection, (context, next) =>
+                    {
+                        var parameter = new TypedParameter(
+                            typeof(ICacheManager),
+                            context.Resolve<ICacheManager>(new TypedParameter(typeof(Type), registration.Activator.LimitType)));
+                        context.ChangeParameters(context.Parameters.Concat(new[] { parameter }));
+                        next(context);
+                    });
                 };
             }
         }

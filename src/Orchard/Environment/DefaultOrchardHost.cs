@@ -16,6 +16,9 @@ using Orchard.Mvc;
 using Orchard.Mvc.Extensions;
 using Orchard.Utility;
 using Orchard.Utility.Extensions;
+using Microsoft.AspNetCore.Http;
+
+using IHttpContextAccessor = Orchard.Mvc.IHttpContextAccessor;
 
 namespace Orchard.Environment
 {
@@ -487,8 +490,12 @@ namespace Orchard.Environment
             {
                 var response = httpContext.Response;
                 response.StatusCode = 503;
-                response.StatusDescription = "This tenant is currently initializing. Please try again later.";
-                response.Write("This tenant is currently initializing. Please try again later.");
+                var responseFeature = httpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseFeature>();
+                if (responseFeature != null)
+                {
+                    responseFeature.ReasonPhrase = "This tenant is currently initializing. Please try again later.";
+                }
+                response.WriteAsync("This tenant is currently initializing. Please try again later.").GetAwaiter().GetResult();
             }
         }
 

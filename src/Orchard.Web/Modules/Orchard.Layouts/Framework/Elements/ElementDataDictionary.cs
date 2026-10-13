@@ -1,6 +1,5 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
-using Orchard.Layouts.Helpers;
+using Orchard.Mvc.ModelBinders;
 
 namespace Orchard.Layouts.Framework.Elements
 {
@@ -11,16 +10,7 @@ namespace Orchard.Layouts.Framework.Elements
 
         public T TryGetModel<T>(string key) where T : class
         {
-            var binder = new DefaultModelBinder();
-            var controllerContext = new ControllerContext();
-            var context = new ModelBindingContext
-            {
-                ModelMetadata = ModelMetadataProviders.Current.GetMetadataForType(null, typeof(T)),
-                ModelName = key,
-                ValueProvider = this.ToValueProvider(null)
-            };
-            return (T)binder.BindModel(controllerContext, context);
-
+            return (T)DictionaryModelBinder.Bind(this, typeof(T), key);
         }
 
         public T TryGetModel<T>() where T : class

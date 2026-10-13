@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData.Models;
 using Orchard.Core.Common.Models;
@@ -488,12 +488,12 @@ namespace Orchard.MediaLibrary.Services
         /// <param name="folderPath">The path to the folder where to upload the file.</param>
         /// <param name="postedFile">The file to upload.</param>
         /// <returns>The path to the uploaded file.</returns>
-        public string UploadMediaFile(string folderPath, HttpPostedFileBase postedFile)
+        public string UploadMediaFile(string folderPath, IFormFile postedFile)
         {
             Argument.ThrowIfNullOrEmpty(folderPath, "folderPath");
             Argument.ThrowIfNull(postedFile, "postedFile");
 
-            return UploadMediaFile(folderPath, Path.GetFileName(postedFile.FileName), postedFile.InputStream);
+            return UploadMediaFile(folderPath, Path.GetFileName(postedFile.FileName), postedFile.OpenReadStream());
         }
 
         /// <summary>

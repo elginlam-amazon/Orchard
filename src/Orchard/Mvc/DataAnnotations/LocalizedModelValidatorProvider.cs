@@ -1,14 +1,23 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Orchard.Localization;
 
 namespace Orchard.Mvc.DataAnnotations
 {
-    public class LocalizedModelValidatorProvider : DataAnnotationsModelValidatorProvider
+    /// <summary>
+    /// Substitutes the data annotation validation attributes with their localized versions, and localizes the display names.
+    /// It is registered in the MVC options model metadata details providers.
+    /// </summary>
+    /// <remarks>
+    /// The model metadata is application wide and cached, so the localizers resolve the work context of the current request
+    /// each time a message is localized.
+    /// </remarks>
+    public class LocalizedModelValidatorProvider : IValidationMetadataProvider, IDisplayMetadataProvider
     {
+        private static readonly Microsoft.AspNetCore.Http.HttpContextAccessor _httpContextAccessor = new Microsoft.AspNetCore.Http.HttpContextAccessor();
         private static readonly Dictionary<Type, Func<ValidationAttribute, Localizer, ValidationAttribute>> _validationAttributes;
 
         static LocalizedModelValidatorProvider()
@@ -19,62 +28,69 @@ namespace Orchard.Mvc.DataAnnotations
                 { typeof(StringLengthAttribute),        (attribute, t) => new LocalizedStringLengthAttribute((StringLengthAttribute)attribute, t)},
                 { typeof(RegularExpressionAttribute),   (attribute, t) => new LocalizedRegularExpressionAttribute((RegularExpressionAttribute)attribute, t)}
             };
-
-            //Register Orchard's localized version of the validation attributes to the existing adapters.
-            RegisterAdapter(typeof(LocalizedRequiredAttribute), typeof(RequiredAttributeAdapter));
-            RegisterAdapter(typeof(LocalizedRangeAttribute), typeof(RangeAttributeAdapter));
-            RegisterAdapter(typeof(LocalizedStringLengthAttribute), typeof(StringLengthAttributeAdapter));
-            RegisterAdapter(typeof(LocalizedRegularExpressionAttribute), typeof(RegularExpressionAttributeAdapter));
         }
 
-        protected override IEnumerable<ModelValidator> GetValidators(ModelMetadata metadata, ControllerContext context, IEnumerable<Attribute> attributes)
+        public void CreateValidationMetadata(ValidationMetadataProviderContext context)
         {
-            var localizedAttributes = new List<Attribute>();
+            var validatorMetadata = context.ValidationMetadata.ValidatorMetadata;
 
-            // overriden messages have their localization in the scope of the class they are applied to
-            var tContainer = new Lazy<Localizer>(() => LocalizationUtilities.Resolve(context, (metadata.ContainerType ?? metadata.ModelType).FullName));
-
-            foreach (var attribute in attributes)
+            for (var i = 0; i < validatorMetadata.Count; i++)
             {
-                Func<ValidationAttribute, Localizer, ValidationAttribute> localizedAttribute;
+                var attribute = validatorMetadata[i] as ValidationAttribute;
+                if (attribute == null)
+                {
+                    continue;
+                }
 
                 // default translations use the attribute's scope, e.g., Orchard.Mvc.DataAnnotations.LocalizedRequiredAttribute
-                var localAttribute = attribute;
-                var tProvider = new Lazy<Localizer>(() => LocalizationUtilities.Resolve(context, localAttribute.GetType().FullName));
-
-                var validationAttribute = attribute as ValidationAttribute;
+                Func<ValidationAttribute, Localizer, ValidationAttribute> localizedAttribute;
 
                 // substitute the attribute to its localized version if available
                 if (_validationAttributes.TryGetValue(attribute.GetType(), out localizedAttribute))
                 {
-                    localizedAttributes.Add(localizedAttribute((ValidationAttribute)attribute, tProvider.Value));
+                    var localized = localizedAttribute(attribute, CreateLocalizer(GetLocalizedAttributeScope(attribute)));
+                    validatorMetadata[i] = localized;
                 }
                 else
                 {
-
                     // try to inject the localizer if it's an unkown validation attribute
-                    if (validationAttribute != null)
+                    var propertyInfo = attribute.GetType().GetProperty("T", typeof(Localizer));
+                    if (propertyInfo != null)
                     {
-
-                        var propertyInfo = validationAttribute.GetType().GetProperty("T", typeof(Localizer));
-                        if (propertyInfo != null)
-                        {
-                            propertyInfo.SetValue(attribute, tProvider.Value, null);
-                        }
+                        propertyInfo.SetValue(attribute, CreateLocalizer(attribute.GetType().FullName), null);
                     }
-
-                    if (attribute is DisplayNameAttribute)
-                    {
-                        metadata.DisplayName = tContainer.Value(metadata.DisplayName).Text;
-                    }
-
-                    localizedAttributes.Add(attribute);
                 }
             }
+        }
 
-            var result = base.GetValidators(metadata, context, localizedAttributes);
+        public void CreateDisplayMetadata(DisplayMetadataProviderContext context)
+        {
+            var displayName = context.DisplayMetadata.DisplayName;
+            if (displayName == null)
+            {
+                return;
+            }
 
-            return result;
+            // overriden messages have their localization in the scope of the class they are applied to
+            var containerType = context.Key.ContainerType ?? context.Key.ModelType;
+            var t = CreateLocalizer(containerType.FullName);
+            context.DisplayMetadata.DisplayName = () => t(displayName()).Text;
+        }
+
+        private static string GetLocalizedAttributeScope(ValidationAttribute attribute)
+        {
+            // The localized attributes are in this namespace, e.g. Orchard.Mvc.DataAnnotations.LocalizedRequiredAttribute
+            return typeof(LocalizedModelValidatorProvider).Namespace + ".Localized" + attribute.GetType().Name;
+        }
+
+        private static Localizer CreateLocalizer(string scope)
+        {
+            return (text, args) =>
+            {
+                var workContext = _httpContextAccessor.HttpContext.GetWorkContext();
+                var localizer = LocalizationUtilities.Resolve(workContext, scope);
+                return localizer(text, args);
+            };
         }
     }
 }

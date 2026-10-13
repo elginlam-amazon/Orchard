@@ -1,9 +1,10 @@
 using System;
 using System.Globalization;
 using System.Linq;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Environment.Extensions;
 using Orchard.Localization.Services;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Localization.Selectors
 {
@@ -18,12 +19,12 @@ namespace Orchard.Localization.Selectors
             _cultureManager = cultureManager;
         }
 
-        public CultureSelectorResult GetCulture(HttpContextBase context)
+        public CultureSelectorResult GetCulture(HttpContext context)
         {
             if (context == null) return null;
 
             /* Fall back to Browser */
-            var userLanguages = context.Request.UserLanguages;
+            var userLanguages = context.Request.GetUserLanguages();
 
             if (userLanguages == null || !userLanguages.Any())
                 return null;

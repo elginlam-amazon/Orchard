@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard;
 using Orchard.Environment.Features;
 using Orchard.Localization;
@@ -85,7 +85,7 @@ namespace Upgrade.Controllers
         public ActionResult IndexPOST()
         {
             if (!_orchardServices.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to migrate Contrib.Taxonomies.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             try
             {
                 _upgradeService.CopyTable("Contrib_Taxonomies_TaxonomyPartRecord", "Orchard_Taxonomies_TaxonomyPartRecord", new string[0]);
@@ -126,7 +126,7 @@ namespace Upgrade.Controllers
             }
 
 
-            return new JsonResult { Data = lastCount };
+            return new JsonResult(lastCount);
         }
 
     }

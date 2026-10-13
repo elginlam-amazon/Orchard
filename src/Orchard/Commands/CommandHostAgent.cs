@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac;
+using Orchard.Mvc.ModelBinders;
+using Orchard.Mvc.Routes;
 using Orchard.Caching;
 using Orchard.Data;
 using Orchard.Environment;
@@ -282,9 +282,8 @@ namespace Orchard.Commands
 
         static void MvcSingletons(ContainerBuilder builder)
         {
-            builder.Register(ctx => RouteTable.Routes).SingleInstance();
-            builder.Register(ctx => ModelBinders.Binders).SingleInstance();
-            builder.Register(ctx => ViewEngines.Engines).SingleInstance();
+            builder.RegisterType<OrchardRouteCollection>().SingleInstance();
+            builder.RegisterType<ModelBinderDictionary>().SingleInstance();
         }
 
         private class CommandHostShellContainerRegistrations : IShellContainerRegistrations

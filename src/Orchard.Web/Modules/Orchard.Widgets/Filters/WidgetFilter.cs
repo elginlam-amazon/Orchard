@@ -1,5 +1,6 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Aspects;
 using Orchard.Core.Settings.Models;
@@ -48,8 +49,8 @@ namespace Orchard.Widgets.Filters
             if (workContext == null ||
                 workContext.Layout == null ||
                 workContext.CurrentSite == null ||
-                AdminFilter.IsApplied(filterContext.RequestContext) ||
-                !ThemeFilter.IsApplied(filterContext.RequestContext))
+                AdminFilter.IsApplied(filterContext) ||
+                !ThemeFilter.IsApplied(filterContext))
             {
                 return;
             }

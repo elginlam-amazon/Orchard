@@ -91,7 +91,7 @@ namespace Orchard.Roles.Drivers
         protected override DriverResult Editor(ContentPart part, IUpdateModel updater, dynamic shapeHelper)
         {
             var httpContext = _httpContextAccessor.Current();
-            var name = httpContext.Request.Form["submit.Save"];
+            var name = httpContext.Request.Form["submit.Save"].ToString();
             if (!string.IsNullOrEmpty(name) && name.StartsWith("usertask-"))
             {
                 name = name.Substring("usertask-".Length);

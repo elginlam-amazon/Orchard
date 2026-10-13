@@ -1,5 +1,5 @@
 using System;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 
 namespace Orchard.Time
 {
@@ -8,7 +8,7 @@ namespace Orchard.Time
     /// </summary>
     public class FallbackTimeZoneSelector : ITimeZoneSelector
     {
-        public TimeZoneSelectorResult GetTimeZone(HttpContextBase context)
+        public TimeZoneSelectorResult GetTimeZone(HttpContext context)
         {
             return new TimeZoneSelectorResult
             {

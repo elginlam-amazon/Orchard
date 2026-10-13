@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Timers;
-using System.Web.Compilation;
+using Autofac;
+using Microsoft.AspNetCore.Mvc.Razor.Compilation;
+using Orchard.Mvc;
 using Orchard.Exceptions;
 using Orchard.FileSystems.VirtualPath;
 using Orchard.Logging;
@@ -19,11 +21,13 @@ namespace Orchard.Environment
     public class ViewsBackgroundCompilation : IViewsBackgroundCompilation
     {
         private readonly IVirtualPathProvider _virtualPathProvider;
+        private readonly ILifetimeScope _lifetimeScope;
         private volatile bool _stopping;
 
-        public ViewsBackgroundCompilation(IVirtualPathProvider virtualPathProvider)
+        public ViewsBackgroundCompilation(IVirtualPathProvider virtualPathProvider, ILifetimeScope lifetimeScope)
         {
             _virtualPathProvider = virtualPathProvider;
+            _lifetimeScope = lifetimeScope;
 
             Logger = NullLogger.Instance;
         }
@@ -144,13 +148,21 @@ namespace Orchard.Environment
             stopwatch.Start();
             try
             {
-                var firstFile = _virtualPathProvider
-                    .ListFiles(viewDirectory)
-                    .Where(f => context.FileExtensionsToCompile.Any(e => f.EndsWith(e, StringComparison.OrdinalIgnoreCase)))
-                    .FirstOrDefault();
+                var viewCompiler = GetViewCompiler();
+                if (viewCompiler != null)
+                {
+                    // Razor views are compiled one by one (there is no batch compilation of a directory).
+                    var files = _virtualPathProvider
+                        .ListFiles(viewDirectory)
+                        .Where(f => context.FileExtensionsToCompile.Any(e => f.EndsWith(e, StringComparison.OrdinalIgnoreCase)));
 
-                if (firstFile != null)
-                    BuildManager.GetCompiledAssembly(firstFile);
+                    foreach (var file in files)
+                    {
+                        if (_stopping)
+                            break;
+                        viewCompiler.CompileAsync(file.TrimStart('~')).GetAwaiter().GetResult();
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -164,6 +176,15 @@ namespace Orchard.Environment
             }
             stopwatch.Stop();
             Logger.Information("Directory '{0}' compiled in {1} msec", viewDirectory, stopwatch.ElapsedMilliseconds);
+        }
+
+        private IViewCompiler GetViewCompiler()
+        {
+            if (!_lifetimeScope.TryResolveNamed(MvcModule.ApplicationServicesKey, typeof(IServiceProvider), out var services))
+                return null;
+
+            var viewCompilerProvider = ((IServiceProvider)services).GetService(typeof(IViewCompilerProvider)) as IViewCompilerProvider;
+            return viewCompilerProvider?.GetCompiler();
         }
 
         private IEnumerable<string> GetViewDirectories(string directory, IEnumerable<string> extensions)

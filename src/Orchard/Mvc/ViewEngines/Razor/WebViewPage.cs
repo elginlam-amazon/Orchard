@@ -1,8 +1,10 @@
 using System;
+using System.IO;
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.WebPages;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement;
 using Orchard.DisplayManagement.Shapes;
@@ -17,13 +19,27 @@ using Orchard.UI.Resources;
 namespace Orchard.Mvc.ViewEngines.Razor
 {
 
-    public abstract class WebViewPage<TModel> : System.Web.Mvc.WebViewPage<TModel>, IOrchardViewPage
+    /// <summary>
+    /// Base class of the Orchard Razor views (configured with <c>@inherits</c> in the _ViewImports.cshtml file).
+    /// </summary>
+    public abstract class WebViewPage<TModel> : RazorPage<TModel>, IOrchardViewPage, IViewDataContainer
     {
         private ScriptRegister _scriptRegister;
         private ResourceRegister _stylesheetRegister;
         private Localizer _localizer = NullLocalizer.Instance;
         private object _display;
-        private object _layout;
+        private WorkContext _workContext;
+
+        /// <summary>
+        /// The app relative virtual path of the view (~/...).
+        /// </summary>
+        public string VirtualPath => Path == null ? null : (Path.StartsWith("/") ? "~" + Path : Path);
+
+        ViewDataDictionary IViewDataContainer.ViewData
+        {
+            get { return ViewData; }
+            set { ViewData = (ViewDataDictionary<TModel>)value; }
+        }
 
         public Localizer T
         {
@@ -67,10 +83,16 @@ namespace Orchard.Mvc.ViewEngines.Razor
             }
         }
 
-        public dynamic Display => _display;
-        // review: (heskew) is it going to be a problem?
-        public new dynamic Layout => _layout;
-        public WorkContext WorkContext { get; set; }
+        public dynamic Display => _display ?? (_display = DisplayHelperFactory.CreateHelper(ViewContext, this));
+
+        // The Orchard layout is a shape, the Razor (string) layout is not used.
+        public new dynamic Layout => WorkContext.Layout;
+
+        public WorkContext WorkContext
+        {
+            get { return _workContext ?? (_workContext = ViewContext.GetWorkContext()); }
+            set { _workContext = value; }
+        }
 
         public dynamic New => ShapeFactory;
 
@@ -99,7 +121,7 @@ namespace Orchard.Mvc.ViewEngines.Razor
             get
             {
                 return _scriptRegister ??
-                    (_scriptRegister = new WebViewScriptRegister(this, Html.ViewDataContainer, ResourceManager));
+                    (_scriptRegister = new WebViewScriptRegister(this, ResourceManager));
             }
         }
 
@@ -111,7 +133,7 @@ namespace Orchard.Mvc.ViewEngines.Razor
             get
             {
                 return _stylesheetRegister ??
-                    (_stylesheetRegister = new ResourceRegister(Html.ViewDataContainer, ResourceManager, "stylesheet"));
+                    (_stylesheetRegister = new ResourceRegister(this, ResourceManager, "stylesheet"));
             }
         }
 
@@ -154,16 +176,6 @@ namespace Orchard.Mvc.ViewEngines.Razor
             ResourceManager.AppendMeta(meta, contentSeparator);
         }
 
-        public override void InitHelpers()
-        {
-            base.InitHelpers();
-
-            WorkContext = ViewContext.GetWorkContext();
-
-            _display = DisplayHelperFactory.CreateHelper(ViewContext, this);
-            _layout = WorkContext.Layout;
-        }
-
         public bool AuthorizedFor(Permission permission)
         {
             return Authorizer.Authorize(permission);
@@ -181,21 +193,27 @@ namespace Orchard.Mvc.ViewEngines.Razor
 
         public OrchardTagBuilder Tag(dynamic shape, string tagName)
         {
-            return Html.GetWorkContext().Resolve<ITagBuilderFactory>().Create(shape, tagName);
+            return WorkContext.Resolve<ITagBuilderFactory>().Create(shape, tagName);
         }
 
-        public IHtmlString DisplayChildren(dynamic shape)
+        public IHtmlContent DisplayChildren(dynamic shape)
         {
             var writer = new HtmlStringWriter();
             foreach (var item in shape)
             {
-                writer.Write(Display(item));
+                IHtmlContent content = Display(item);
+                content?.WriteTo(writer, HtmlEncoder.Default);
             }
             return writer;
         }
 
-        private string _tenantPrefix;
-        public override string Href(string path, params object[] pathParts)
+        /// <summary>
+        /// Resolves an application url (~/...), optionally appending url encoded path segments.
+        /// </summary>
+        /// <remarks>
+        /// The tenant url prefix is part of the request path base, so it is added by the url helper.
+        /// </remarks>
+        public string Href(string path, params object[] pathParts)
         {
             if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
                 || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -203,22 +221,26 @@ namespace Orchard.Mvc.ViewEngines.Razor
                 return path;
             }
 
-            if (_tenantPrefix == null)
+            var url = base.Href(path);
+            if (pathParts != null && pathParts.Length > 0)
             {
-                _tenantPrefix = WorkContext.Resolve<ShellSettings>().RequestUrlPrefix ?? "";
+                url = url.TrimEnd('/') + "/" + string.Join("/", pathParts.Select(p => Uri.EscapeDataString(Convert.ToString(p))));
             }
 
-            if (!string.IsNullOrWhiteSpace(_tenantPrefix)
-                && path.StartsWith("~/")
-                && !CommonLocations.Any(gpp => path.StartsWith(gpp, StringComparison.OrdinalIgnoreCase)))
-            {
-                return base.Href("~/" + _tenantPrefix + path.Substring(1), pathParts);
-            }
-
-            return base.Href(path, pathParts);
+            return url;
         }
 
-        public IDisposable Capture(Action<IHtmlString> callback)
+        internal void PushCaptureWriter(TextWriter writer)
+        {
+            PushWriter(writer);
+        }
+
+        internal void PopCaptureWriter()
+        {
+            PopWriter();
+        }
+
+        public IDisposable Capture(Action<IHtmlContent> callback)
         {
             return new CaptureScope(this, callback);
         }
@@ -230,29 +252,30 @@ namespace Orchard.Mvc.ViewEngines.Razor
 
         class CaptureScope : IDisposable
         {
-            readonly WebPageBase _viewPage;
-            readonly Action<IHtmlString> _callback;
+            readonly WebViewPage<TModel> _viewPage;
+            readonly Action<IHtmlContent> _callback;
+            readonly HtmlStringWriter _writer = new HtmlStringWriter();
 
-            public CaptureScope(WebPageBase viewPage, Action<IHtmlString> callback)
+            public CaptureScope(WebViewPage<TModel> viewPage, Action<IHtmlContent> callback)
             {
                 _viewPage = viewPage;
                 _callback = callback;
-                _viewPage.OutputStack.Push(new HtmlStringWriter());
+                _viewPage.PushCaptureWriter(_writer);
             }
 
             void IDisposable.Dispose()
             {
-                var writer = (HtmlStringWriter)_viewPage.OutputStack.Pop();
-                _callback(writer);
+                _viewPage.PopCaptureWriter();
+                _callback(_writer);
             }
         }
 
         class WebViewScriptRegister : ScriptRegister
         {
-            private readonly WebPageBase _viewPage;
+            private readonly WebViewPage<TModel> _viewPage;
 
-            public WebViewScriptRegister(WebPageBase viewPage, IViewDataContainer container, IResourceManager resourceManager)
-                : base(container, resourceManager)
+            public WebViewScriptRegister(WebViewPage<TModel> viewPage, IResourceManager resourceManager)
+                : base(viewPage, resourceManager)
             {
                 _viewPage = viewPage;
             }

@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Environment.Configuration;
 using Orchard.Localization;
 using Orchard.Logging;
@@ -12,7 +12,6 @@ using Orchard.UI.Notify;
 
 namespace Orchard.MultiTenancy.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller
     {
         private readonly ITenantService _tenantService;
@@ -43,10 +42,10 @@ namespace Orchard.MultiTenancy.Controllers
         public ActionResult Add()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You don't have permission to create tenants.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!IsExecutingInDefaultTenant())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new TenantAddViewModel
             {
@@ -63,12 +62,12 @@ namespace Orchard.MultiTenancy.Controllers
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You don't have permission to create tenants.")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             if (!IsExecutingInDefaultTenant())
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             if (_tenantService.GetTenants().Any(tenant => string.Equals(tenant.Name, viewModel.Name, StringComparison.OrdinalIgnoreCase)))
@@ -127,14 +126,14 @@ namespace Orchard.MultiTenancy.Controllers
         public ActionResult Edit(string name)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You don't have permission to edit tenants.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!IsExecutingInDefaultTenant())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var tenant = _tenantService.GetTenants().FirstOrDefault(ss => ss.Name == name);
             return tenant == null
-                ? HttpNotFound()
+                ? NotFound()
                 : (ActionResult)View(new TenantEditViewModel
             {
                 Name = tenant.Name,
@@ -163,15 +162,15 @@ namespace Orchard.MultiTenancy.Controllers
         public ActionResult EditPost(TenantEditViewModel viewModel)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You don't have permission to edit tenants.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!IsExecutingInDefaultTenant())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var tenant = _tenantService.GetTenants().FirstOrDefault(ss => ss.Name == viewModel.Name);
 
             if (tenant == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!string.Equals(viewModel.Name, "default", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(viewModel.RequestUrlHost) && string.IsNullOrWhiteSpace(viewModel.RequestUrlPrefix))
             {
@@ -217,10 +216,10 @@ namespace Orchard.MultiTenancy.Controllers
         public ActionResult Disable(string name)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You don't have permission to disable tenants.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!IsExecutingInDefaultTenant())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var tenant = _tenantService.GetTenants().FirstOrDefault(ss => ss.Name == name);
 
@@ -237,10 +236,10 @@ namespace Orchard.MultiTenancy.Controllers
         public ActionResult Enable(string name)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You don't have permission to enable tenants.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!IsExecutingInDefaultTenant())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var tenant = _tenantService.GetTenants().FirstOrDefault(ss => ss.Name == name);
 
@@ -256,14 +255,14 @@ namespace Orchard.MultiTenancy.Controllers
         public ActionResult Reset(string name)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You don't have permission to reset tenants.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!IsExecutingInDefaultTenant())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var tenant = _tenantService.GetTenants().FirstOrDefault(ss => ss.Name == name);
             return tenant == null
-                ? HttpNotFound()
+                ? NotFound()
                 : (ActionResult)View(new TenantResetViewModel()
             {
                 Name = name,
@@ -275,16 +274,16 @@ namespace Orchard.MultiTenancy.Controllers
         public ActionResult ResetPost(TenantResetViewModel viewModel)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("You don't have permission to reset tenants.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!IsExecutingInDefaultTenant())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var tenant = _tenantService.GetTenants().FirstOrDefault(ss => ss.Name == viewModel.Name);
             if (tenant == null)
-                return HttpNotFound();
+                return NotFound();
             else if (tenant.Name == _thisShellSettings.Name)
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!ModelState.IsValid)
             {

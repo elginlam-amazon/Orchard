@@ -5,10 +5,10 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Web;
-using System.Web.Mvc;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Orchard.Collections;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
@@ -316,7 +316,7 @@ namespace Orchard.DynamicForms.Services
             var requestForm = _services.WorkContext.HttpContext.Request.Form;
             var blackList = new[] { "__RequestVerificationToken", "formName", "contentId" };
             foreach (var key in
-                from string key in requestForm
+                from key in requestForm.Keys
                 where !string.IsNullOrWhiteSpace(key) && !blackList.Contains(key) && values[key] == null
                 select key)
             {

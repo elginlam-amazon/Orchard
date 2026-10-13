@@ -2,7 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Caching;
 using Orchard.Environment.Configuration;
 using Orchard.Utility.Extensions;
 
@@ -70,18 +69,11 @@ namespace Orchard.OutputCache.Services
                 {
                     if (_dictionary == null)
                     {
-                        var workContext = _workContextAccessor.GetContext();
-
-                        if (workContext != null)
-                        {
-                            _dictionary = workContext.HttpContext.Cache.Get(_cacheKey) as ConcurrentDictionary<string, HashSet<string>>;
-
-                            if (_dictionary == null)
-                            {
-                                _dictionary = new ConcurrentDictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-                                workContext.HttpContext.Cache.Add(_cacheKey, _dictionary, null, Cache.NoAbsoluteExpiration, Cache.NoSlidingExpiration, CacheItemPriority.Normal, null);
-                            }
-                        }
+                        _dictionary = (ConcurrentDictionary<string, HashSet<string>>)ApplicationCache.Instance.AddOrGetExisting(
+                            _cacheKey,
+                            new ConcurrentDictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase),
+                            System.Runtime.Caching.ObjectCache.InfiniteAbsoluteExpiration)
+                            ?? (ConcurrentDictionary<string, HashSet<string>>)ApplicationCache.Instance.Get(_cacheKey);
                     }
                 }
             }

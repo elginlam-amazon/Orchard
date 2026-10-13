@@ -2,12 +2,18 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Caching;
 using Orchard.ContentManagement;
+using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
 using Orchard.SecureSocketsLayer.Models;
 using Orchard.UI.Admin;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.SecureSocketsLayer.Services
 {
@@ -33,7 +39,7 @@ namespace Orchard.SecureSocketsLayer.Services
             return ShouldBeSecure(requestContext, null);
         }
 
-        public bool ShouldBeSecure(RequestContext requestContext)
+        public bool ShouldBeSecure(ActionContext requestContext)
         {
             return ShouldBeSecure(requestContext, null);
         }
@@ -41,13 +47,13 @@ namespace Orchard.SecureSocketsLayer.Services
         public bool ShouldBeSecure(ActionExecutingContext actionContext)
         {
             var requestContext = GetRequestContext(
-                actionContext.ActionDescriptor.ActionName,
-                actionContext.ActionDescriptor.ControllerDescriptor.ControllerName,
-                actionContext.RequestContext.RouteData.Values);
+                actionContext.ActionDescriptor.GetActionName(),
+                actionContext.ActionDescriptor.GetControllerName(),
+                actionContext.RouteData.Values);
             return ShouldBeSecure(requestContext, actionContext);
         }
 
-        private bool ShouldBeSecure(RequestContext requestContext, ActionExecutingContext actionContext)
+        private bool ShouldBeSecure(ActionContext requestContext, ActionExecutingContext actionContext)
         {
             var controllerName = (string)requestContext.RouteData.Values["controller"];
             if (controllerName == null) return false;
@@ -65,29 +71,16 @@ namespace Orchard.SecureSocketsLayer.Services
                 return true;
             }
 
-            var controller = (actionContext != null
-                ? actionContext.Controller
-                : ControllerBuilder.Current.GetControllerFactory()
-                    .CreateController(requestContext, controllerName)) as ControllerBase;
-            if (controller != null)
+            var actionDescriptor = actionContext != null
+                ? actionContext.ActionDescriptor as ControllerActionDescriptor
+                : FindActionDescriptor(requestContext, controllerName, actionName);
+            if (actionDescriptor != null)
             {
-                var controllerType = controller.GetType();
-                if (controllerType.GetCustomAttributes(typeof(RequireHttpsAttribute), false).Any())
+                if (actionDescriptor.ControllerTypeInfo.GetCustomAttributes(typeof(RequireHttpsAttribute), false).Any())
                 {
                     return true;
                 }
-                ActionDescriptor actionDescriptor;
-                if (actionContext != null)
-                {
-                    actionDescriptor = actionContext.ActionDescriptor;
-                }
-                else
-                {
-                    var controllerContext = new ControllerContext(requestContext, controller);
-                    var controllerDescriptor = new ReflectedControllerDescriptor(controllerType);
-                    actionDescriptor = controllerDescriptor.FindAction(controllerContext, actionName);
-                }
-                if (actionDescriptor.GetCustomAttributes(typeof(RequireHttpsAttribute), false).Any())
+                if (actionDescriptor.MethodInfo.GetCustomAttributes(typeof(RequireHttpsAttribute), false).Any())
                 {
                     return true;
                 }
@@ -112,7 +105,7 @@ namespace Orchard.SecureSocketsLayer.Services
 
             if (!settings.CustomEnabled) return false;
 
-            var urlHelper = new UrlHelper(requestContext);
+            var urlHelper = HtmlHelperFactory.CreateUrlHelper(requestContext);
             var url = urlHelper.Action(actionName, controllerName, requestContext.RouteData.Values);
 
             if (string.IsNullOrWhiteSpace(url))
@@ -121,7 +114,7 @@ namespace Orchard.SecureSocketsLayer.Services
             }
 
             return IsRequestProtected(
-                url, requestContext.HttpContext.Request.ApplicationPath, settings);
+                url, requestContext.HttpContext.Request.GetApplicationPath(), settings);
         }
 
         public string SecureActionUrl(string actionName, string controllerName)
@@ -137,10 +130,10 @@ namespace Orchard.SecureSocketsLayer.Services
         public string SecureActionUrl(string actionName, string controllerName, RouteValueDictionary routeValues)
         {
             var requestContext = GetRequestContext(actionName, controllerName, routeValues);
-            var url = new UrlHelper(requestContext);
+            var url = HtmlHelperFactory.CreateUrlHelper(requestContext);
             var actionUrl = url.Action(actionName, controllerName, routeValues);
             if (actionUrl == null) return null;
-            var currentUri = _workContextAccessor.GetContext().HttpContext.Request.Url;
+            var currentUri = _workContextAccessor.GetContext().HttpContext.Request.GetUrl();
             return currentUri != null && currentUri.Scheme.Equals(Uri.UriSchemeHttps) ?
                 actionUrl /* action url is relative so will keep current protocol */ :
                 MakeSecure(actionUrl);
@@ -159,16 +152,38 @@ namespace Orchard.SecureSocketsLayer.Services
         public string InsecureActionUrl(string actionName, string controllerName, RouteValueDictionary routeValues)
         {
             var requestContext = GetRequestContext(actionName, controllerName, routeValues);
-            var url = new UrlHelper(requestContext);
+            var url = HtmlHelperFactory.CreateUrlHelper(requestContext);
             var actionUrl = url.Action(actionName, controllerName, routeValues);
             if (actionUrl == null) return null;
-            var currentUri = _workContextAccessor.GetContext().HttpContext.Request.Url;
+            var currentUri = _workContextAccessor.GetContext().HttpContext.Request.GetUrl();
             return currentUri != null && currentUri.Scheme.Equals(Uri.UriSchemeHttp) ?
                 actionUrl /* action url is relative so will keep current protocol */ :
                 MakeInsecure(actionUrl);
         }
 
-        private RequestContext GetRequestContext(
+        /// <summary>
+        /// Finds the MVC action matching the area, controller and action names.
+        /// </summary>
+        private static ControllerActionDescriptor FindActionDescriptor(ActionContext requestContext, string controllerName, string actionName)
+        {
+            var provider = requestContext.HttpContext.RequestServices?.GetService(typeof(IActionDescriptorCollectionProvider)) as IActionDescriptorCollectionProvider;
+            if (provider == null)
+            {
+                return null;
+            }
+
+            var areaName = requestContext.RouteData.Values.TryGetValue("area", out var area) ? Convert.ToString(area, CultureInfo.InvariantCulture) : null;
+
+            return provider.ActionDescriptors.Items
+                .OfType<ControllerActionDescriptor>()
+                .FirstOrDefault(descriptor =>
+                    string.Equals(descriptor.ControllerName, controllerName, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(descriptor.ActionName, actionName, StringComparison.OrdinalIgnoreCase)
+                    && (string.IsNullOrEmpty(areaName)
+                        || (descriptor.RouteValues.TryGetValue("area", out var descriptorArea) && string.Equals(descriptorArea, areaName, StringComparison.OrdinalIgnoreCase))));
+        }
+
+        private ActionContext GetRequestContext(
             string actionName,
             string controllerName,
             RouteValueDictionary routeValues)
@@ -182,7 +197,7 @@ namespace Orchard.SecureSocketsLayer.Services
             }
             routeData.Values["controller"] = controllerName;
             routeData.Values["action"] = actionName;
-            var requestContext = new RequestContext(httpContext, routeData);
+            var requestContext = new ActionContext(httpContext, routeData, new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
             return requestContext;
         }
 

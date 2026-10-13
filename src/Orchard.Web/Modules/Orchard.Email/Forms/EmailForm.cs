@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.DisplayManagement;
 using Orchard.Environment.Extensions;
 using Orchard.Environment.Features;
@@ -114,9 +114,9 @@ namespace Orchard.Email.Forms
         {
             if (context.FormName != "EmailActivity") return;
 
-            var recipients = context.ValueProvider.GetValue("Recipients").AttemptedValue;
-            var subject = context.ValueProvider.GetValue("Subject").AttemptedValue;
-            var body = context.ValueProvider.GetValue("Body").AttemptedValue;
+            var recipients = context.ValueProvider.GetValue("Recipients").FirstValue;
+            var subject = context.ValueProvider.GetValue("Subject").FirstValue;
+            var body = context.ValueProvider.GetValue("Body").FirstValue;
 
 
             if (string.IsNullOrWhiteSpace(recipients))

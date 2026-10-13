@@ -1,6 +1,6 @@
-using System.Web.Mvc;
 using System.Xml.Linq;
 using Autofac;
+using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
 using Orchard.Core.XmlRpc;
 using Orchard.Core.XmlRpc.Controllers;

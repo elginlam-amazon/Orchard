@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Aspects;
 using Orchard.ContentManagement.MetaData;
@@ -26,7 +26,6 @@ using Orchard.Utility.Extensions;
 
 namespace Orchard.Core.Contents.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : ContentControllerBase, IUpdateModel
     {
         private readonly IContentManager _contentManager;
@@ -88,7 +87,7 @@ namespace Orchard.Core.Contents.Controllers
             {
                 contentTypeDefinition = _contentDefinitionManager.GetTypeDefinition(model.TypeName);
                 if (contentTypeDefinition == null)
-                    return HttpNotFound();
+                    return NotFound();
 
                 model.TypeDisplayName = !string.IsNullOrWhiteSpace(contentTypeDefinition.DisplayName)
                                             ? contentTypeDefinition.DisplayName
@@ -205,7 +204,7 @@ namespace Orchard.Core.Contents.Controllers
                             if (!Services.Authorizer.Authorize(Permissions.PublishContent, item, T("Couldn't publish selected content.")))
                             {
                                 _transactionManager.Cancel();
-                                return new HttpUnauthorizedResult();
+                                return new UnauthorizedResult();
                             }
 
                             _contentManager.Publish(item);
@@ -218,7 +217,7 @@ namespace Orchard.Core.Contents.Controllers
                             if (!Services.Authorizer.Authorize(Permissions.PublishContent, item, T("Couldn't unpublish selected content.")))
                             {
                                 _transactionManager.Cancel();
-                                return new HttpUnauthorizedResult();
+                                return new UnauthorizedResult();
                             }
 
                             _contentManager.Unpublish(item);
@@ -231,7 +230,7 @@ namespace Orchard.Core.Contents.Controllers
                             if (!Services.Authorizer.Authorize(Permissions.DeleteContent, item, T("Couldn't remove selected content.")))
                             {
                                 _transactionManager.Cancel();
-                                return new HttpUnauthorizedResult();
+                                return new UnauthorizedResult();
                             }
 
                             _contentManager.Remove(item);
@@ -279,7 +278,7 @@ namespace Orchard.Core.Contents.Controllers
             }
 
             if (!Services.Authorizer.Authorize(Permissions.CreateContent, contentItem, T("Cannot create content")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (containerId.HasValue && contentItem.Is<ContainablePart>())
             {
@@ -310,7 +309,7 @@ namespace Orchard.Core.Contents.Controllers
             var dummyContent = _contentManager.New(id);
 
             if (!Services.Authorizer.Authorize(Permissions.PublishContent, dummyContent, T("You do not have permission to publish content.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return CreatePOST(id, returnUrl, contentItem =>
             {
@@ -324,7 +323,7 @@ namespace Orchard.Core.Contents.Controllers
             var contentItem = _contentManager.New(id);
 
             if (!Services.Authorizer.Authorize(Permissions.EditContent, contentItem, T("You do not have permission to edit content.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             _contentManager.Create(contentItem, VersionOptions.Draft);
 
@@ -371,10 +370,10 @@ namespace Orchard.Core.Contents.Controllers
             }
 
             if (contentItem == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!Services.Authorizer.Authorize(Permissions.EditContent, contentItem, T("You do not have permission to edit content.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var model = _contentManager.BuildEditor(contentItem);
             return View(model);
@@ -394,10 +393,10 @@ namespace Orchard.Core.Contents.Controllers
             var content = _contentManager.Get(id, VersionOptions.Latest);
 
             if (content == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!Services.Authorizer.Authorize(Permissions.PublishContent, content, T("You do not have permission to publish content.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return EditPOST(id, returnUrl, contentItem =>
             {
@@ -439,10 +438,10 @@ namespace Orchard.Core.Contents.Controllers
             var contentItem = _contentManager.Get(id, VersionOptions.DraftRequired);
 
             if (contentItem == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!Services.Authorizer.Authorize(Permissions.EditContent, contentItem, T("You do not have permission to edit content.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             string previousRoute = null;
             if (contentItem.Has<IAliasAspect>()
@@ -493,20 +492,20 @@ namespace Orchard.Core.Contents.Controllers
             var originalContentItem = _contentManager.GetLatest(id);
 
             if (!Services.Authorizer.Authorize(Permissions.ViewContent, originalContentItem, T("You do not have permission to view existing content.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!Services.Authorizer.Authorize(Permissions.CreateContent, originalContentItem, T("Couldn't clone content")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             // pass a dummy content to the authorization check to check for "own" variations
             var dummyContent = _contentManager.New(originalContentItem.ContentType);
 
             if (!Services.Authorizer.Authorize(Permissions.EditContent, dummyContent, T("You do not have permission to edit (or create) content.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
 
             if (!Services.Authorizer.Authorize(Permissions.EditContent, dummyContent, T("You do not have permission to edit (or create) content.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var cloneContentItem = _contentManager.Clone(originalContentItem);
 
@@ -531,7 +530,7 @@ namespace Orchard.Core.Contents.Controllers
             var contentItem = _contentManager.Get(id, VersionOptions.Latest);
 
             if (!Services.Authorizer.Authorize(Permissions.DeleteContent, contentItem, T("You do not have permission to delete content.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (contentItem != null)
             {
@@ -551,19 +550,19 @@ namespace Orchard.Core.Contents.Controllers
 
             if (contentItem == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             if (!contentItem.TypeDefinition.Settings.GetModel<ContentTypeSettings>().Draftable
                 || !contentItem.HasPublished()
                 || contentItem.IsPublished())
             {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+                return new StatusCodeResult((int)HttpStatusCode.BadRequest);
             }
 
             if (!Services.Authorizer.Authorize(Permissions.DeleteContent, contentItem, T("You do not have permission to delete content (or discard draft content).")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             _contentManager.DiscardDraft(contentItem);
@@ -580,10 +579,10 @@ namespace Orchard.Core.Contents.Controllers
         {
             var contentItem = _contentManager.GetLatest(id);
             if (contentItem == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!Services.Authorizer.Authorize(Permissions.PublishContent, contentItem, T("You do not have permission to publish content.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             _contentManager.Publish(contentItem);
 
@@ -599,10 +598,10 @@ namespace Orchard.Core.Contents.Controllers
         {
             var contentItem = _contentManager.GetLatest(id);
             if (contentItem == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!Services.Authorizer.Authorize(Permissions.PublishContent, contentItem, T("You do not have permission to publish (or unpublish) content.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             _contentManager.Unpublish(contentItem);
 
@@ -615,7 +614,7 @@ namespace Orchard.Core.Contents.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

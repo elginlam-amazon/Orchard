@@ -2,6 +2,7 @@ using System;
 using Orchard.Conditions.Services;
 using Orchard.Environment.Configuration;
 using Orchard.Mvc;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Conditions.Providers
 {
@@ -28,7 +29,7 @@ namespace Orchard.Conditions.Providers
                 if (url.StartsWith("~/"))
                 {
                     url = url.Substring(2);
-                    var appPath = context.Request.ApplicationPath;
+                    var appPath = context.Request.GetApplicationPath();
                     if (appPath == "/")
                         appPath = "";
 
@@ -41,7 +42,7 @@ namespace Orchard.Conditions.Providers
                 if (!url.Contains("?"))
                     url = url.TrimEnd('/');
 
-                var requestPath = context.Request.Path;
+                var requestPath = context.Request.PathBase.Add(context.Request.Path).Value ?? "/";
                 if (!requestPath.Contains("?"))
                     requestPath = requestPath.TrimEnd('/');
 

@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using System.Web.Http.Filters;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.Logging;
 
 namespace Orchard.WebApi.Filters
@@ -13,7 +13,7 @@ namespace Orchard.WebApi.Filters
 
         public ILogger Logger { get; set; }
 
-        public override void OnException(HttpActionExecutedContext actionExecutedContext)
+        public override void OnException(ExceptionContext actionExecutedContext)
         {
             if (actionExecutedContext.Exception is TaskCanceledException)
                 Logger.Warning(actionExecutedContext.Exception, "A pending API operation was canceled by the client.");

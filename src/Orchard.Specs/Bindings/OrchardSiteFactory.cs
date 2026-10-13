@@ -6,7 +6,7 @@ using Orchard.Environment.Configuration;
 using Orchard.Environment.Descriptor;
 using Orchard.Environment.Descriptor.Models;
 using Orchard.Specs.Hosting.Orchard.Web;
-using TechTalk.SpecFlow;
+using Reqnroll;
 
 namespace Orchard.Specs.Bindings
 {

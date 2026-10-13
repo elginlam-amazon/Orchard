@@ -1,15 +1,14 @@
-using System.IO;
 using System.Net;
-using TechTalk.SpecFlow;
+using System.Net.Http;
+using System.Text;
+using Reqnroll;
 
 namespace Orchard.Profile.Tests
 {
     [Binding]
     public class HttpClient
     {
-        private readonly CookieContainer _cookieContainer = new CookieContainer();
-        private HttpWebRequest _request;
-        private HttpWebResponse _response;
+        private readonly System.Net.Http.HttpClient _client = new System.Net.Http.HttpClient(new HttpClientHandler { CookieContainer = new CookieContainer() });
         private string _text;
 
         [Given(@"I am logged in")]
@@ -49,35 +48,21 @@ namespace Orchard.Profile.Tests
 
         private void DoRequest(string url, string postData)
         {
-            _request = (HttpWebRequest)WebRequest.Create("http://localhost" + url);
-            _request.CookieContainer = _cookieContainer;
+            HttpResponseMessage response;
             if (postData != null)
             {
-                _request.Method = "POST";
-                _request.ContentType = "application/x-www-form-urlencoded";
-                using (var stream = _request.GetRequestStream())
-                {
-                    using (var writer = new StreamWriter(stream))
-                    {
-                        writer.Write(postData);
-                    }
-                }
+                var content = new StringContent(postData, Encoding.UTF8, "application/x-www-form-urlencoded");
+                response = _client.PostAsync("http://localhost" + url, content).GetAwaiter().GetResult();
             }
-            try
+            else
             {
-                _response = (HttpWebResponse)_request.GetResponse();
-            }
-            catch (WebException ex)
-            {
-                _response = (HttpWebResponse)ex.Response;
+                response = _client.GetAsync("http://localhost" + url).GetAwaiter().GetResult();
             }
 
-            using (var stream = _response.GetResponseStream())
+            // the error responses are read too
+            using (response)
             {
-                using (var reader = new StreamReader(stream))
-                {
-                    _text = reader.ReadToEnd();
-                }
+                _text = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             }
         }
     }

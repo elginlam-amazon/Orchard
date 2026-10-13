@@ -1,5 +1,6 @@
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.Data;
 using Orchard.Layouts.Elements;
 using Orchard.Layouts.Framework.Display;
@@ -38,12 +39,12 @@ namespace Orchard.Layouts.Drivers
             {
                 // The content item hasn't been stored yet, so bind form values with the content part to represent actual state.
                 var controller = (Controller)context.Updater;
-                var oldValueProvider = controller.ValueProvider;
+                var oldValueProvider = controller.GetValueProvider();
 
-                controller.ValueProvider = context.Element.Data.ToValueProvider(_cultureAccessor.CurrentCulture);
+                controller.SetValueProvider(context.Element.Data.ToValueProvider(_cultureAccessor.CurrentCulture));
                 _contentPartDisplay.UpdateEditor(contentPart, context.Updater);
                 _transactionManager.Cancel();
-                controller.ValueProvider = oldValueProvider;
+                controller.SetValueProvider(oldValueProvider);
             }
 
             var contentPartShape = _contentPartDisplay.BuildDisplay(contentPart, displayType: "Layout");

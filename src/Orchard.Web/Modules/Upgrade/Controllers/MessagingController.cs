@@ -1,4 +1,4 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Orchard;
 using Orchard.Data;
@@ -60,7 +60,7 @@ namespace Upgrade.Controllers
         public ActionResult IndexPOST()
         {
             if (!_orchardServices.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not allowed to upgrade.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var activityTable = _upgradeService.GetPrefixedTableName("Orchard_Workflows_ActivityRecord");
             if (_upgradeService.TableExists(activityTable))

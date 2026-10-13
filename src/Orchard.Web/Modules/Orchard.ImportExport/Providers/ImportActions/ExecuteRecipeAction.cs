@@ -90,13 +90,13 @@ namespace Orchard.ImportExport.Providers.ImportActions
                 {
                     // Validate and read uploaded recipe file.
                     var request = _orchardServices.WorkContext.HttpContext.Request;
-                    var file = request.Files["RecipeFile"];
+                    var file = request.Form.Files["RecipeFile"];
                     var isValid = true;
 
                     ResetSite = viewModel.ResetSite;
                     SuperUserPassword = viewModel.SuperUserPassword;
 
-                    if (file == null || file.ContentLength == 0)
+                    if (file == null || file.Length == 0)
                     {
                         updater.AddModelError("RecipeFile", T("No recipe file selected."));
                         isValid = false;
@@ -133,7 +133,7 @@ namespace Orchard.ImportExport.Providers.ImportActions
                     if (isValid)
                     {
                         // Read recipe file.
-                        RecipeDocument = XDocument.Parse(new StreamReader(file.InputStream).ReadToEnd());
+                        RecipeDocument = XDocument.Parse(new StreamReader(file.OpenReadStream()).ReadToEnd());
                     }
                 }
             }
@@ -174,7 +174,6 @@ namespace Orchard.ImportExport.Providers.ImportActions
             // Sets the request timeout to a configurable amount of seconds to give enough time to execute custom recipes.
             if (_orchardServices.WorkContext.HttpContext != null)
             {
-                _orchardServices.WorkContext.HttpContext.Server.ScriptTimeout = RecipeExecutionTimeout;
             }
 
             // Suspend background task execution.

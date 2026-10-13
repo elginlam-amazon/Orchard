@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
-using Microsoft.WindowsAzure.Storage.Blob;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 
 namespace Orchard.Azure.Services.FileSystems
 {
@@ -8,14 +9,14 @@ namespace Orchard.Azure.Services.FileSystems
     public static class CloudBlobContainerExtensions
     {
 
-        public static bool BlobExists(this CloudBlobContainer container, string path)
+        public static bool BlobExists(this BlobContainerClient container, string path)
         {
             if (string.IsNullOrEmpty(path) || path.Trim() == string.Empty)
                 throw new ArgumentException("Path can't be empty");
-            return container.GetBlockBlobReference(path).Exists();
+            return container.GetBlobClient(path).Exists().Value;
         }
 
-        public static void EnsureBlobExists(this CloudBlobContainer container, string path)
+        public static void EnsureBlobExists(this BlobContainerClient container, string path)
         {
             if (!BlobExists(container, path))
             {
@@ -23,7 +24,7 @@ namespace Orchard.Azure.Services.FileSystems
             }
         }
 
-        public static void EnsureBlobDoesNotExist(this CloudBlobContainer container, string path)
+        public static void EnsureBlobDoesNotExist(this BlobContainerClient container, string path)
         {
             if (BlobExists(container, path))
             {
@@ -31,17 +32,17 @@ namespace Orchard.Azure.Services.FileSystems
             }
         }
 
-        public static bool DirectoryExists(this CloudBlobContainer container, string path)
+        public static bool DirectoryExists(this BlobContainerClient container, string path)
         {
             if (string.IsNullOrEmpty(path) || path.Trim() == string.Empty)
             {
                 throw new ArgumentException("Path can't be empty");
             }
 
-            return container.GetDirectoryReference(path).ListBlobs().Any();
+            return container.GetBlobs(BlobTraits.None, BlobStates.None, ToDirectoryPrefix(path), default).Any();
         }
 
-        public static void EnsureDirectoryExists(this CloudBlobContainer container, string path)
+        public static void EnsureDirectoryExists(this BlobContainerClient container, string path)
         {
             if (!DirectoryExists(container, path))
             {
@@ -49,12 +50,25 @@ namespace Orchard.Azure.Services.FileSystems
             }
         }
 
-        public static void EnsureDirectoryDoesNotExist(this CloudBlobContainer container, string path)
+        public static void EnsureDirectoryDoesNotExist(this BlobContainerClient container, string path)
         {
             if (DirectoryExists(container, path))
             {
                 throw new ArgumentException("Directory " + path + " already exists");
             }
+        }
+
+        /// <summary>
+        /// Returns the blob name prefix of a virtual directory (ending with the delimiter).
+        /// </summary>
+        public static string ToDirectoryPrefix(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return string.Empty;
+            }
+
+            return path.EndsWith("/") ? path : path + "/";
         }
     }
 }

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Concurrent;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 
 namespace Orchard.Mvc.ViewEngines.ThemeAwareness
 {

@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
-using System.Net.Configuration;
 using System.Net.Mail;
-using System.Web.Mvc;
 using MailKit.Security;
+using Microsoft.AspNetCore.Html;
 using MimeKit;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement;
@@ -81,7 +80,7 @@ namespace Orchard.Email.Services
             // Apply default Body alteration for SmtpChannel.
             var template = _shapeFactory.Create("Template_Smtp_Wrapper", Arguments.From(new
             {
-                Content = new MvcHtmlString(emailMessage.Body)
+                Content = new HtmlString(emailMessage.Body)
             }));
 
             var mailMessage = new MimeMessage
@@ -134,7 +133,7 @@ namespace Orchard.Email.Services
                     // "From" address precendence: Current email message > site settings > configuration.
                     string.IsNullOrWhiteSpace(emailMessage.FromAddress)
                         ? string.IsNullOrWhiteSpace(_smtpSettings.FromAddress)
-                            ? ((SmtpSection)ConfigurationManager.GetSection("system.net/mailSettings/smtp")).From
+                            ? SmtpSection.Load()?.From
                             : _smtpSettings.FromAddress
                         : emailMessage.FromAddress);
                 fromAddress.Name = string.IsNullOrWhiteSpace(emailMessage.FromName) ? _smtpSettings.FromName : emailMessage.FromName;
@@ -172,7 +171,7 @@ namespace Orchard.Email.Services
             // If no properties are set in the dashboard, use the web.config value.
             if (string.IsNullOrWhiteSpace(_smtpSettings.Host))
             {
-                var smtpSection = (SmtpSection)ConfigurationManager.GetSection("system.net/mailSettings/smtp");
+                var smtpSection = SmtpSection.Load();
                 if (smtpSection.DeliveryMethod != SmtpDeliveryMethod.Network)
                 {
                     throw new NotSupportedException($"Only the {SmtpDeliveryMethod.Network} delivery method is supported, but "

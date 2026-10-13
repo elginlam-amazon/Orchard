@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Web;
+using Microsoft.AspNetCore.Html;
 using Orchard.Localization.Services;
 using Orchard.Logging;
 
@@ -36,7 +37,7 @@ namespace Orchard.Localization
                 var currentCulture = workContext.CurrentCulture;
                 FormatForScope localizedFormatScope = _localizedStringManager.GetLocalizedString(_scopes, textHint, currentCulture);
                 scope = localizedFormatScope.Scope;
-                // localization arguments are HTML-encoded unless they implement IHtmlString
+                // localization arguments are HTML-encoded unless they implement IHtmlContent
 
                 return args.Length == 0
                 ? new LocalizedString(localizedFormatScope.Format, scope, textHint, args)
@@ -64,7 +65,7 @@ namespace Orchard.Localization
 
         static object Encode(object arg)
         {
-            if (arg is IFormattable || arg is IHtmlString)
+            if (arg is IFormattable || arg is IHtmlContent)
             {
                 return arg;
             }

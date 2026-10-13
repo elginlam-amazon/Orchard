@@ -1,19 +1,21 @@
 using System;
 using System.Globalization;
-using System.Web;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Orchard.Environment;
+using Orchard.Environment.Configuration;
 using log4net;
 using log4net.Core;
 using log4net.Util;
-using Orchard.Environment;
-using Orchard.Environment.Configuration;
 using Logger = Castle.Core.Logging.ILogger;
 
 namespace Orchard.Logging
 {
     [Serializable]
-    public class OrchardLog4netLogger : MarshalByRefObject, Logger, IShim
+    public class OrchardLog4netLogger : Logger, IShim
     {
         private static readonly Type declaringType = typeof(OrchardLog4netLogger);
+        private static readonly HttpContextAccessor _httpContextAccessor = new HttpContextAccessor();
 
         private readonly Lazy<ShellSettings> _shellSettings;
 
@@ -39,7 +41,7 @@ namespace Orchard.Logging
 
         private ShellSettings LoadSettings()
         {
-            var ctx = HttpContext.Current;
+            var ctx = _httpContextAccessor.HttpContext;
             if (ctx == null)
                 return null;
 
@@ -47,7 +49,7 @@ namespace Orchard.Logging
             if (runningShellTable == null)
                 return null;
 
-            var shellSettings = runningShellTable.Match(new HttpContextWrapper(ctx));
+            var shellSettings = runningShellTable.Match(ctx);
             if (shellSettings == null)
                 return null;
 
@@ -77,21 +79,23 @@ namespace Orchard.Logging
 
             try
             {
-                var ctx = HttpContext.Current;
+                var ctx = _httpContextAccessor.HttpContext;
                 if (ctx != null)
                 {
-                    ThreadContext.Properties["Url"] = ctx.Request.Url.ToString();
+                    ThreadContext.Properties["Url"] = ctx.Request.GetDisplayUrl();
                 }
                 else
                 {
                     ThreadContext.Properties.Remove("Url");
                 }
             }
-            catch (HttpException)
+            catch (ObjectDisposedException)
             {
-                // can happen on cloud service for an unknown reason
+                // can happen when the request has already completed
             }
         }
+
+        public bool IsTraceEnabled => Logger.IsEnabledFor(Level.Trace);
 
         public bool IsDebugEnabled => Logger.IsEnabledFor(Level.Debug);
 
@@ -115,6 +119,69 @@ namespace Orchard.Logging
         public virtual Logger CreateChildLogger(string name)
         {
             return Factory.Create(Logger.Name + "." + name);
+        }
+
+        public void Trace(string message)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Trace, message, null);
+            }
+        }
+
+        public void Trace(Func<string> messageFactory)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Trace, messageFactory.Invoke(), null);
+            }
+        }
+
+        public void Trace(string message, Exception exception)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Trace, message, exception);
+            }
+        }
+
+        public void TraceFormat(string format, params object[] args)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Trace, new SystemStringFormat(CultureInfo.InvariantCulture, format, args), null);
+            }
+        }
+
+        public void TraceFormat(Exception exception, string format, params object[] args)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Trace, new SystemStringFormat(CultureInfo.InvariantCulture, format, args), exception);
+            }
+        }
+
+        public void TraceFormat(IFormatProvider formatProvider, string format, params object[] args)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Trace, new SystemStringFormat(formatProvider, format, args), null);
+            }
+        }
+
+        public void TraceFormat(Exception exception, IFormatProvider formatProvider, string format, params object[] args)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Trace, new SystemStringFormat(formatProvider, format, args), exception);
+            }
         }
 
         public void Debug(string message)
@@ -430,12 +497,6 @@ namespace Orchard.Logging
                 AddExtendedThreadInfo();
                 Logger.Log(declaringType, Level.Warn, new SystemStringFormat(formatProvider, format, args), exception);
             }
-        }
-
-        public override object InitializeLifetimeService()
-        {
-            // never expire the cross-AppDomain lease on this object
-            return null;
         }
     }
 }

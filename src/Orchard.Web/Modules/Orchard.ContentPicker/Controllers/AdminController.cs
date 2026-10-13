@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
 using Orchard.ContentManagement.MetaData.Models;
@@ -56,7 +56,7 @@ namespace Orchard.ContentPicker.Controllers
             var contentPickerMenuItem = menuItems.FirstOrDefault();
             if (contentPickerMenuItem == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             if (contentPickerMenuItem.Items.All(x => x.Text.TextHint != "Recent Content"))
@@ -65,18 +65,18 @@ namespace Orchard.ContentPicker.Controllers
                 var root = menuItems.FirstOrDefault();
                 if (root == null)
                 {
-                    return HttpNotFound();
+                    return NotFound();
                 }
 
                 var firstChild = root.Items.First();
                 if (firstChild == null)
                 {
-                    return HttpNotFound();
+                    return NotFound();
                 }
 
                 var routeData = new RouteValueDictionary(firstChild.RouteValues);
-                var queryString = Request.QueryString;
-                foreach (var key in queryString.AllKeys)
+                var queryString = Request.Query;
+                foreach (var key in queryString.Keys)
                 {
                     if (!string.IsNullOrEmpty(key))
                     {
@@ -125,7 +125,7 @@ namespace Orchard.ContentPicker.Controllers
             {
                 var contentTypeDefinition = _contentDefinitionManager.GetTypeDefinition(model.Options.SelectedFilter);
                 if (contentTypeDefinition == null)
-                    return HttpNotFound();
+                    return NotFound();
 
                 model.TypeDisplayName = !string.IsNullOrWhiteSpace(contentTypeDefinition.DisplayName)
                                             ? contentTypeDefinition.DisplayName

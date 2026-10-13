@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
 using Orchard.Core.Title.Models;
@@ -19,7 +19,6 @@ using Orchard.Validation;
 
 namespace Orchard.MediaLibrary.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller
     {
         private readonly IMediaLibraryService _mediaLibraryService;
@@ -53,7 +52,7 @@ namespace Orchard.MediaLibrary.Controllers
             if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.SelectMediaContent, folderPath))
             {
                 Services.Notifier.Add(UI.Notify.NotifyType.Error, T("Cannot select media"));
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var userMediaFolder = _mediaLibraryService.GetUserMediaFolder();
@@ -121,12 +120,12 @@ namespace Orchard.MediaLibrary.Controllers
             {
                 var replaceMedia = Services.ContentManager.Get(replaceId.Value).As<MediaPart>();
                 if (replaceMedia == null)
-                    return HttpNotFound();
+                    return NotFound();
 
                 // Check permission
                 if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, folderPath) && !_mediaLibraryService.CanManageMediaFolder(replaceMedia.FolderPath))
                 {
-                    return new HttpUnauthorizedResult();
+                    return new UnauthorizedResult();
                 }
 
                 viewModel.Replace = replaceMedia;
@@ -137,7 +136,7 @@ namespace Orchard.MediaLibrary.Controllers
                 // Check permission
                 if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, folderPath) && !_mediaLibraryService.CanManageMediaFolder(folderPath))
                 {
-                    return new HttpUnauthorizedResult();
+                    return new UnauthorizedResult();
                 }
             }
 
@@ -234,7 +233,7 @@ namespace Orchard.MediaLibrary.Controllers
             if (!Services.Authorizer.Authorize(Permissions.ManageOwnMedia))
             {
                 Services.Notifier.Add(UI.Notify.NotifyType.Error, T("Cannot view media"));
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var rootMediaFolder = _mediaLibraryService.GetRootMediaFolder();
@@ -264,12 +263,12 @@ namespace Orchard.MediaLibrary.Controllers
             var contentItem = Services.ContentManager.Get<MediaPart>(id, VersionOptions.Latest);
 
             if (contentItem == null)
-                return HttpNotFound();
+                return NotFound();
 
             if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.SelectMediaContent, contentItem.FolderPath))
             {
                 Services.Notifier.Add(UI.Notify.NotifyType.Error, T("Cannot select media"));
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             dynamic model = Services.ContentManager.BuildDisplay(contentItem, displayType);
@@ -283,7 +282,7 @@ namespace Orchard.MediaLibrary.Controllers
             if (!Services.Authorizer.Authorize(Permissions.ManageOwnMedia))
             {
                 Services.Notifier.Add(UI.Notify.NotifyType.Error, T("Couldn't delete media items"));
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var mediaItems = Services.ContentManager
@@ -319,7 +318,7 @@ namespace Orchard.MediaLibrary.Controllers
             if (!Services.Authorizer.Authorize(Permissions.ManageOwnMedia))
             {
                 Services.Notifier.Add(UI.Notify.NotifyType.Error, T("Couldn't clone media items"));
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             try

@@ -3,7 +3,7 @@ using System.Linq;
 using Orchard.Commands;
 using Orchard.Parameters;
 using Orchard.Specs.Hosting;
-using TechTalk.SpecFlow;
+using Reqnroll;
 
 namespace Orchard.Specs.Bindings
 {

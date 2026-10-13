@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web.Hosting;
 using Orchard.Caching;
 using Orchard.FileSystems.VirtualPath;
 using Orchard.Logging;
+using Orchard.Environment;
 
 namespace Orchard.FileSystems.WebSite
 {
@@ -126,7 +126,7 @@ namespace Orchard.FileSystems.WebSite
         {
             // todo: use IVirtualPathProvider instance instead of static.
             // Currently IVirtualPathProvider has no way of doing normalization like this
-            return HostingEnvironment.VirtualPathProvider.GetFile(virtualPath).VirtualPath;
+            return Orchard.Utility.VirtualPathUtility.ToAbsolute(virtualPath, "/");
         }
     }
 }

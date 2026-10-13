@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
-using System.Web.Hosting;
+using Microsoft.Data.SqlClient;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions;
 using Orchard.Logging;
@@ -19,7 +18,7 @@ namespace Orchard.MessageBus.Brokers.SqlServer
     }
 
     [OrchardFeature("Orchard.MessageBus.SqlServerServiceBroker")]
-    public class Worker : IWorker, IRegisteredObject
+    public class Worker : IWorker
     {
 
         private readonly ShellSettings _shellSettings;

@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
 using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Newtonsoft.Json.Linq;
 using Orchard.ContentManagement;
 using Orchard.Data;
@@ -24,7 +25,6 @@ using Orchard.Workflows.ViewModels;
 
 namespace Orchard.Workflows.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller, IUpdateModel
     {
         private readonly ISiteService _siteService;
@@ -61,7 +61,7 @@ namespace Orchard.Workflows.Controllers
         public ActionResult Index(AdminIndexOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var pager = new Pager(_siteService.GetSiteSettings(), pagerParameters);
 
@@ -133,11 +133,11 @@ namespace Orchard.Workflows.Controllers
         public ActionResult BulkEdit(AdminIndexOptions options, PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new AdminIndexViewModel { WorkflowDefinitions = new List<WorkflowDefinitionEntry>(), Options = new AdminIndexOptions() };
 
-            if (!TryUpdateModel(viewModel))
+            if (!this.TryUpdateModel(viewModel))
             {
                 return View(viewModel);
             }
@@ -149,7 +149,7 @@ namespace Orchard.Workflows.Controllers
                     break;
                 case WorkflowDefinitionBulk.Delete:
                     if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage workflows")))
-                        return new HttpUnauthorizedResult();
+                        return new UnauthorizedResult();
 
                     foreach (var entry in checkedEntries)
                     {
@@ -173,13 +173,13 @@ namespace Orchard.Workflows.Controllers
         public ActionResult List(int id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to list workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var contentItem = Services.ContentManager.Get(id, VersionOptions.Latest);
 
             if (contentItem == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             var workflows = _workflowRecords.Table.Where(x => x.ContentItemRecord == contentItem.Record).ToList();
@@ -195,7 +195,7 @@ namespace Orchard.Workflows.Controllers
         public ActionResult EditProperties(int id = 0)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to edit workflows.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (id == 0)
             {
@@ -214,7 +214,7 @@ namespace Orchard.Workflows.Controllers
         public ActionResult EditPropertiesPost(AdminEditViewModel adminEditViewModel, int id = 0)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to edit workflows.")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
 
             if (string.IsNullOrWhiteSpace(adminEditViewModel.WorkflowDefinition.Name))
@@ -255,13 +255,13 @@ namespace Orchard.Workflows.Controllers
 
             var workflowDefinitionRecord = id.HasValue ? _workflowDefinitionRecords.Get(id.Value) : null;
             var isRunning = workflowDefinitionRecord != null && workflowDefinitionRecord.WorkflowRecords.Any();
-            return Json(new { isRunning = isRunning }, JsonRequestBehavior.AllowGet);
+            return Json(new { isRunning = isRunning });
         }
 
         public ActionResult Edit(int id, string localId, int? workflowId)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to edit workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             // convert the workflow definition into its view model
             var workflowDefinitionRecord = _workflowDefinitionRecords.Get(id);
@@ -284,7 +284,7 @@ namespace Orchard.Workflows.Controllers
         public ActionResult Delete(int id)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var workflowDefinition = _workflowDefinitionRecords.Get(id);
 
@@ -301,7 +301,7 @@ namespace Orchard.Workflows.Controllers
         public ActionResult DeleteWorkflow(int id, string returnUrl)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var workflow = _workflowRecords.Get(id);
 
@@ -362,13 +362,13 @@ namespace Orchard.Workflows.Controllers
         public ActionResult EditPost(int id, string localId, string data, bool clearWorkflows)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to edit workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var workflowDefinitionRecord = _workflowDefinitionRecords.Get(id);
 
             if (workflowDefinitionRecord == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             workflowDefinitionRecord.Enabled = true;
@@ -462,7 +462,7 @@ namespace Orchard.Workflows.Controllers
         public ActionResult EditPostCancel()
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to edit workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return View();
         }
@@ -472,13 +472,13 @@ namespace Orchard.Workflows.Controllers
         public ActionResult RenderActivity(ActivityViewModel model)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to edit workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var activity = _activitiesManager.GetActivityByName(model.Name);
 
             if (activity == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             dynamic shape = New.Activity(activity);
@@ -501,13 +501,13 @@ namespace Orchard.Workflows.Controllers
         public ActionResult EditActivity(string localId, string clientId, ActivityViewModel model)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to edit workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var activity = _activitiesManager.GetActivityByName(model.Name);
 
             if (activity == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             // build the form, and let external components alter it
@@ -521,20 +521,20 @@ namespace Orchard.Workflows.Controllers
 
         [HttpPost, ActionName("EditActivity")]
         [FormValueRequired("_submit.Save")]
-        public ActionResult EditActivityPost(int id, string localId, string name, string clientId, FormCollection formValues)
+        public ActionResult EditActivityPost(int id, string localId, string name, string clientId, IFormCollection formValues)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to edit workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var activity = _activitiesManager.GetActivityByName(name);
 
             if (activity == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             // validating form values
-            _formManager.Validate(new ValidatingContext { FormName = activity.Form, ModelState = ModelState, ValueProvider = ValueProvider });
+            _formManager.Validate(new ValidatingContext { FormName = activity.Form, ModelState = ModelState, ValueProvider = this.GetValueProvider() });
 
             // stay on the page if there are validation errors
             if (!ModelState.IsValid)
@@ -544,7 +544,7 @@ namespace Orchard.Workflows.Controllers
                 var form = activity.Form == null ? null : _formManager.Build(activity.Form);
 
                 // bind form with existing values.
-                _formManager.Bind(form, ValueProvider);
+                _formManager.Bind(form, this.GetValueProvider());
 
                 var viewModel = New.ViewModel(Id: id, LocalId: localId, Form: form);
 
@@ -568,17 +568,17 @@ namespace Orchard.Workflows.Controllers
 
         [HttpPost, ActionName("EditActivity")]
         [FormValueRequired("_submit.Cancel")]
-        public ActionResult EditActivityPostCancel(int id, string localId, string name, string clientId, FormCollection formValues)
+        public ActionResult EditActivityPostCancel(int id, string localId, string name, string clientId, IFormCollection formValues)
         {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to edit workflows")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return RedirectToAction("Edit", new { id, localId });
         }
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         public void AddModelError(string key, LocalizedString errorMessage)

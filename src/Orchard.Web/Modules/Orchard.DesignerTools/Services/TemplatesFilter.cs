@@ -1,9 +1,11 @@
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
 using Orchard.DisplayManagement;
 using Orchard.Mvc.Filters;
 using Orchard.Security;
 using Orchard.UI.Admin;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.DesignerTools.Services
 {
@@ -45,12 +47,12 @@ namespace Orchard.DesignerTools.Services
         private bool IsActivable()
         {
             // activate on front-end only
-            if (AdminFilter.IsApplied(new RequestContext(_workContext.HttpContext, new RouteData())))
+            if (AdminFilter.IsApplied(new ActionContext(_workContext.HttpContext, new RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor())))
                 return false;
 
             // if not logged as a site owner, still activate if it's a local request (development machine)
             if (!_authorizer.Authorize(StandardPermissions.SiteOwner))
-                return _workContext.HttpContext.Request.IsLocal;
+                return _workContext.HttpContext.Request.IsLocal();
 
             return true;
         }

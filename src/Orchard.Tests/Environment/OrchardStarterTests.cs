@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
 using Autofac;
 using NUnit.Framework;
 using Orchard.Environment;
@@ -13,7 +12,7 @@ namespace Orchard.Tests.Environment
         [Test]
         public void DefaultOrchardHostInstanceReturnedByCreateHost()
         {
-            var host = OrchardStarter.CreateHost(b => b.RegisterInstance(new ControllerBuilder()));
+            var host = OrchardStarter.CreateHost(b => b.RegisterInstance(new Orchard.Mvc.Routes.OrchardRouteCollection()));
             Assert.That(host, Is.TypeOf<DefaultOrchardHost>());
         }
 

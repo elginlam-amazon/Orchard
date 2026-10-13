@@ -4,9 +4,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Web.Mvc;
 using System.Xml.Linq;
-using NuGet;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Environment;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions.Models;
@@ -15,6 +14,7 @@ using Orchard.Localization;
 using Orchard.Modules.Services;
 using Orchard.Mvc.Extensions;
 using Orchard.Packaging.Extensions;
+using Orchard.Packaging.Packages;
 using Orchard.Packaging.Services;
 using Orchard.Packaging.ViewModels;
 using Orchard.Recipes.Models;
@@ -86,7 +86,7 @@ namespace Orchard.Packaging.Controllers
         public ActionResult AddTheme(string returnUrl)
         {
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to add themes")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return View();
         }
@@ -96,11 +96,11 @@ namespace Orchard.Packaging.Controllers
         {
             if (string.IsNullOrEmpty(themeId))
             {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+                return new StatusCodeResult((int)HttpStatusCode.BadRequest);
             }
 
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to remove themes")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return UninstallPackage(PackageBuilder.BuildPackageId(themeId, DefaultExtensionTypes.Theme), returnUrl, retryUrl);
         }
@@ -110,11 +110,11 @@ namespace Orchard.Packaging.Controllers
         {
             if (string.IsNullOrEmpty(moduleId))
             {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+                return new StatusCodeResult((int)HttpStatusCode.BadRequest);
             }
 
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to remove modules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return UninstallPackage(PackageBuilder.BuildPackageId(moduleId, DefaultExtensionTypes.Module), returnUrl, retryUrl);
         }
@@ -122,7 +122,7 @@ namespace Orchard.Packaging.Controllers
         public ActionResult AddModule(string returnUrl)
         {
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to add modules")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return View();
         }
@@ -130,12 +130,12 @@ namespace Orchard.Packaging.Controllers
         public ActionResult InstallGallery(string packageId, string version, int sourceId, string redirectUrl)
         {
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to add sources")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var source = _packagingSourceManager.GetSources().FirstOrDefault(s => s.Id == sourceId);
             if (source == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
             try
@@ -150,7 +150,7 @@ namespace Orchard.Packaging.Controllers
                 {
                     Services.Notifier.Success(T("The module has been successfully installed."));
 
-                    IPackageRepository packageRepository = PackageRepositoryFactory.Default.CreateRepository(new PackageSource(source.FeedUrl, "Default"));
+                    var packageRepository = new PackageRepository(source.FeedUrl);
                     IPackage package = packageRepository.FindPackage(packageId);
                     ExtensionDescriptor extensionDescriptor = package.GetExtensionDescriptor(packageInfo.ExtensionType);
 
@@ -174,11 +174,11 @@ namespace Orchard.Packaging.Controllers
         public ActionResult InstallLocally(string redirectUrl)
         {
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to install packages")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
-            var httpPostedFileBase = Request.Files.Get(0);
+            var httpPostedFileBase = Request.Form.Files.Count > 0 ? Request.Form.Files[0] : null;
             if (httpPostedFileBase == null
-                || Request.Files.Count == 0
+                || Request.Form.Files.Count == 0
                 || string.IsNullOrWhiteSpace(httpPostedFileBase.FileName))
             {
 
@@ -187,7 +187,10 @@ namespace Orchard.Packaging.Controllers
             try
             {
                 string fullFileName = Path.Combine(_appDataFolderRoot.RootFolder, Path.GetFileName(httpPostedFileBase.FileName)).Replace(Path.DirectorySeparatorChar, '/');
-                httpPostedFileBase.SaveAs(fullFileName);
+                using (var fileStream = System.IO.File.Create(fullFileName))
+                {
+                    httpPostedFileBase.CopyTo(fileStream);
+                }
                 var package = new ZipPackage(fullFileName);
                 PackageInfo packageInfo = _packageManager.Install(package, _appDataFolderRoot.RootFolder, MapAppRoot());
                 ExtensionDescriptor extensionDescriptor = package.GetExtensionDescriptor(packageInfo.ExtensionType);
@@ -259,7 +262,7 @@ namespace Orchard.Packaging.Controllers
         public ActionResult InstallPackageDetailsPOST(PackagingInstallViewModel packagingInstallViewModel, string redirectUrl)
         {
             if (_shellSettings.Name != ShellSettings.DefaultName || !Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to add sources")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             try
             {

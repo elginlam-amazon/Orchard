@@ -1,14 +1,15 @@
 using System;
 using System.Threading;
-using System.Web;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace Orchard.WarmupStarter
 {
     public class Starter<T> where T : class
     {
-        private readonly Func<HttpApplication, T> _initialization;
-        private readonly Action<HttpApplication, T> _beginRequest;
-        private readonly Action<HttpApplication, T> _endRequest;
+        private readonly Func<T> _initialization;
+        private readonly Action<HttpContext, T> _beginRequest;
+        private readonly Action<HttpContext, T> _endRequest;
         private readonly object _synLock = new object();
         /// <summary>
         /// The result of the initialization queued work item.
@@ -28,19 +29,36 @@ namespace Orchard.WarmupStarter
         /// </summary>
         private volatile Exception _previousError;
 
-        public Starter(Func<HttpApplication, T> initialization, Action<HttpApplication, T> beginRequest, Action<HttpApplication, T> endRequest)
+        public Starter(Func<T> initialization, Action<HttpContext, T> beginRequest, Action<HttpContext, T> endRequest)
         {
             _initialization = initialization;
             _beginRequest = beginRequest;
             _endRequest = endRequest;
         }
 
-        public void OnApplicationStart(HttpApplication application)
+        public void OnApplicationStart()
         {
-            LaunchStartupThread(application);
+            LaunchStartupThread();
         }
 
-        public void OnBeginRequest(HttpApplication application)
+        /// <summary>
+        /// The middleware notifying the begin and the end of the requests (formerly the Application_BeginRequest
+        /// and Application_EndRequest events).
+        /// </summary>
+        public async Task InvokeAsync(HttpContext context, Func<Task> next)
+        {
+            OnBeginRequest(context);
+            try
+            {
+                await next();
+            }
+            finally
+            {
+                OnEndRequest(context);
+            }
+        }
+
+        public void OnBeginRequest(HttpContext context)
         {
             // Initialization resulted in an error
             if (_error != null)
@@ -63,7 +81,7 @@ namespace Orchard.WarmupStarter
 
                 if (restartInitialization)
                 {
-                    LaunchStartupThread(application);
+                    LaunchStartupThread();
                 }
             }
 
@@ -76,33 +94,33 @@ namespace Orchard.WarmupStarter
             // Only notify if the initialization has successfully completed
             if (_initializationResult != null)
             {
-                _beginRequest(application, _initializationResult);
+                _beginRequest(context, _initializationResult);
             }
         }
 
-        public void OnEndRequest(HttpApplication application)
+        public void OnEndRequest(HttpContext context)
         {
             // Only notify if the initialization has successfully completed
             if (_initializationResult != null)
             {
-                _endRequest(application, _initializationResult);
+                _endRequest(context, _initializationResult);
             }
         }
 
         /// <summary>
         /// Run the initialization delegate asynchronously in a queued work item
         /// </summary>
-        public void LaunchStartupThread(HttpApplication application)
+        public void LaunchStartupThread()
         {
             // Make sure incoming requests are queued
-            WarmupHttpModule.SignalWarmupStart();
+            WarmupMiddleware.SignalWarmupStart();
 
             ThreadPool.QueueUserWorkItem(
                 state =>
                 {
                     try
                     {
-                        var result = _initialization(application);
+                        var result = _initialization();
                         _initializationResult = result;
                     }
                     catch (Exception ex)
@@ -116,7 +134,7 @@ namespace Orchard.WarmupStarter
                     finally
                     {
                         // Execute pending requests as the initialization is over
-                        WarmupHttpModule.SignalWarmupDone();
+                        WarmupMiddleware.SignalWarmupDone();
                     }
                 });
         }

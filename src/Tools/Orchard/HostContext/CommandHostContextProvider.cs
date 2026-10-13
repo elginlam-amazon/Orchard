@@ -1,9 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Security;
-using System.Web.Compilation;
-using System.Web.Hosting;
 using Orchard.Host;
 using Orchard.Parameters;
 
@@ -22,7 +19,6 @@ namespace Orchard.HostContext
             _args = args;
         }
 
-        [SecurityCritical]
         public CommandHostContext CreateContext()
         {
             var context = new CommandHostContext { RetryResult = CommandReturnCodes.Retry };
@@ -30,7 +26,6 @@ namespace Orchard.HostContext
             return context;
         }
 
-        [SecurityCritical]
         public void Shutdown(CommandHostContext context)
         {
             try
@@ -44,12 +39,6 @@ namespace Orchard.HostContext
             catch (AppDomainUnloadedException)
             {
                 LogInfo(context, "   (AppDomain already unloaded)");
-            }
-
-            if (context.CommandHost != null)
-            {
-                LogInfo(context, "Shutting down ASP.NET AppDomain...");
-                ApplicationManager.GetApplicationManager().ShutdownAll();
             }
         }
 
@@ -83,8 +72,8 @@ namespace Orchard.HostContext
             context.OrchardDirectory = GetOrchardDirectory(context.Arguments.WorkingDirectory);
             LogInfo(context, "Orchard root directory: \"{0}\"", context.OrchardDirectory.FullName);
 
-            LogInfo(context, "Creating ASP.NET AppDomain for command agent...");
-            context.CommandHost = CreateWorkerAppDomainWithHost(context.Arguments.VirtualPath, context.OrchardDirectory.FullName, typeof(CommandHost));
+            LogInfo(context, "Loading Orchard for command agent...");
+            context.CommandHost = new CommandHost(context.OrchardDirectory.FullName);
 
             LogInfo(context, "Starting Orchard session");
             context.StartSessionResult = context.CommandHost.StartSession(_input, _output);
@@ -106,10 +95,10 @@ namespace Orchard.HostContext
                 }
 
                 // We look for 
-                // 1) .\web.config
+                // 1) .\web.config (or the Orchard.Web project)
                 // 2) .\bin\Orchard.Framework.dll
                 var webConfigFileInfo = new FileInfo(Path.Combine(directoryInfo.FullName, "web.config"));
-                if (!webConfigFileInfo.Exists)
+                if (!webConfigFileInfo.Exists && !File.Exists(Path.Combine(directoryInfo.FullName, "Orchard.Web.csproj")))
                     continue;
 
                 var binDirectoryInfo = new DirectoryInfo(Path.Combine(directoryInfo.FullName, "bin"));
@@ -125,17 +114,6 @@ namespace Orchard.HostContext
 
             throw new ApplicationException(
                 string.Format("Directory \"{0}\" doesn't seem to contain an Orchard installation", new DirectoryInfo(directory).FullName));
-        }
-
-        private static CommandHost CreateWorkerAppDomainWithHost(string virtualPath, string physicalPath, Type hostType)
-        {
-            var clientBuildManager = new ClientBuildManager(virtualPath, physicalPath);
-            // Fix for https://github.com/OrchardCMS/Orchard/issues/1749
-            // By forcing the CBM to build App_Code, etc, we ensure that the ASP.NET BuildManager
-            // is in a state where it can safely (i.e. in a multi-threaded safe way) process
-            // multiple concurrent calls to "GetCompiledAssembly".
-            clientBuildManager.CompileApplicationDependencies();
-            return (CommandHost)clientBuildManager.CreateObject(hostType, false);
         }
     }
 }

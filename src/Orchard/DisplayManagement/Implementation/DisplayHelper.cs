@@ -1,9 +1,13 @@
 using System.Collections.Generic;
+using System.IO;
+using System.Text.Encodings.Web;
 using System.Dynamic;
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.DisplayManagement.Shapes;
+using Orchard.Mvc;
+using Orchard.Mvc.Html;
 
 namespace Orchard.DisplayManagement.Implementation
 {
@@ -61,38 +65,42 @@ namespace Orchard.DisplayManagement.Implementation
             return null;
         }
 
-        public class Combined : IHtmlString
+        public class Combined : IHtmlContent
         {
-            private readonly IEnumerable<IHtmlString> _fragments;
+            private readonly IEnumerable<IHtmlContent> _fragments;
 
-            public Combined(IEnumerable<IHtmlString> fragments)
+            public Combined(IEnumerable<IHtmlContent> fragments)
             {
                 _fragments = fragments;
             }
 
-            public string ToHtmlString()
+            public void WriteTo(TextWriter writer, HtmlEncoder encoder)
             {
-                return string.Join("", _fragments);
+                foreach (var fragment in _fragments)
+                {
+                    fragment?.WriteTo(writer, encoder);
+                }
             }
+
             public override string ToString()
             {
-                return ToHtmlString();
+                return this.ToHtmlString();
             }
         }
 
-        private IHtmlString ShapeTypeExecute(string name, INamedEnumerable<object> parameters)
+        private IHtmlContent ShapeTypeExecute(string name, INamedEnumerable<object> parameters)
         {
             var shape = _shapeFactory.Create(name, parameters);
             return ShapeExecute(shape);
         }
 
-        public IHtmlString ShapeExecute(Shape shape)
+        public IHtmlContent ShapeExecute(Shape shape)
         {
             // disambiguates the call to ShapeExecute(object) as Shape also implements IEnumerable
             return ShapeExecute((object)shape);
         }
 
-        public IHtmlString ShapeExecute(object shape)
+        public IHtmlContent ShapeExecute(object shape)
         {
             if (shape == null)
             {
@@ -103,7 +111,7 @@ namespace Orchard.DisplayManagement.Implementation
             return _displayManager.Execute(context);
         }
 
-        public IEnumerable<IHtmlString> ShapeExecute(IEnumerable<object> shapes)
+        public IEnumerable<IHtmlContent> ShapeExecute(IEnumerable<object> shapes)
         {
             return shapes.Select(ShapeExecute).ToArray();
         }

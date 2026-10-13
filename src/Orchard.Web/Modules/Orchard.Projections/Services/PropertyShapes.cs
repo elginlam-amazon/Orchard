@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.Conditions.Services;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement;
 using Orchard.Environment;
 using Orchard.Localization;
+using Orchard.Mvc.Html;
 using Orchard.Projections.Models;
 using Orchard.Tokens;
 using Orchard.Utility.Extensions;
@@ -29,7 +31,7 @@ namespace Orchard.Projections.Services
         public Localizer T { get; set; }
 
         [Shape]
-        public void Properties(dynamic Display, TextWriter Output, HtmlHelper Html, IEnumerable<dynamic> Items)
+        public void Properties(dynamic Display, TextWriter Output, IHtmlHelper Html, IEnumerable<dynamic> Items)
         {
             foreach (var item in Items)
             {
@@ -43,7 +45,7 @@ namespace Orchard.Projections.Services
         }
 
         [Shape]
-        public void LayoutGroup(dynamic Display, TextWriter Output, HtmlHelper Html, dynamic Key, dynamic List)
+        public void LayoutGroup(dynamic Display, TextWriter Output, IHtmlHelper Html, dynamic Key, dynamic List)
         {
             Output.WriteLine(Display(Key));
             Output.WriteLine(Display(List));
@@ -53,14 +55,14 @@ namespace Orchard.Projections.Services
         public void PropertyWrapper(
             dynamic Display,
             TextWriter Output,
-            HtmlHelper Html,
-            UrlHelper Url,
+            IHtmlHelper Html,
+            IUrlHelper Url,
             dynamic Item,
             ContentItem ContentItem,
             ContentItemMetadata ContentItemMetadata,
             PropertyRecord Property)
         {
-            // Display will encode any string which is not IHtmlString.
+            // Display will encode any string which is not IHtmlContent.
             string resultOutput = Convert.ToString(Display(Item));
 
             var tokenData = new Dictionary<string, object> { { "Text", resultOutput }, { "Content", ContentItem } };
@@ -161,7 +163,7 @@ namespace Orchard.Projections.Services
                 {
                     var linkTag = new TagBuilder("a");
                     linkTag.Attributes.Add("href", Url.RouteUrl(ContentItemMetadata.DisplayRouteValues));
-                    linkTag.InnerHtml = resultOutput;
+                    linkTag.InnerHtml.AppendHtml(resultOutput);
                     Output.Write(linkTag.ToString());
                 }
                 else

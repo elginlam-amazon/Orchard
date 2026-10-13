@@ -1,12 +1,12 @@
 using System;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 
 namespace Orchard
 {
     public interface IWorkContextAccessor
     {
-        WorkContext GetContext(HttpContextBase httpContext);
-        IWorkContextScope CreateWorkContextScope(HttpContextBase httpContext);
+        WorkContext GetContext(HttpContext httpContext);
+        IWorkContextScope CreateWorkContextScope(HttpContext httpContext);
 
         WorkContext GetContext();
         IWorkContextScope CreateWorkContextScope();

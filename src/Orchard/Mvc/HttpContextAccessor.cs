@@ -1,13 +1,15 @@
-using System;
-using System.Web;
 using Autofac;
+using Microsoft.AspNetCore.Http;
 
 namespace Orchard.Mvc
 {
     public class HttpContextAccessor : IHttpContextAccessor
     {
+        // The ASP.NET Core accessor stores the current request in an AsyncLocal shared by all its instances.
+        private static readonly Microsoft.AspNetCore.Http.HttpContextAccessor _aspNetCoreHttpContextAccessor = new Microsoft.AspNetCore.Http.HttpContextAccessor();
+
         readonly ILifetimeScope _lifetimeScope;
-        private HttpContextBase _httpContext;
+        private HttpContext _httpContext;
         private IWorkContextAccessor _wca;
 
         public HttpContextAccessor(ILifetimeScope lifetimeScope)
@@ -15,12 +17,12 @@ namespace Orchard.Mvc
             _lifetimeScope = lifetimeScope;
         }
 
-        public HttpContextBase Current()
+        public HttpContext Current()
         {
-            var httpContext = GetStaticProperty();
+            var httpContext = _aspNetCoreHttpContextAccessor.HttpContext;
 
             if (!IsBackgroundHttpContext(httpContext))
-                return new HttpContextWrapper(httpContext);
+                return httpContext;
 
             if (_httpContext != null)
                 return _httpContext;
@@ -32,37 +34,14 @@ namespace Orchard.Mvc
             return workContext != null ? workContext.HttpContext : null;
         }
 
-        public void Set(HttpContextBase httpContext)
+        public void Set(HttpContext httpContext)
         {
             _httpContext = httpContext;
         }
 
         internal static bool IsBackgroundHttpContext(HttpContext httpContext)
         {
-            return httpContext == null || httpContext.Items.Contains(MvcModule.IsBackgroundHttpContextKey);
-        }
-
-        private static HttpContext GetStaticProperty()
-        {
-            var httpContext = HttpContext.Current;
-            if (httpContext == null)
-            {
-                return null;
-            }
-
-            try
-            {
-                // The "Request" property throws at application startup on IIS integrated pipeline mode.
-                if (httpContext.Request == null)
-                {
-                    return null;
-                }
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-            return httpContext;
+            return httpContext == null || httpContext.Items.ContainsKey(MvcModule.IsBackgroundHttpContextKey);
         }
     }
 }

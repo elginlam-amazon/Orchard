@@ -1,11 +1,10 @@
-using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace Orchard.Mvc.Routes
 {
     public interface IRoutePublisher : IDependency
     {
-        void Publish(IEnumerable<RouteDescriptor> routes, Func<IDictionary<string, object>, Task> pipeline = null);
+        void Publish(IEnumerable<RouteDescriptor> routes, RequestDelegate pipeline = null);
     }
 }

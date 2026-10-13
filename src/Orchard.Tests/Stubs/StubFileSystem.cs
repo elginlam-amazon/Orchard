@@ -320,9 +320,10 @@ namespace Orchard.Tests.Stubs
             if (string.IsNullOrEmpty(path))
                 return _root;
 
-            path = path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            // the tests use both separators, whatever the platform
+            path = path.Replace('\\', '/').Replace(Path.AltDirectorySeparatorChar, '/').Replace(Path.DirectorySeparatorChar, '/');
             var current = _root;
-            foreach (var name in path.Split(Path.DirectorySeparatorChar))
+            foreach (var name in path.Split('/'))
             {
                 current = current.GetEntry(name) as DirectoryEntry;
                 if (current == null)
@@ -337,9 +338,10 @@ namespace Orchard.Tests.Stubs
             if (string.IsNullOrEmpty(path))
                 return _root;
 
-            path = path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            // the tests use both separators, whatever the platform
+            path = path.Replace('\\', '/').Replace(Path.AltDirectorySeparatorChar, '/').Replace(Path.DirectorySeparatorChar, '/');
             var current = _root;
-            foreach (var name in path.Split(Path.DirectorySeparatorChar))
+            foreach (var name in path.Split('/'))
             {
                 current = current.CreateDirectory(name);
             }
@@ -348,6 +350,8 @@ namespace Orchard.Tests.Stubs
 
         public FileEntry GetFileEntry(string path)
         {
+            // the tests use both separators, whatever the platform
+            path = path.Replace('\\', '/');
             var directoryName = Path.GetDirectoryName(path);
             var fileName = Path.GetFileName(path);
 
@@ -360,6 +364,8 @@ namespace Orchard.Tests.Stubs
 
         public FileEntry CreateFileEntry(string path)
         {
+            // the tests use both separators, whatever the platform
+            path = path.Replace('\\', '/');
             var directoryName = Path.GetDirectoryName(path);
             var fileName = Path.GetFileName(path);
 
@@ -410,6 +416,8 @@ namespace Orchard.Tests.Stubs
 
         public void DeleteFile(string path)
         {
+            // the tests use both separators, whatever the platform
+            path = path.Replace('\\', '/');
             var directoryName = Path.GetDirectoryName(path);
             var fileName = Path.GetFileName(path);
 

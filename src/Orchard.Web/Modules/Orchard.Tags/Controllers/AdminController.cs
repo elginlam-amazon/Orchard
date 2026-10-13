@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Localization;
 using Orchard.Mvc;
@@ -14,7 +15,6 @@ using Orchard.UI.Navigation;
 
 namespace Orchard.Tags.Controllers
 {
-    [ValidateInput(false)]
     public class AdminController : Controller
     {
         private readonly ITagService _tagService;
@@ -33,7 +33,7 @@ namespace Orchard.Tags.Controllers
         public ActionResult Index(PagerParameters pagerParameters)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageTags, T("Can't manage tags")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             IEnumerable<TagRecord> tags = _tagService.GetTags();
 
@@ -52,11 +52,11 @@ namespace Orchard.Tags.Controllers
 
         [HttpPost]
         [FormValueRequired("submit.BulkEdit")]
-        public ActionResult Index(FormCollection input)
+        public ActionResult Index(IFormCollection input)
         {
             var viewModel = new TagsAdminIndexViewModel { Tags = new List<TagEntry>(), BulkAction = new TagAdminIndexBulkAction() };
 
-            if (!TryUpdateModel(viewModel))
+            if (!this.TryUpdateModel(viewModel))
             {
                 return View(viewModel);
             }
@@ -68,7 +68,7 @@ namespace Orchard.Tags.Controllers
                     break;
                 case TagAdminIndexBulkAction.Delete:
                     if (!Services.Authorizer.Authorize(Permissions.ManageTags, T("Couldn't delete tag")))
-                        return new HttpUnauthorizedResult();
+                        return new UnauthorizedResult();
 
                     foreach (TagEntry entry in checkedEntries)
                     {
@@ -88,11 +88,11 @@ namespace Orchard.Tags.Controllers
         public ActionResult IndexCreatePOST()
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageTags, T("Couldn't create tag")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var viewModel = new TagsAdminCreateViewModel();
 
-            if (TryUpdateModel(viewModel))
+            if (this.TryUpdateModel(viewModel))
             {
                 if (viewModel.TagName.Intersect(TagsPartDriver.DisalowedChars).Any())
                 {
@@ -132,17 +132,17 @@ namespace Orchard.Tags.Controllers
         }
 
         [HttpPost]
-        public ActionResult Edit(FormCollection input)
+        public ActionResult Edit(IFormCollection input)
         {
             var viewModel = new TagsAdminEditViewModel();
 
-            if (!TryUpdateModel(viewModel))
+            if (!this.TryUpdateModel(viewModel))
             {
                 return View(viewModel);
             }
 
             if (!Services.Authorizer.Authorize(Permissions.ManageTags, T("Couldn't edit tag")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (viewModel.TagName.Intersect(TagsPartDriver.DisalowedChars).Any())
             {
@@ -158,12 +158,12 @@ namespace Orchard.Tags.Controllers
         public ActionResult Remove(int id, string returnUrl)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageTags, T("Couldn't remove tag")))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             TagRecord tagRecord = _tagService.GetTag(id);
 
             if (tagRecord == null)
-                return new HttpNotFoundResult();
+                return new NotFoundResult();
 
             _tagService.DeleteTag(id);
 
@@ -173,8 +173,7 @@ namespace Orchard.Tags.Controllers
         public JsonResult FetchSimilarTags(string snippet)
         {
             return Json(
-                _tagService.GetTagsByNameSnippet(snippet).Select(tag => tag.TagName).ToList(),
-                JsonRequestBehavior.AllowGet
+                _tagService.GetTagsByNameSnippet(snippet).Select(tag => tag.TagName).ToList()
             );
         }
 

@@ -4,11 +4,15 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Orchard.DisplayManagement;
 using Orchard.DisplayManagement.Descriptors;
 using Orchard.DisplayManagement.Shapes;
+using Orchard.Mvc.Html;
 using Orchard.UI;
+using Orchard.Utility.Extensions;
 
 // ReSharper disable InconsistentNaming
 
@@ -35,19 +39,19 @@ namespace Orchard.Forms.Shapes
         }
 
         [Shape]
-        public void InputLabel(HtmlHelper Html, TextWriter Output, dynamic Shape, string For, object Title)
+        public void InputLabel(IHtmlHelper Html, TextWriter Output, dynamic Shape, string For, object Title)
         {
             if (Title != null)
             {
                 var label = _tagBuilderFactory.Create(Shape, "label");
                 label.MergeAttribute("for", For);
-                label.InnerHtml = Html.Encode(Title);
+                label.InnerHtml.AppendHtml(Html.Encode(Title));
                 Output.WriteLine(label.ToString());
             }
         }
 
         [Shape]
-        public void InputHint(dynamic Display, dynamic Shape, HtmlHelper Html, TextWriter Output, object Description/*, object ActionLinkValue, object ActionLink*/)
+        public void InputHint(dynamic Display, dynamic Shape, IHtmlHelper Html, TextWriter Output, object Description/*, object ActionLinkValue, object ActionLink*/)
         {
             // <span class="hint">
             if (Description != null)
@@ -56,7 +60,7 @@ namespace Orchard.Forms.Shapes
                 span.AddCssClass("hint");
                 var html = Html.Encode(Description);
                 html = html.Replace("\n", "</span><span class=\"hint\">");
-                span.InnerHtml = html;
+                span.InnerHtml.AppendHtml(html);
                 Output.WriteLine(span.ToString(TagRenderMode.Normal));
             }
             // action link
@@ -71,20 +75,20 @@ namespace Orchard.Forms.Shapes
         }
 
         [Shape]
-        public void InputRequiredMarker(TextWriter Output, HtmlHelper Html, dynamic Shape, object ErrorMessage, bool? IsValid)
+        public void InputRequiredMarker(TextWriter Output, IHtmlHelper Html, dynamic Shape, object ErrorMessage, bool? IsValid)
         {
             if (!IsValid.GetValueOrDefault(true) && ErrorMessage != null)
             {
                 var span = _tagBuilderFactory.Create(Shape, "span");
                 span.AddCssClass(HtmlHelper.ValidationMessageCssClassName);
-                span.InnerHtml = Html.Encode(Shape.ErrorMessage);
+                span.InnerHtml.AppendHtml(Html.Encode(Shape.ErrorMessage));
                 Output.WriteLine(span.ToString());
             }
         }
 
         [Shape]
         public void InputWrapper(
-            HtmlHelper Html,
+            IHtmlHelper Html,
             TextWriter Output,
             dynamic Display,
             dynamic Shape,
@@ -163,7 +167,7 @@ namespace Orchard.Forms.Shapes
 
             var isCheckbox = new[] { "checkbox", "radio" }.Any(x => x.Equals(Type, StringComparison.OrdinalIgnoreCase));
 
-            IHtmlString labelHtml = null;
+            IHtmlContent labelHtml = null;
             if (Title != null)
             {
                 labelHtml = Display.InputLabel(For: Id, Title: Title, Input: Shape, Classes: isCheckbox ? new[] { "forcheckbox" } : null);
@@ -186,12 +190,12 @@ namespace Orchard.Forms.Shapes
         }
 
         [Shape]
-        public void Form(HtmlHelper Html, Action<object> Output, dynamic Display, dynamic Shape, string Method, string Action)
+        public void Form(IHtmlHelper Html, Action<object> Output, dynamic Display, dynamic Shape, string Method, string Action)
         {
             // (todo) design markup
             OrchardTagBuilder tag = _tagBuilderFactory.Create(Shape, "form");
 
-            tag.MergeAttribute("action", Action ?? Html.ViewContext.HttpContext.Request.Url.PathAndQuery);
+            tag.MergeAttribute("action", Action ?? Html.ViewContext.HttpContext.Request.GetUrl().PathAndQuery);
             tag.MergeAttribute("method", Method ?? "POST");
 
             Output(tag.ToString(TagRenderMode.StartTag));
@@ -203,7 +207,7 @@ namespace Orchard.Forms.Shapes
         }
 
         [Shape]
-        public IHtmlString Hidden(dynamic Display, dynamic Shape)
+        public IHtmlContent Hidden(dynamic Display, dynamic Shape)
         {
             return DisplayShapeAsInput(Display, Shape, "hidden");
         }
@@ -250,21 +254,21 @@ namespace Orchard.Forms.Shapes
         }
 
         [Shape]
-        public IHtmlString Textbox(dynamic Display, dynamic Shape)
+        public IHtmlContent Textbox(dynamic Display, dynamic Shape)
         {
             Shape.Classes.Add("text");
             return DisplayShapeAsInput(Display, Shape, "text");
         }
 
         [Shape]
-        public IHtmlString Numberbox(dynamic Display, dynamic Shape)
+        public IHtmlContent Numberbox(dynamic Display, dynamic Shape)
         {
             Shape.Classes.Add("number");
             return DisplayShapeAsInput(Display, Shape, "number");
         }
 
         [Shape]
-        public IHtmlString Password(dynamic Display, dynamic Shape)
+        public IHtmlContent Password(dynamic Display, dynamic Shape)
         {
             Shape.Classes.Add("password");
             return DisplayShapeAsInput(Display, Shape, "password");
@@ -300,7 +304,7 @@ namespace Orchard.Forms.Shapes
         }
 
         [Shape]
-        public IHtmlString Submit(dynamic Display, dynamic Shape)
+        public IHtmlContent Submit(dynamic Display, dynamic Shape)
         {
             Shape.Classes.Add("primaryAction button");
             // (todo) this might not need full wrapper in hindsight?
@@ -308,20 +312,20 @@ namespace Orchard.Forms.Shapes
         }
 
         [Shape]
-        public IHtmlString Markup(dynamic Display, dynamic Shape, string Value)
+        public IHtmlContent Markup(dynamic Display, dynamic Shape, string Value)
         {
-            return new MvcHtmlString(Value);
+            return new HtmlString(Value);
         }
 
         [Shape]
-        public IHtmlString Button(dynamic Display, dynamic Shape)
+        public IHtmlContent Button(dynamic Display, dynamic Shape)
         {
             // (todo) this might not need full wrapper in hindsight?
             return DisplayShapeAsInput(Display, Shape, "button");
         }
 
         [Shape]
-        public IHtmlString Input(HtmlHelper Html, dynamic Shape, dynamic Display, string Type, string Name, dynamic Value, bool? Checked)
+        public IHtmlContent Input(IHtmlHelper Html, dynamic Shape, dynamic Display, string Type, string Name, dynamic Value, bool? Checked)
         {
             var tag = (TagBuilder)_tagBuilderFactory.Create(Shape, "input");
             tag.MergeAttribute("type", Type, false);
@@ -341,7 +345,7 @@ namespace Orchard.Forms.Shapes
             return new HtmlString(tag.ToString(TagRenderMode.SelfClosing));
         }
 
-        private static IHtmlString DisplayShapeAsInput(dynamic Display, dynamic Shape, string inputType)
+        private static IHtmlContent DisplayShapeAsInput(dynamic Display, dynamic Shape, string inputType)
         {
             Shape.Metadata.Alternates.Clear();
             Shape.Type = inputType;
@@ -361,10 +365,8 @@ namespace Orchard.Forms.Shapes
 
         private static string ListItemToOption(SelectListItem item)
         {
-            var option = new TagBuilder("option")
-            {
-                InnerHtml = HttpUtility.HtmlEncode(item.Text)
-            };
+            var option = new TagBuilder("option");
+            option.InnerHtml.Append(item.Text ?? string.Empty);
 
             if (item.Value != null)
             {
@@ -484,13 +486,13 @@ namespace Orchard.Forms.Shapes
         }
 
         [Shape]
-        public IHtmlString Checkbox(dynamic Display, dynamic Shape)
+        public IHtmlContent Checkbox(dynamic Display, dynamic Shape)
         {
             return DisplayShapeAsInput(Display, Shape, "checkbox");
         }
 
         [Shape]
-        public IHtmlString Radio(dynamic Display, dynamic Shape)
+        public IHtmlContent Radio(dynamic Display, dynamic Shape)
         {
             return DisplayShapeAsInput(Display, Shape, "radio");
         }
@@ -502,7 +504,7 @@ namespace Orchard.Forms.Shapes
             foreach (var cssClass in classes ?? Enumerable.Empty<string>())
                 tagBuilder.AddCssClass(cssClass);
             if (!string.IsNullOrWhiteSpace(id))
-                tagBuilder.GenerateId(id);
+                tagBuilder.GenerateId(id, "_");
             return tagBuilder;
         }
     }

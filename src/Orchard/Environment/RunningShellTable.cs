@@ -3,8 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Environment.Configuration;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Environment
 {
@@ -13,7 +14,7 @@ namespace Orchard.Environment
         void Add(ShellSettings settings);
         void Remove(ShellSettings settings);
         void Update(ShellSettings settings);
-        ShellSettings Match(HttpContextBase httpContext);
+        ShellSettings Match(HttpContext httpContext);
         ShellSettings Match(string host, string appRelativeCurrentExecutionFilePath);
     }
 
@@ -126,7 +127,7 @@ namespace Orchard.Environment
             _shellsByHostAndPrefix.Clear();
         }
 
-        public ShellSettings Match(HttpContextBase httpContext)
+        public ShellSettings Match(HttpContext httpContext)
         {
             // use Host header to prevent proxy alteration of the orignal request
             try
@@ -137,14 +138,29 @@ namespace Orchard.Environment
                     return null;
                 }
 
-                var host = httpRequest.Headers["Host"];
-                var appRelativeCurrentExecutionFilePath = httpRequest.AppRelativeCurrentExecutionFilePath;
+                var host = httpRequest.Headers["Host"].ToString();
 
-                return Match(host ?? string.Empty, appRelativeCurrentExecutionFilePath);
+                // The tenant url prefix may already have been moved into the request path base,
+                // the match is done on the full path relative to the application.
+                var fullPath = httpRequest.PathBase.Add(httpRequest.Path).Value;
+                if (string.IsNullOrEmpty(fullPath))
+                {
+                    fullPath = "/";
+                }
+
+                var applicationPath = httpRequest.GetApplicationPath().TrimEnd('/');
+                if (applicationPath.Length > 0 && fullPath.StartsWith(applicationPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    fullPath = fullPath.Substring(applicationPath.Length);
+                }
+
+                var appRelativeCurrentExecutionFilePath = "~" + (fullPath.StartsWith("/") ? fullPath : "/" + fullPath);
+
+                return Match(host, appRelativeCurrentExecutionFilePath);
             }
-            catch (HttpException)
+            catch (ObjectDisposedException)
             {
-                // can happen on cloud service for an unknown reason
+                // the request has completed
                 return null;
             }
         }

@@ -1,8 +1,10 @@
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.Mvc.Filters;
 using Orchard.UI.Admin;
+using Orchard.Mvc.Extensions;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 
 namespace Orchard.Themes
 {
@@ -11,12 +13,12 @@ namespace Orchard.Themes
         public void OnActionExecuting(ActionExecutingContext filterContext)
         {
             var attribute = GetThemedAttribute(filterContext.ActionDescriptor);
-            if (AdminFilter.IsApplied(filterContext.RequestContext))
+            if (AdminFilter.IsApplied(filterContext))
             {
                 // admin are themed by default
                 if (attribute == null || attribute.Enabled)
                 {
-                    Apply(filterContext.RequestContext);
+                    Apply(filterContext);
                 }
             }
             else
@@ -25,7 +27,7 @@ namespace Orchard.Themes
                 // Don't layout the result if it's not an Admin controller and it's disabled
                 if (attribute != null && attribute.Enabled)
                 {
-                    Apply(filterContext.RequestContext);
+                    Apply(filterContext);
                 }
             }
         }
@@ -38,26 +40,26 @@ namespace Orchard.Themes
 
         public void OnResultExecuted(ResultExecutedContext filterContext) { }
 
-        public static void Apply(RequestContext context)
+        public static void Apply(ActionContext context)
         {
             // the value isn't important
             context.HttpContext.Items[typeof(ThemeFilter)] = null;
         }
 
-        public static void Disable(RequestContext context)
+        public static void Disable(ActionContext context)
         {
             context.HttpContext.Items.Remove(typeof(ThemeFilter));
         }
 
-        public static bool IsApplied(RequestContext context)
+        public static bool IsApplied(ActionContext context)
         {
-            return context.HttpContext.Items.Contains(typeof(ThemeFilter));
+            return context.HttpContext.Items.ContainsKey(typeof(ThemeFilter));
         }
 
         private static ThemedAttribute GetThemedAttribute(ActionDescriptor descriptor)
         {
             return descriptor.GetCustomAttributes(typeof(ThemedAttribute), true)
-                .Concat(descriptor.ControllerDescriptor.GetCustomAttributes(typeof(ThemedAttribute), true))
+                .Concat(descriptor.GetControllerCustomAttributes(typeof(ThemedAttribute), true))
                 .OfType<ThemedAttribute>()
                 .FirstOrDefault();
         }

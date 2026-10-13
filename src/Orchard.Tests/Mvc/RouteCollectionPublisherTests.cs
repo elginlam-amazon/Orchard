@@ -1,13 +1,13 @@
 using System;
 using System.Linq;
 using System.Threading;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac;
+using Microsoft.AspNetCore.Routing;
 using NUnit.Framework;
 using Orchard.Environment.Configuration;
 using Orchard.Mvc.Routes;
 using Orchard.Tests.Utility;
+using Route = Orchard.Mvc.Routes.Route;
 
 namespace Orchard.Tests.Mvc
 {
@@ -15,7 +15,7 @@ namespace Orchard.Tests.Mvc
     public class RouteCollectionPublisherTests
     {
         private IContainer _container;
-        private RouteCollection _routes;
+        private OrchardRouteCollection _routes;
 
         static RouteDescriptor Desc(string name, string url)
         {
@@ -25,7 +25,7 @@ namespace Orchard.Tests.Mvc
         [SetUp]
         public void Init()
         {
-            _routes = new RouteCollection();
+            _routes = new OrchardRouteCollection();
 
             var builder = new ContainerBuilder();
             builder.RegisterType<RoutePublisher>().As<IRoutePublisher>();
@@ -39,7 +39,7 @@ namespace Orchard.Tests.Mvc
         [Test]
         public void RoutesCanHaveNullOrEmptyNames()
         {
-            _routes.MapRoute("foo", "{controller}");
+            _routes.Add(new Route("{controller}", new MvcRouteHandler()) { Name = "foo" });
 
             var publisher = _container.Resolve<IRoutePublisher>();
             publisher.Publish(new[] { Desc(null, "bar"), Desc(string.Empty, "quux") });
@@ -50,7 +50,7 @@ namespace Orchard.Tests.Mvc
         [Test]
         public void SameNameTwiceCausesExplosion()
         {
-            _routes.MapRoute("foo", "{controller}");
+            _routes.Add(new Route("{controller}", new MvcRouteHandler()) { Name = "foo" });
 
             var publisher = _container.Resolve<IRoutePublisher>();
 
@@ -65,7 +65,7 @@ namespace Orchard.Tests.Mvc
         [Test]
         public void ExplosionLeavesOriginalRoutesIntact()
         {
-            _routes.MapRoute("foo", "{controller}");
+            _routes.Add(new Route("{controller}", new MvcRouteHandler()) { Name = "foo" });
 
             var publisher = _container.Resolve<IRoutePublisher>();
             try
@@ -82,7 +82,7 @@ namespace Orchard.Tests.Mvc
         [Test]
         public void WriteBlocksWhileReadIsInEffect()
         {
-            _routes.MapRoute("foo", "{controller}");
+            _routes.Add(new Route("{controller}", new MvcRouteHandler()) { Name = "foo" });
 
             var publisher = _container.Resolve<IRoutePublisher>();
 
@@ -97,19 +97,20 @@ namespace Orchard.Tests.Mvc
             });
 
             Assert.That(where, Is.EqualTo("init"));
-            var asyncResult = action.BeginInvoke(null, null);
+            // delegates are not invoked asynchronously with BeginInvoke on .NET
+            var task = System.Threading.Tasks.Task.Run(action);
             Thread.Sleep(75);
             Assert.That(where, Is.EqualTo("before"));
             readLock.Dispose();
             Thread.Sleep(75);
             Assert.That(where, Is.EqualTo("after"));
-            action.EndInvoke(asyncResult);
+            task.GetAwaiter().GetResult();
         }
 
         [Test]
         public void RouteDescriptorWithNameCreatesNamedRouteInCollection()
         {
-            _routes.MapRoute("foo", "{controller}");
+            _routes.Add(new Route("{controller}", new MvcRouteHandler()) { Name = "foo" });
 
             var publisher = _container.Resolve<IRoutePublisher>();
             var routeDescriptor = Desc("yarg", "bar");

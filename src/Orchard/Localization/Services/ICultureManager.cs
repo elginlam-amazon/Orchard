@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Localization.Records;
 
 namespace Orchard.Localization.Services
@@ -9,7 +9,7 @@ namespace Orchard.Localization.Services
         IEnumerable<string> ListCultures();
         void AddCulture(string cultureName);
         void DeleteCulture(string cultureName);
-        string GetCurrentCulture(HttpContextBase requestContext);
+        string GetCurrentCulture(HttpContext requestContext);
         CultureRecord GetCultureById(int id);
         CultureRecord GetCultureByName(string cultureName);
         string GetSiteCulture();

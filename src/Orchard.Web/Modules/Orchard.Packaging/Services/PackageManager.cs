@@ -1,12 +1,12 @@
 using System;
 using System.Linq;
-using NuGet;
 using Orchard.Environment.Extensions;
 using Orchard.Environment.Extensions.Models;
 using Orchard.Environment.Features;
 using Orchard.Environment.State;
 using Orchard.Localization;
 using Orchard.Packaging.Models;
+using Orchard.Packaging.Packages;
 
 namespace Orchard.Packaging.Services
 {

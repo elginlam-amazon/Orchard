@@ -93,24 +93,24 @@ namespace Orchard.Email.Forms
             if (context.FormName != "ActivityActionEmail") return;
 
             var recipientFormValue = context.ValueProvider.GetValue("Recipient");
-            var recipient = recipientFormValue != null ? recipientFormValue.AttemptedValue : string.Empty;
+            var recipient = recipientFormValue != Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None ? recipientFormValue.FirstValue : string.Empty;
 
             if (recipient == string.Empty)
             {
                 context.ModelState.AddModelError("Recipient", T("You must select at least one recipient").Text);
             }
 
-            if (context.ValueProvider.GetValue("Subject").AttemptedValue == string.Empty)
+            if (context.ValueProvider.GetValue("Subject").FirstValue == string.Empty)
             {
                 context.ModelState.AddModelError("Subject", T("You must provide a Subject").Text);
             }
 
-            if (context.ValueProvider.GetValue("Body").AttemptedValue == string.Empty)
+            if (context.ValueProvider.GetValue("Body").FirstValue == string.Empty)
             {
                 context.ModelState.AddModelError("Body", T("You must provide a Body").Text);
             }
 
-            if (context.ValueProvider.GetValue("RecipientOther").AttemptedValue == string.Empty && recipient == "other")
+            if (context.ValueProvider.GetValue("RecipientOther").FirstValue == string.Empty && recipient == "other")
             {
                 context.ModelState.AddModelError("RecipientOther", T("You must provide an e-mail address").Text);
             }

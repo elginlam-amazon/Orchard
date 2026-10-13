@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Web.Security;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement;
 using Orchard.Environment.Configuration;
@@ -240,10 +239,7 @@ namespace Orchard.Users.Services
         private void SetPasswordHashed(UserPart userPart, string password)
         {
             var saltBytes = new byte[0x10];
-            using (var random = new RNGCryptoServiceProvider())
-            {
-                random.GetBytes(saltBytes);
-            }
+            RandomNumberGenerator.Fill(saltBytes);
 
             userPart.PasswordFormat = MembershipPasswordFormat.Hashed;
             userPart.Password = PasswordExtensions.ComputeHashBase64(userPart.HashAlgorithm, saltBytes, password);

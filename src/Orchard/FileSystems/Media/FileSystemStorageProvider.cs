@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web.Hosting;
 using Orchard.Environment.Configuration;
 using Orchard.Exceptions;
 using Orchard.Localization;
 using Orchard.Utility.Extensions;
 using Orchard.Validation;
+using Orchard.Environment;
 
 namespace Orchard.FileSystems.Media
 {

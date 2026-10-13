@@ -1,18 +1,18 @@
 using System;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Aspects;
 using Orchard.Core.Contents.Settings;
 using Orchard.Dashboards.Services;
 using Orchard.Localization;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.UI.Admin;
 using Orchard.UI.Notify;
 
 namespace Orchard.Dashboards.Controllers
 {
     [Admin]
-    [ValidateInput(false)]
     public class DashboardController : Controller, IUpdateModel
     {
         private readonly IDashboardService _dashboardService;
@@ -36,7 +36,7 @@ namespace Orchard.Dashboards.Controllers
         public ActionResult Edit()
         {
             if (!_services.Authorizer.Authorize(Permissions.ManageDashboards))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var dashboard = _dashboardService.GetDashboardDescriptor();
             var editor = dashboard.Editor(_services.New);
@@ -49,7 +49,7 @@ namespace Orchard.Dashboards.Controllers
         public ActionResult Save()
         {
             if (!_services.Authorizer.Authorize(Permissions.ManageDashboards))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return UpdateDashboard(dashboard =>
             {
@@ -65,7 +65,7 @@ namespace Orchard.Dashboards.Controllers
         public ActionResult Publish()
         {
             if (!_services.Authorizer.Authorize(Permissions.ManageDashboards))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             return UpdateDashboard(dashboard =>
             {
@@ -97,7 +97,7 @@ namespace Orchard.Dashboards.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

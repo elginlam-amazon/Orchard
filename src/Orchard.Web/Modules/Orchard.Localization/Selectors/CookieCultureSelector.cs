@@ -1,4 +1,4 @@
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions;
 using Orchard.Localization.Providers;
@@ -6,6 +6,8 @@ using Orchard.Localization.Services;
 using Orchard.Mvc;
 using Orchard.Services;
 using Orchard.UI.Admin;
+using Orchard.Utility.Extensions;
+using IHttpContextAccessor = Orchard.Mvc.IHttpContextAccessor;
 
 namespace Orchard.Localization.Selectors
 {
@@ -38,39 +40,41 @@ namespace Orchard.Localization.Selectors
 
             var cookieName = AdminFilter.IsApplied(httpContext) ? AdminCookieName : FrontEndCookieName;
 
-            var cookie = new HttpCookie(cookieName, culture)
+            var cookieOptions = new CookieOptions
             {
                 Expires = _clock.UtcNow.AddYears(DefaultExpireTimeYear),
-                Domain = httpContext.Request.IsLocal ? null : httpContext.Request.Url.Host
+                Domain = httpContext.Request.IsLocal() ? null : httpContext.Request.GetUrl().Host
             };
 
             if (!string.IsNullOrEmpty(_shellSettings.RequestUrlPrefix))
             {
-                cookie.Path = GetCookiePath(httpContext);
+                cookieOptions.Path = GetCookiePath(httpContext);
             }
 
-            httpContext.Request.Cookies.Remove(cookieName);
-            httpContext.Response.Cookies.Remove(cookieName);
-            httpContext.Response.Cookies.Add(cookie);
+            // the request cookies are read-only, the new culture is used for the rest of the request
+            httpContext.Items[cookieName] = culture;
+            httpContext.Response.Cookies.Append(cookieName, culture, cookieOptions);
         }
 
-        public CultureSelectorResult GetCulture(HttpContextBase context)
+        public CultureSelectorResult GetCulture(HttpContext context)
         {
             if (context == null) return null;
 
             var cookieName = AdminFilter.IsApplied(context) ? AdminCookieName : FrontEndCookieName;
 
-            var cookie = context.Request.Cookies.Get(cookieName);
+            var culture = context.Items.TryGetValue(cookieName, out var currentCulture)
+                ? currentCulture as string
+                : context.Request.Cookies[cookieName];
 
-            if (cookie != null)
-                return new CultureSelectorResult { Priority = -1, CultureName = cookie.Value };
+            if (culture != null)
+                return new CultureSelectorResult { Priority = -1, CultureName = culture };
 
             return null;
         }
 
-        private string GetCookiePath(HttpContextBase httpContext)
+        private string GetCookiePath(HttpContext httpContext)
         {
-            var cookiePath = httpContext.Request.ApplicationPath;
+            var cookiePath = httpContext.Request.GetApplicationPath();
             if (cookiePath != null && cookiePath.Length > 1)
             {
                 cookiePath += '/';

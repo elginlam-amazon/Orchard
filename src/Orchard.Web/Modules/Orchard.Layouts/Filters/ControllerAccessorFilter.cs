@@ -1,4 +1,4 @@
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Orchard.Mvc.Filters;
 
 namespace Orchard.Layouts.Filters

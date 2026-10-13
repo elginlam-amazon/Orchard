@@ -1,11 +1,11 @@
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Themes;
 
 namespace Orchard.UI.Admin
 {
     public class AdminThemeSelector : IThemeSelector
     {
-        public ThemeSelectorResult GetTheme(RequestContext context)
+        public ThemeSelectorResult GetTheme(ActionContext context)
         {
             if (AdminFilter.IsApplied(context))
             {

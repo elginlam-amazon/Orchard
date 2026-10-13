@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.Media.Models;
 
 namespace Orchard.Media.Services
@@ -89,7 +89,7 @@ namespace Orchard.Media.Services
         /// <param name="postedFile">The file to upload.</param>
         /// <param name="extractZip">Boolean value indicating weather zip files should be extracted.</param>
         /// <returns>The path to the uploaded file.</returns>
-        string UploadMediaFile(string folderPath, HttpPostedFileBase postedFile, bool extractZip);
+        string UploadMediaFile(string folderPath, IFormFile postedFile, bool extractZip);
 
         /// <summary>
         /// Uploads a media file based on an array of bytes.
@@ -116,7 +116,7 @@ namespace Orchard.Media.Services
         /// </summary>
         /// <param name="postedFile">The posted file</param>
         /// <returns>True if the file is allowed; false if otherwise.</returns>
-        bool FileAllowed(HttpPostedFileBase postedFile);
+        bool FileAllowed(IFormFile postedFile);
 
         /// <summary>
         /// Verifies if a file is allowed based on its name and the policies defined by the black / white lists.

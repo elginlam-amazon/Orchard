@@ -87,15 +87,7 @@ namespace Orchard.Packaging.Services
         {
             var galleryFeedContext = new GalleryFeedContext(new Uri(source.FeedUrl)) { IgnoreMissingProperties = true };
 
-            // Setup compression
-            galleryFeedContext.SendingRequest += (o, e) =>
-            {
-                if (e.Request is HttpWebRequest)
-                {
-                    (e.Request as HttpWebRequest).AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-                }
-            };
-
+            // (the feed responses are decompressed by the gallery feed context)
             // Include screenshots if needed
             IQueryable<PublishedPackage> packages = includeScreenshots
                 ? galleryFeedContext.Packages.Expand("Screenshots")

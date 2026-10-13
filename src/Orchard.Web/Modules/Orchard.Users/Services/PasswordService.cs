@@ -1,7 +1,5 @@
 using System;
 using System.Text;
-using System.Web.Helpers;
-using System.Web.Security;
 using Orchard.Environment.Configuration;
 using Orchard.Security;
 using Orchard.Users.Models;

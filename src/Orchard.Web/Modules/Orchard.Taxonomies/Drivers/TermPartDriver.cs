@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Routing;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Drivers;
 using Orchard.ContentManagement.Handlers;
@@ -60,7 +60,7 @@ namespace Orchard.Taxonomies.Drivers
                     {
                         // Check if "page" parameter is a valid number.
                         int page = 0;
-                        if (int.TryParse(httpContext.Request.QueryString["page"], out page))
+                        if (int.TryParse(httpContext.Request.Query["page"], out page))
                         {
                             pagerParameters.Page = page;
                         }

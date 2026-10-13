@@ -8,6 +8,7 @@ using Orchard.DisplayManagement.Descriptors;
 using Orchard.Environment;
 using Orchard.Environment.Extensions.Models;
 using Orchard.UI.Admin;
+using Orchard.Mvc.Extensions;
 
 namespace Orchard.ContentTypes.Services
 {
@@ -59,7 +60,7 @@ namespace Orchard.ContentTypes.Services
                     {
                         var workContext = _workContextAccessor.GetContext();
                         if (ctx.DisplayType == null &&
-                            AdminFilter.IsApplied(workContext.HttpContext.Request.RequestContext))
+                            AdminFilter.IsApplied(workContext.HttpContext.GetActionContext()))
                         { // Tests if it's executing in admin in order to override placement.info for editors in back-end only
 
                             foreach (var customPlacement in customPlacements)

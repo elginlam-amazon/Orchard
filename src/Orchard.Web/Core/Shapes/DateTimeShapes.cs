@@ -1,6 +1,5 @@
 using System;
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Html;
 using Orchard.DisplayManagement;
 using Orchard.Localization;
 using Orchard.Localization.Services;
@@ -30,7 +29,7 @@ namespace Orchard.Core.Shapes
         public Localizer T { get; set; }
 
         [Shape]
-        public IHtmlString DateTimeRelative(dynamic Display, DateTime DateTimeUtc, DateTime dateTimeUtc)
+        public IHtmlContent DateTimeRelative(dynamic Display, DateTime DateTimeUtc, DateTime dateTimeUtc)
         {
             DateTimeUtc = DateTimeUtc != System.DateTime.MinValue ? DateTimeUtc : dateTimeUtc; // Both capitalizations retained for compatibility.
             var time = _clock.UtcNow - DateTimeUtc;
@@ -76,16 +75,16 @@ namespace Orchard.Core.Shapes
         }
 
         [Shape]
-        public IHtmlString DateTime(DateTime DateTimeUtc, LocalizedString CustomFormat)
+        public IHtmlContent DateTime(DateTime DateTimeUtc, LocalizedString CustomFormat)
         {
             //using a LocalizedString forces the caller to use a localizable format
 
             if (CustomFormat == null || string.IsNullOrWhiteSpace(CustomFormat.Text))
             {
-                return new MvcHtmlString(_dateLocalizationServices.ConvertToLocalizedString(DateTimeUtc, _dateTimeLocalization.LongDateTimeFormat));
+                return new HtmlString(_dateLocalizationServices.ConvertToLocalizedString(DateTimeUtc, _dateTimeLocalization.LongDateTimeFormat));
             }
 
-            return new MvcHtmlString(_dateLocalizationServices.ConvertToLocalizedString(DateTimeUtc, CustomFormat.Text));
+            return new HtmlString(_dateLocalizationServices.ConvertToLocalizedString(DateTimeUtc, CustomFormat.Text));
         }
     }
 

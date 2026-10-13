@@ -5,6 +5,7 @@ using System.Reflection;
 using Autofac;
 using Autofac.Builder;
 using Autofac.Core;
+using Autofac.Core.Resolving;
 using Module = Autofac.Module;
 
 namespace Orchard.Environment
@@ -68,7 +69,7 @@ namespace Orchard.Environment
             return type.IsGenericType && type.GetGenericTypeDefinition() == openGenericType;
         }
 
-        public IEnumerable<IComponentRegistration> RegistrationsFor(Service service, Func<Service, IEnumerable<IComponentRegistration>> registrationAccessor)
+        public IEnumerable<IComponentRegistration> RegistrationsFor(Service service, Func<Service, IEnumerable<ServiceRegistration>> registrationAccessor)
         {
             var swt = service as IServiceWithType;
             if (swt == null || !IsClosingTypeOf(swt.ServiceType, typeof(Work<>)))
@@ -81,13 +82,13 @@ namespace Orchard.Environment
             var registrationCreator = CreateMetaRegistrationMethod.MakeGenericMethod(valueType);
 
             return registrationAccessor(valueService)
-                .Select(v => registrationCreator.Invoke(null, new object[] { service, v }))
+                .Select(v => registrationCreator.Invoke(null, new object[] { service, valueService, v }))
                 .Cast<IComponentRegistration>();
         }
 
         public bool IsAdapterForIndividualComponents => true;
 
-        static IComponentRegistration CreateMetaRegistration<T>(Service providedService, IComponentRegistration valueRegistration) where T : class
+        static IComponentRegistration CreateMetaRegistration<T>(Service providedService, Service valueService, ServiceRegistration valueRegistration) where T : class
         {
             var rb = RegistrationBuilder.ForDelegate(
                 (c, p) =>
@@ -104,14 +105,14 @@ namespace Orchard.Environment
                         T value;
                         if (!workValues.Values.TryGetValue(w, out value))
                         {
-                            value = (T)workValues.ComponentContext.ResolveComponent(valueRegistration, p);
+                            value = (T)workValues.ComponentContext.ResolveComponent(new ResolveRequest(valueService, valueRegistration, p));
                             workValues.Values[w] = value;
                         }
                         return value;
                     });
                 })
                 .As(providedService)
-                .Targeting(valueRegistration);
+                .Targeting(valueRegistration.Registration);
 
             return rb.CreateRegistration();
         }

@@ -30,6 +30,8 @@ namespace Orchard.Tests.Environment.Loaders
             builder.RegisterType<DynamicExtensionLoaderAccessor>().As<DynamicExtensionLoaderAccessor>();
 
             builder.RegisterType<DefaultBuildManager>().As<IBuildManager>();
+            // the build manager compiles the module projects with the extension compiler (formerly the ASP.NET build manager)
+            builder.RegisterInstance(new Moq.Mock<Orchard.Environment.Extensions.Compilers.IExtensionCompiler>().Object);
             builder.RegisterType<DefaultAssemblyProbingFolder>().As<IAssemblyProbingFolder>();
             builder.RegisterType<StubHostEnvironment>().As<IHostEnvironment>();
             builder.RegisterType<StubVirtualPathMonitor>().As<IVirtualPathMonitor>();

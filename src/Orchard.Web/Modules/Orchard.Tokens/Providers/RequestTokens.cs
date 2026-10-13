@@ -1,8 +1,9 @@
 using System;
 using System.Linq;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Orchard.ContentManagement;
 using Orchard.Localization;
+using Orchard.Mvc.Extensions;
 
 namespace Orchard.Tokens.Providers
 {
@@ -53,23 +54,23 @@ namespace Orchard.Tokens.Providers
                     token => token.StartsWith("QueryString:", StringComparison.OrdinalIgnoreCase) ? FilterTokenParam(token) : null,
                     (token, request) =>
                     {
-                        return request.QueryString.Get(token);
+                        return request.Query[token].ToString();
                     }
                 )
                 .Chain(token => token.StartsWith("QueryString:", StringComparison.OrdinalIgnoreCase) ? FilterChainParam(token) : null,
-                "Text", (token, request) => request.QueryString.Get(token))
+                "Text", (token, request) => request.Query[token].ToString())
                 .Token(
                     token => token.StartsWith("Form:", StringComparison.OrdinalIgnoreCase) ? FilterTokenParam(token) : null,
-                    (token, request) => request.Form.Get(token)
+                    (token, request) => request.HasFormContentType ? request.Form[token].ToString() : null
                 )
                 .Chain(token => token.StartsWith("Form:", StringComparison.OrdinalIgnoreCase) ? FilterChainParam(token) : null
-                , "Text", (token, request) => request.Form.Get(token))
+                , "Text", (token, request) => request.HasFormContentType ? request.Form[token].ToString() : null)
                 .Token(
                     token => token.StartsWith("Header:", StringComparison.OrdinalIgnoreCase) ? FilterTokenParam(token) : null,
-                    (token, request) => request.Headers[token]
+                    (token, request) => request.Headers[token].ToString()
                 )
                 .Chain(token => token.StartsWith("Header:", StringComparison.OrdinalIgnoreCase) ? FilterChainParam(token) : null,
-                "Text", (token, request) => request.Headers[token])
+                "Text", (token, request) => request.Headers[token].ToString())
                 .Token(
                     token => token.StartsWith("Route:", StringComparison.OrdinalIgnoreCase) ? token.Substring("Route:".Length) : null,
                     (token, request) => GetRouteValue(token, request)
@@ -82,13 +83,13 @@ namespace Orchard.Tokens.Providers
                 );
         }
 
-        private static string GetRouteValue(string token, HttpRequestBase request)
+        private static string GetRouteValue(string token, HttpRequest request)
         {
             object result;
-            return !request.RequestContext.RouteData.Values.TryGetValue(token, out result) ? string.Empty : result.ToString();
+            return !request.HttpContext.GetActionContext().RouteData.Values.TryGetValue(token, out result) ? string.Empty : result.ToString();
         }
 
-        private ContentItem GetRoutedContentItem(HttpRequestBase request)
+        private ContentItem GetRoutedContentItem(HttpRequest request)
         {
             string area = GetRouteValue("area", request);
             string action = GetRouteValue("action", request);
@@ -115,7 +116,7 @@ namespace Orchard.Tokens.Providers
             {
                 VersionOptions versionOptions = VersionOptions.Latest;
                 int version;
-                if (int.TryParse(request.QueryString["version"], out version))
+                if (int.TryParse(request.Query["version"], out version))
                 {
                     versionOptions = VersionOptions.Number(version);
                 }

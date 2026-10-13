@@ -3,14 +3,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web.Hosting;
-using System.Web.Http.Controllers;
-using System.Web.Mvc;
 using Autofac;
 using Autofac.Builder;
-using Autofac.Configuration;
 using Autofac.Core;
 using Autofac.Features.Indexed;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Environment.AutofacUtil;
 using Orchard.Environment.AutofacUtil.DynamicProxy2;
 using Orchard.Environment.Configuration;
@@ -75,7 +72,7 @@ namespace Orchard.Environment.ShellBuilders
                     builder.Register(ctx => blueprint.Descriptor);
                     builder.Register(ctx => blueprint);
 
-                    var concreteRegistrationNames = new ConcurrentDictionary<Type, ConcurrentBag<NamedRegistration>>();
+                    var concreteRegistrationNames = new ConcurrentDictionary<Type, ConcurrentQueue<NamedRegistration>>();
 
                     var moduleIndex = intermediateScope.Resolve<IIndex<Type, IModule>>();
                     foreach (var item in blueprint.Dependencies.Where(t => typeof(IModule).IsAssignableFrom(t.Type)))
@@ -206,7 +203,8 @@ namespace Orchard.Environment.ShellBuilders
                             throw exception;
                         }
 
-                        var decoratorNames = new ConcurrentBag<NamedRegistration>();
+                        // the decorators are registered in the order of the decorated implementations (Autofac resolves the collections in the registration order)
+                        var decoratorNames = new ConcurrentQueue<NamedRegistration>();
 
                         // For every implementation that can be decorated
                         foreach (var namedRegistration in concreteRegistrationNames[decorator.InterfaceType])
@@ -233,7 +231,7 @@ namespace Orchard.Environment.ShellBuilders
                                 registration = registration.As(decorator.InterfaceType);
                             }
 
-                            decoratorNames.Add(new NamedRegistration(decoratorName, decorator.ItemToBeRegistered.Item.Type));
+                            decoratorNames.Enqueue(new NamedRegistration(decoratorName, decorator.ItemToBeRegistered.Item.Type));
                         }
 
                         // Update the collection of implmentation names that can be decorated to contain only the decorators (this allows us to stack decorators)
@@ -246,8 +244,8 @@ namespace Orchard.Environment.ShellBuilders
                         var serviceKeyType = item.Type;
                         RegisterType(builder, item)
                             .EnableDynamicProxy(dynamicProxyContext)
-                            .Keyed<IController>(serviceKeyName)
-                            .Keyed<IController>(serviceKeyType)
+                            .Keyed<ControllerBase>(serviceKeyName)
+                            .Keyed<ControllerBase>(serviceKeyType)
                             .WithMetadata("ControllerType", item.Type)
                             .InstancePerDependency();
                     }
@@ -258,8 +256,8 @@ namespace Orchard.Environment.ShellBuilders
                         var serviceKeyType = item.Type;
                         RegisterType(builder, item)
                             .EnableDynamicProxy(dynamicProxyContext)
-                            .Keyed<IHttpController>(serviceKeyName)
-                            .Keyed<IHttpController>(serviceKeyType)
+                            .Keyed<ControllerBase>(serviceKeyName)
+                            .Keyed<ControllerBase>(serviceKeyType)
                             .WithMetadata("ControllerType", item.Type)
                             .InstancePerDependency();
                     }
@@ -316,17 +314,17 @@ namespace Orchard.Environment.ShellBuilders
             return decoratorRegistration;
         }
 
-        private void AddConcreteRegistrationName(string registrationName, Type interfaceType, Type implementationType, ConcurrentDictionary<Type, ConcurrentBag<NamedRegistration>> concreteRegistrationNames)
+        private void AddConcreteRegistrationName(string registrationName, Type interfaceType, Type implementationType, ConcurrentDictionary<Type, ConcurrentQueue<NamedRegistration>> concreteRegistrationNames)
         {
             if (concreteRegistrationNames.ContainsKey(interfaceType)
                 && concreteRegistrationNames[interfaceType] != null
                 && !concreteRegistrationNames[interfaceType].Any(nr => nr.Name == registrationName))
             {
-                concreteRegistrationNames[interfaceType].Add(new NamedRegistration(registrationName, implementationType));
+                concreteRegistrationNames[interfaceType].Enqueue(new NamedRegistration(registrationName, implementationType));
             }
             else
             {
-                concreteRegistrationNames[interfaceType] = new ConcurrentBag<NamedRegistration> { new NamedRegistration(registrationName, implementationType) };
+                concreteRegistrationNames[interfaceType] = new ConcurrentQueue<NamedRegistration>(new[] { new NamedRegistration(registrationName, implementationType) });
             }
         }
 

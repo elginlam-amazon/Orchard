@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Orchard.ContentManagement;
 using Orchard.Core.Title.Models;
 using Orchard.Data;
@@ -13,6 +16,7 @@ using Orchard.Layouts.Framework.Display;
 using Orchard.Layouts.Framework.Drivers;
 using Orchard.Layouts.Helpers;
 using Orchard.Layouts.Services;
+using Orchard.Mvc;
 using Orchard.Projections.Descriptors.Layout;
 using Orchard.Projections.Descriptors.Property;
 using Orchard.Projections.Models;
@@ -76,7 +80,7 @@ namespace Orchard.Layouts.Drivers
             }
 
             // Retrieving paging parameters.
-            var queryString = _services.WorkContext.HttpContext.Request.QueryString;
+            var queryString = _services.WorkContext.HttpContext.Request.Query;
             var pageKey = string.IsNullOrWhiteSpace(element.PagerSuffix) ? "page" : "page-" + element.PagerSuffix;
             var page = 0;
 
@@ -84,7 +88,7 @@ namespace Orchard.Layouts.Drivers
             var pageSize = element.ItemsToDisplay;
 
             // Don't try to page if not necessary.
-            if (element.DisplayPager && queryString.AllKeys.Contains(pageKey))
+            if (element.DisplayPager && queryString.Keys.Contains(pageKey))
             {
                 int.TryParse(queryString[pageKey], out page);
             }
@@ -98,7 +102,7 @@ namespace Orchard.Layouts.Drivers
             // If pageSize is provided on the query string, ensure it is compatible within allowed limits.
             var pageSizeKey = "pageSize" + element.PagerSuffix;
 
-            if (queryString.AllKeys.Contains(pageSizeKey))
+            if (queryString.Keys.Contains(pageSizeKey))
             {
                 int qsPageSize;
 
@@ -226,7 +230,7 @@ namespace Orchard.Layouts.Drivers
 
                     // Add the Context to the shape.
                     localResult.Context(renderLayoutContext);
-                    list.Add(_services.New.LayoutGroup(Key: new MvcHtmlString(group.Key), List: localResult));
+                    list.Add(_services.New.LayoutGroup(Key: new HtmlString(group.Key), List: localResult));
                 }
                 return;
             }

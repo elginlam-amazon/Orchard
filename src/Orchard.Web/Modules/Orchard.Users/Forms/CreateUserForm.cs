@@ -46,9 +46,9 @@ namespace Orchard.Users.Forms
         {
             if (context.FormName != "CreateUser") return;
 
-            var userName = context.ValueProvider.GetValue("UserName").AttemptedValue;
-            var email = context.ValueProvider.GetValue("Email").AttemptedValue;
-            var password = context.ValueProvider.GetValue("Password").AttemptedValue;
+            var userName = context.ValueProvider.GetValue("UserName").FirstValue;
+            var email = context.ValueProvider.GetValue("Email").FirstValue;
+            var password = context.ValueProvider.GetValue("Password").FirstValue;
 
             if (string.IsNullOrWhiteSpace(userName))
             {

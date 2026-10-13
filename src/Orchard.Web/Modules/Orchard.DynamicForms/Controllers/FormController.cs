@@ -1,11 +1,12 @@
 using System;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.DynamicForms.Helpers;
 using Orchard.DynamicForms.Services;
 using Orchard.Layouts.Services;
 using Orchard.Localization;
 using Orchard.Logging;
+using Orchard.Mvc.Extensions;
 using Orchard.Services;
 using Orchard.Tokens;
 using Orchard.UI.Notify;
@@ -42,12 +43,11 @@ namespace Orchard.DynamicForms.Controllers
         public ILogger Logger { get; set; }
 
         [HttpPost]
-        [ValidateInput(false)]
         public ActionResult Submit(int contentId, string formName)
         {
             var layoutPart = _layoutManager.GetLayout(contentId);
             var form = _formService.FindForm(layoutPart, formName);
-            var urlReferrer = Request.UrlReferrer != null ? Request.UrlReferrer.LocalPath : "~/";
+            var urlReferrer = Request.GetUrlReferrer() != null ? Request.GetUrlReferrer().LocalPath : "~/";
 
             if (form == null)
             {
@@ -56,7 +56,7 @@ namespace Orchard.DynamicForms.Controllers
                 return Redirect(urlReferrer);
             }
 
-            var values = _formService.SubmitForm(layoutPart, form, ValueProvider, ModelState, this);
+            var values = _formService.SubmitForm(layoutPart, form, this.GetValueProvider(), ModelState, this);
             this.TransferFormSubmission(form, values);
 
             if (!ModelState.IsValid)
@@ -67,7 +67,8 @@ namespace Orchard.DynamicForms.Controllers
                 return Redirect(urlReferrer + "?__r=" + refresh);
             }
 
-            if (Response.IsRequestBeingRedirected)
+            // a redirection has been set during the submission (e.g. by a workflow)
+            if (Response.StatusCode >= 300 && Response.StatusCode < 400 && !string.IsNullOrEmpty(Response.Headers.Location))
                 return new EmptyResult();
 
             var redirectUrl = !string.IsNullOrWhiteSpace(form.RedirectUrl) ? _tokenizer.Replace(form.RedirectUrl, new { Content = layoutPart.ContentItem }) : urlReferrer;
@@ -76,7 +77,7 @@ namespace Orchard.DynamicForms.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

@@ -1,4 +1,4 @@
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Orchard.Themes.Preview
 {
@@ -11,7 +11,7 @@ namespace Orchard.Themes.Preview
             _previewTheme = previewTheme;
         }
 
-        public ThemeSelectorResult GetTheme(RequestContext context)
+        public ThemeSelectorResult GetTheme(ActionContext context)
         {
             var previewThemeName = _previewTheme.GetPreviewTheme();
             return string.IsNullOrEmpty(previewThemeName) ? null : new ThemeSelectorResult { Priority = 90, ThemeName = previewThemeName };

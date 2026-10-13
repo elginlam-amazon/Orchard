@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Orchard.Core.Feeds.Models;
 using Orchard.Logging;
 
@@ -25,6 +26,17 @@ namespace Orchard.Core.Feeds.Controllers
 
         public ILogger Logger { get; set; }
 
+        private IValueProvider _valueProvider;
+
+        /// <summary>
+        /// The value provider of the request (the MVC Controller.ValueProvider), can be replaced for testing purposes.
+        /// </summary>
+        public IValueProvider ValueProvider
+        {
+            get { return _valueProvider ?? (_valueProvider = CompositeValueProvider.CreateAsync(ControllerContext).GetAwaiter().GetResult()); }
+            set { _valueProvider = value; }
+        }
+
         public ActionResult Index(string format)
         {
             var context = new FeedContext(ValueProvider, format);
@@ -36,7 +48,7 @@ namespace Orchard.Core.Feeds.Controllers
                 .FirstOrDefault();
 
             if (bestFormatterMatch == null || bestFormatterMatch.FeedBuilder == null)
-                return HttpNotFound();
+                return NotFound();
 
             context.Builder = bestFormatterMatch.FeedBuilder;
 
@@ -47,7 +59,7 @@ namespace Orchard.Core.Feeds.Controllers
                 .FirstOrDefault();
 
             if (bestQueryMatch == null || bestQueryMatch.FeedQuery == null)
-                return HttpNotFound();
+                return NotFound();
 
             return context.Builder.Process(context, () =>
             {
@@ -55,10 +67,10 @@ namespace Orchard.Core.Feeds.Controllers
                 _feedItemBuilder.Populate(context);
                 foreach (var contextualizer in context.Response.Contextualizers)
                 {
-                    if (ControllerContext != null &&
-                        ControllerContext.RequestContext != null)
+                    // only within a request (formerly ControllerContext.RequestContext != null)
+                    if (ControllerContext?.HttpContext != null)
                     {
-                        contextualizer(ControllerContext.RequestContext);
+                        contextualizer(ControllerContext);
                     }
                 }
             });

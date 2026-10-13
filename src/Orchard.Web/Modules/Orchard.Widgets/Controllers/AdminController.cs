@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Aspects;
 using Orchard.Core.Contents.Settings;
@@ -23,7 +23,7 @@ using Orchard.Widgets.Services;
 namespace Orchard.Widgets.Controllers
 {
 
-    [ValidateInput(false), Admin]
+    [Admin]
     public class AdminController : Controller, IUpdateModel
     {
 
@@ -128,7 +128,7 @@ namespace Orchard.Widgets.Controllers
                 return DeleteWidget(widgetId, returnUrl);
 
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!string.IsNullOrWhiteSpace(moveUp))
                 _widgetsService.MoveWidgetUp(widgetId);
@@ -149,7 +149,7 @@ namespace Orchard.Widgets.Controllers
         public ActionResult ChooseWidget(int layerId, string zone, string returnUrl)
         {
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (string.IsNullOrWhiteSpace(zone))
             {
@@ -184,11 +184,11 @@ namespace Orchard.Widgets.Controllers
         public ActionResult AddWidget(int layerId, string widgetType, string zone, string returnUrl)
         {
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             WidgetPart widgetPart = Services.ContentManager.New<WidgetPart>(widgetType);
             if (widgetPart == null)
-                return HttpNotFound();
+                return NotFound();
             try
             {
                 int widgetPosition = _widgetsService.GetWidgets().Count(widget => widget.Zone == widgetPart.Zone) + 1;
@@ -228,11 +228,11 @@ namespace Orchard.Widgets.Controllers
         private ActionResult AddWidgetPOST([Bind(Prefix = "WidgetPart.LayerId")] int layerId, string widgetType, string returnUrl, Action<ContentItem> conditionallyPublish)
         {
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var widgetPart = _widgetsService.CreateWidget(layerId, widgetType, "", "", "");
             if (widgetPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             var model = Services.ContentManager.UpdateEditor(widgetPart, this);
             try
@@ -261,11 +261,11 @@ namespace Orchard.Widgets.Controllers
         public ActionResult AddLayer(string name, string description, string layerRule)
         { // <- hints for a new layer
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             LayerPart layerPart = Services.ContentManager.New<LayerPart>("Layer");
             if (layerPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             var model = Services.ContentManager.BuildEditor(layerPart);
 
@@ -284,11 +284,11 @@ namespace Orchard.Widgets.Controllers
         public ActionResult AddLayerPOST()
         {
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             LayerPart layerPart = _widgetsService.CreateLayer("", "", "");
             if (layerPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             var model = Services.ContentManager.UpdateEditor(layerPart, this);
 
@@ -305,11 +305,11 @@ namespace Orchard.Widgets.Controllers
         public ActionResult EditLayer(int id)
         {
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             LayerPart layerPart = _widgetsService.GetLayer(id);
             if (layerPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             var model = Services.ContentManager.BuildEditor(layerPart);
             return View(model);
@@ -320,11 +320,11 @@ namespace Orchard.Widgets.Controllers
         public ActionResult EditLayerSavePOST(int id, string returnUrl)
         {
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             LayerPart layerPart = _widgetsService.GetLayer(id);
             if (layerPart == null)
-                return HttpNotFound();
+                return NotFound();
 
             var model = Services.ContentManager.UpdateEditor(layerPart, this);
 
@@ -344,7 +344,7 @@ namespace Orchard.Widgets.Controllers
         public ActionResult EditLayerDeletePOST(int id)
         {
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             try
             {
@@ -363,7 +363,7 @@ namespace Orchard.Widgets.Controllers
         public ActionResult EditWidget(int id)
         {
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             WidgetPart widgetPart = null;
             widgetPart = _widgetsService.GetWidget(id);
@@ -413,13 +413,13 @@ namespace Orchard.Widgets.Controllers
         private ActionResult EditWidgetPOST(int id, int layerId, string returnUrl, Action<ContentItem> conditionallyPublish)
         {
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             WidgetPart widgetPart = null;
             widgetPart = Services.ContentManager.Get<WidgetPart>(id, VersionOptions.DraftRequired);
 
             if (widgetPart == null)
-                return HttpNotFound();
+                return NotFound();
             try
             {
                 var model = Services.ContentManager.UpdateEditor(widgetPart, this);
@@ -453,12 +453,12 @@ namespace Orchard.Widgets.Controllers
         private ActionResult DeleteWidget(int id, string returnUrl)
         {
             if (!IsAuthorizedToManageWidgets())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             WidgetPart widgetPart = null;
             widgetPart = _widgetsService.GetWidget(id);
             if (widgetPart == null)
-                return HttpNotFound();
+                return NotFound();
             try
             {
                 _widgetsService.DeleteWidget(widgetPart.Id);
@@ -475,7 +475,7 @@ namespace Orchard.Widgets.Controllers
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties)
         {
-            return base.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
+            return this.TryUpdateModel(model, prefix, includeProperties, excludeProperties);
         }
 
         void IUpdateModel.AddModelError(string key, LocalizedString errorMessage)

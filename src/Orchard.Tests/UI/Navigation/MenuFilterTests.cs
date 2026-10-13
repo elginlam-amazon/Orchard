@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Routing;
 using Castle.Core.Internal;
+using Microsoft.AspNetCore.Routing;
 using Moq;
 using NUnit.Framework;
 using Orchard.DisplayManagement;
@@ -124,7 +124,10 @@ namespace Orchard.Tests.UI.Navigation
                     return currentMenuItem;
                 }
 
-                currentMenuItem.Items.ForEach(remainingItems.Enqueue);
+                foreach (var item in currentMenuItem.Items)
+                {
+                    remainingItems.Enqueue(item);
+                }
             }
 
             return null;

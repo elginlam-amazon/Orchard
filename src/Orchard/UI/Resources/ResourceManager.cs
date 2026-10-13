@@ -5,13 +5,15 @@ using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Web;
-using System.Web.Hosting;
-using System.Web.Mvc;
 using Autofac.Features.Metadata;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Orchard.Environment.Extensions.Models;
 using Orchard.Mvc;
 using Orchard.Settings;
+using Orchard.Utility;
+using Orchard.Environment;
+using Orchard.Mvc.Html;
+using Orchard.Mvc.Extensions;
 
 namespace Orchard.UI.Resources
 {
@@ -449,7 +451,7 @@ namespace Orchard.UI.Resources
                     debugMode = false;
                     break;
                 default:
-                    debugMode = _hcaLazy.Value.Current()?.IsDebuggingEnabled ?? false;
+                    debugMode = _hcaLazy.Value.Current().IsDebuggingEnabled();
                     break;
             }
 

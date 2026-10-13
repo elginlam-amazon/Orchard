@@ -1,12 +1,13 @@
 using System;
-using System.Web.Mvc;
-using System.Web.Routing;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Core.Feeds;
 using Orchard.Core.Feeds.Models;
 using Orchard.Environment.Extensions;
 using Orchard.Localization;
 using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
 using Orchard.Tags.Services;
 
 namespace Orchard.Tags.Feeds
@@ -28,10 +29,10 @@ namespace Orchard.Tags.Feeds
         public FeedQueryMatch Match(FeedContext context)
         {
             var tagIdValue = context.ValueProvider.GetValue("tag");
-            if (tagIdValue == null)
+            if (tagIdValue == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
                 return null;
 
-            var tagName = (string)tagIdValue.ConvertTo(typeof(string));
+            var tagName = (string)System.Convert.ChangeType(tagIdValue.FirstValue, typeof(string), System.Globalization.CultureInfo.InvariantCulture);
             var tag = _tagService.GetTagByName(tagName);
 
             if (tag == null)
@@ -45,19 +46,19 @@ namespace Orchard.Tags.Feeds
         public void Execute(FeedContext context)
         {
             var tagIdValue = context.ValueProvider.GetValue("tag");
-            if (tagIdValue == null)
+            if (tagIdValue == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
                 return;
 
             var limitValue = context.ValueProvider.GetValue("limit");
             var limit = 20;
-            if (limitValue != null)
+            if (limitValue != Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
             {
                 int.TryParse(Convert.ToString(limitValue), out limit);
             }
 
             limit = Math.Min(limit, 100);
 
-            var tagName = (string)tagIdValue.ConvertTo(typeof(string));
+            var tagName = (string)System.Convert.ChangeType(tagIdValue.FirstValue, typeof(string), System.Globalization.CultureInfo.InvariantCulture);
             var tag = _tagService.GetTagByName(tagName);
 
             if (tag == null)
@@ -81,7 +82,7 @@ namespace Orchard.Tags.Feeds
 
                 context.Response.Contextualize(requestContext =>
                 {
-                    var urlHelper = new UrlHelper(requestContext);
+                    var urlHelper = HtmlHelperFactory.CreateUrlHelper(requestContext);
                     var uriBuilder = new UriBuilder(urlHelper.MakeAbsolute("/")) { Path = urlHelper.RouteUrl(displayRouteValues) };
                     link.Add(uriBuilder.Uri.OriginalString);
                 });
@@ -92,7 +93,7 @@ namespace Orchard.Tags.Feeds
                 context.Builder.AddProperty(context, null, "description", T("Content tagged with {0}", tag.TagName).ToString());
                 context.Response.Contextualize(requestContext =>
                 {
-                    var urlHelper = new UrlHelper(requestContext);
+                    var urlHelper = HtmlHelperFactory.CreateUrlHelper(requestContext);
                     context.Builder.AddProperty(context, null, "link", urlHelper.MakeAbsolute(urlHelper.RouteUrl(displayRouteValues)));
                 });
             }

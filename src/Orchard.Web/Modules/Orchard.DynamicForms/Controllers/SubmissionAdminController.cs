@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.DynamicForms.Helpers;
 using Orchard.DynamicForms.Services;
 using Orchard.DynamicForms.ViewModels;
 using Orchard.Localization;
 using Orchard.Mvc;
+using Orchard.Mvc.Extensions;
 using Orchard.UI.Admin;
 using Orchard.UI.Navigation;
 using Orchard.UI.Notify;
@@ -46,7 +47,7 @@ namespace Orchard.DynamicForms.Controllers
             var submission = _formService.GetSubmission(id);
 
             if (submission == null)
-                return HttpNotFound();
+                return NotFound();
 
             var viewModel = new SubmissionViewModel
             {
@@ -61,11 +62,11 @@ namespace Orchard.DynamicForms.Controllers
             var submission = _formService.GetSubmission(id);
 
             if (submission == null)
-                return HttpNotFound();
+                return NotFound();
 
             _formService.DeleteSubmission(submission);
             _services.Notifier.Success(T("That submission has been deleted."));
-            return Redirect(Request.UrlReferrer.ToString());
+            return Redirect(Request.GetUrlReferrer().ToString());
         }
 
         [FormValueRequired("submit.BulkEdit")]
@@ -83,7 +84,7 @@ namespace Orchard.DynamicForms.Controllers
                 _services.Notifier.Success(T("{0} submissions have been deleted.", numDeletedSubmissions));
             }
 
-            return Redirect(Request.UrlReferrer.ToString());
+            return Redirect(Request.GetUrlReferrer().ToString());
         }
 
         public ActionResult Export(string id) =>

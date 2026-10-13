@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Routing;
 using Orchard.DisplayManagement;
 
 namespace Orchard.Tests.DisplayManagement

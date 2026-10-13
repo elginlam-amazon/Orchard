@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement.Implementation;
 using Orchard.Environment.Extensions.Models;
@@ -43,13 +44,13 @@ namespace Orchard.DisplayManagement.Descriptors
             return this;
         }
 
-        public ShapeAlterationBuilder BoundAs(string bindingSource, Func<ShapeDescriptor, Func<DisplayContext, IHtmlString>> binder)
+        public ShapeAlterationBuilder BoundAs(string bindingSource, Func<ShapeDescriptor, Func<DisplayContext, IHtmlContent>> binder)
         {
             // schedule the configuration
             return Configure(descriptor =>
             {
 
-                Func<DisplayContext, IHtmlString> target = null;
+                Func<DisplayContext, IHtmlContent> target = null;
 
                 var binding = new ShapeBinding
                 {

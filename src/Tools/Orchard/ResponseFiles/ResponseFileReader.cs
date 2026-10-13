@@ -6,18 +6,12 @@ using Orchard.Parameters;
 
 namespace Orchard.ResponseFiles
 {
-    public class ResponseLine : MarshalByRefObject
+    public class ResponseLine
     {
         public string Filename { get; set; }
         public string LineText { get; set; }
         public int LineNumber { get; set; }
         public string[] Args { get; set; }
-
-        public override object InitializeLifetimeService()
-        {
-            // never expire the cross-AppDomain lease on this object
-            return null;
-        }
     }
 
     public class ResponseFileReader

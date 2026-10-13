@@ -1,8 +1,8 @@
 using System;
 using System.Web;
-using System.Web.Mvc;
 using Orchard.Localization;
 using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
 using Orchard.Tokens;
 using Orchard.Workflows.Models;
 using Orchard.Workflows.Services;
@@ -49,7 +49,7 @@ namespace Orchard.Workflows.Tokens
                            }
 
                            var url = "~/Workflows/Signal/Trigger?nonce=" + HttpUtility.UrlEncode(_signalService.Value.CreateNonce(contentItemId, token));
-                           return new UrlHelper(_workContextAccessor.GetContext().HttpContext.Request.RequestContext).MakeAbsolute(url);
+                           return HtmlHelperFactory.CreateUrlHelper(_workContextAccessor.GetContext().HttpContext.GetActionContext()).MakeAbsolute(url);
                        });
         }
     }

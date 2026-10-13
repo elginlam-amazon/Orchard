@@ -2,10 +2,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Mvc.Html;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Orchard.Caching;
 using Orchard.DisplayManagement.Implementation;
 using Orchard.Environment;
@@ -16,6 +16,10 @@ using Orchard.FileSystems.VirtualPath;
 using Orchard.Logging;
 using Orchard.Mvc.ViewEngines.ThemeAwareness;
 using Orchard.Utility.Extensions;
+using System;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Orchard.DisplayManagement.Descriptors.ShapeTemplateStrategy
 {
@@ -158,15 +162,18 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeTemplateStrategy
                 _shellDescriptor.Features.Any(sf => sf.Name == fd.Id);
         }
 
-        private IHtmlString Render(ShapeDescriptor shapeDescriptor, DisplayContext displayContext, HarvestShapeInfo harvestShapeInfo, HarvestShapeHit harvestShapeHit)
+        private IHtmlContent Render(ShapeDescriptor shapeDescriptor, DisplayContext displayContext, HarvestShapeInfo harvestShapeInfo, HarvestShapeHit harvestShapeHit)
         {
             Logger.Information("Rendering template file '{0}'", harvestShapeInfo.TemplateVirtualPath);
-            IHtmlString result;
+            IHtmlContent result;
 
-            if (displayContext.ViewContext.View != null)
+            if (displayContext.ViewContext != null && displayContext.ViewContext.View != null)
             {
-                var htmlHelper = new HtmlHelper(displayContext.ViewContext, displayContext.ViewDataContainer);
-                result = htmlHelper.Partial(harvestShapeInfo.TemplateVirtualPath, displayContext.Value);
+                var viewData = new ViewDataDictionary(displayContext.ViewDataContainer?.ViewData ?? displayContext.ViewContext.ViewData)
+                {
+                    Model = displayContext.Value
+                };
+                result = RenderView(harvestShapeInfo.TemplateVirtualPath, displayContext.ViewContext, viewData, displayContext.ViewContext.TempData);
             }
             else
             {
@@ -180,29 +187,42 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeTemplateStrategy
             return result;
         }
 
-        private IHtmlString RenderRazorViewToString(string path, DisplayContext context)
+        private IHtmlContent RenderView(string path, ActionContext actionContext, ViewDataDictionary viewData, ITempDataDictionary tempData)
         {
-            using (var sw = new StringWriter())
+            var viewResult = _viewEngine.Value.FindView(actionContext, path, false);
+            if (!viewResult.Success)
             {
-                var controllerContext = CreateControllerContext();
-                var viewResult = _viewEngine.Value.FindPartialView(controllerContext, path, false);
-
-                context.ViewContext.ViewData = new ViewDataDictionary(context.Value);
-                context.ViewContext.TempData = new TempDataDictionary();
-                context.ViewContext.View = viewResult.View;
-                context.ViewContext.RouteData = controllerContext.RouteData;
-                context.ViewContext.RequestContext.RouteData = controllerContext.RouteData;
-                viewResult.View.Render(context.ViewContext, sw);
-                viewResult.ViewEngine.ReleaseView(controllerContext, viewResult.View);
-                return new HtmlString(sw.GetStringBuilder().ToString());
+                throw new InvalidOperationException(string.Format("The template file '{0}' could not be found. Searched locations: {1}", path, string.Join(", ", viewResult.SearchedLocations)));
             }
+
+            using (var writer = new StringWriter())
+            {
+                var viewContext = actionContext is ViewContext parentViewContext
+                    ? new ViewContext(parentViewContext, viewResult.View, viewData, writer)
+                    : new ViewContext(actionContext, viewResult.View, viewData, tempData, writer, new HtmlHelperOptions());
+
+                // Shapes are rendered synchronously.
+                viewResult.View.RenderAsync(viewContext).GetAwaiter().GetResult();
+                return new HtmlString(writer.ToString());
+            }
+        }
+
+        private IHtmlContent RenderRazorViewToString(string path, DisplayContext context)
+        {
+            var controllerContext = CreateControllerContext();
+            var viewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), new ModelStateDictionary())
+            {
+                Model = context.Value
+            };
+            var tempData = new TempDataDictionary(controllerContext.HttpContext, new NullTempDataProvider());
+
+            return RenderView(path, controllerContext, viewData, tempData);
         }
 
         private ControllerContext CreateControllerContext()
         {
             var controller = new StubController();
-            var httpContext = _workContextAccessor.GetContext().Resolve<HttpContextBase>();
-            var requestContext = _workContextAccessor.GetContext().Resolve<RequestContext>();
+            var requestContext = _workContextAccessor.GetContext().Resolve<ActionContext>();
             var routeData = requestContext.RouteData;
 
             routeData.DataTokens["IWorkContextAccessor"] = _workContextAccessor;
@@ -210,11 +230,17 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeTemplateStrategy
             if (!routeData.Values.ContainsKey("controller") && !routeData.Values.ContainsKey("Controller"))
                 routeData.Values.Add("controller", controller.GetType().Name.ToLower().Replace("controller", ""));
 
-            controller.ControllerContext = new ControllerContext(httpContext, routeData, controller)
-            {
-                RequestContext = requestContext
-            };
+            controller.ControllerContext = new ControllerContext(new ActionContext(requestContext.HttpContext, routeData, new ControllerActionDescriptor()));
             return controller.ControllerContext;
+        }
+
+        private class NullTempDataProvider : ITempDataProvider
+        {
+            public IDictionary<string, object> LoadTempData(HttpContext context) => new Dictionary<string, object>();
+
+            public void SaveTempData(HttpContext context, IDictionary<string, object> values)
+            {
+            }
         }
 
         private class StubController : Controller { }

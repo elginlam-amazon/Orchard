@@ -16,10 +16,10 @@ namespace Orchard.Blogs.Feeds
         public void Populate(FeedContext context)
         {
             var containerIdValue = context.ValueProvider.GetValue("containerid");
-            if (containerIdValue == null)
+            if (containerIdValue == Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.None)
                 return;
 
-            var containerId = (int)containerIdValue.ConvertTo(typeof(int));
+            var containerId = (int)System.Convert.ChangeType(containerIdValue.FirstValue, typeof(int), System.Globalization.CultureInfo.InvariantCulture);
             var container = _contentManager.Get(containerId);
 
             if (container == null)

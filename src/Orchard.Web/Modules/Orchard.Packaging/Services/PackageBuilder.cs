@@ -5,14 +5,13 @@ using System.Linq;
 using System.Net.Mime;
 using System.Reflection;
 using System.Xml.Linq;
-using NuGet;
 using Orchard.Environment;
 using Orchard.Environment.Extensions;
 using Orchard.Environment.Extensions.Models;
 using Orchard.FileSystems.VirtualPath;
 using Orchard.FileSystems.WebSite;
 using Orchard.Utility.Extensions;
-using NuGetPackageBuilder = NuGet.PackageBuilder;
+using NuGetPackageBuilder = NuGet.Packaging.PackageBuilder;
 
 namespace Orchard.Packaging.Services
 {
@@ -91,7 +90,7 @@ namespace Orchard.Packaging.Services
         private static void SetCoreProperties(CreateContext context, ExtensionDescriptor extensionDescriptor)
         {
             context.Builder.Id = BuildPackageId(extensionDescriptor.Id, extensionDescriptor.ExtensionType);
-            context.Builder.Version = new Version(extensionDescriptor.Version);
+            context.Builder.Version = NuGet.Versioning.NuGetVersion.Parse(extensionDescriptor.Version);
             context.Builder.Title = extensionDescriptor.Name ?? extensionDescriptor.Id;
             context.Builder.Description = extensionDescriptor.Description;
             context.Builder.Authors.Add(extensionDescriptor.Author);
@@ -239,7 +238,7 @@ namespace Orchard.Packaging.Services
 
         #region Nested type: CreateContext
 
-        private class VirtualPackageFile : IPackageFile
+        private class VirtualPackageFile : NuGet.Packaging.IPackageFile
         {
             private readonly IWebSiteFolder _webSiteFolder;
             private readonly string _virtualPath;
@@ -248,10 +247,18 @@ namespace Orchard.Packaging.Services
             {
                 _webSiteFolder = webSiteFolder;
                 _virtualPath = virtualPath;
-                Path = packagePath;
+                Path = packagePath.TrimStart('\\', '/');
             }
 
             public string Path { get; }
+
+            public string EffectivePath => Path;
+
+            public System.Runtime.Versioning.FrameworkName TargetFramework => null;
+
+            public NuGet.Frameworks.NuGetFramework NuGetFramework => null;
+
+            public DateTimeOffset LastWriteTime => DateTimeOffset.UtcNow;
 
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Supposed to return an open stream.")]
             public Stream GetStream()

@@ -1,12 +1,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Owin.Security.OpenIdConnect;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.DependencyInjection;
 using Orchard.ContentManagement;
+using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions;
 using Orchard.OpenId.Models;
+using Orchard.OpenId.Security;
 using Orchard.Owin;
-using Owin;
 
 namespace Orchard.OpenId.OwinMiddlewares
 {
@@ -14,10 +17,12 @@ namespace Orchard.OpenId.OwinMiddlewares
     public class ActiveDirectoryFederationServices : IOwinMiddlewareProvider
     {
         private readonly IWorkContextAccessor _workContextAccessor;
+        private readonly ShellSettings _shellSettings;
 
-        public ActiveDirectoryFederationServices(IWorkContextAccessor workContextAccessor)
+        public ActiveDirectoryFederationServices(IWorkContextAccessor workContextAccessor, ShellSettings shellSettings)
         {
             _workContextAccessor = workContextAccessor;
+            _shellSettings = shellSettings;
         }
 
         public IEnumerable<OwinMiddlewareRegistration> GetOwinMiddlewares()
@@ -29,20 +34,20 @@ namespace Orchard.OpenId.OwinMiddlewares
                 return Enumerable.Empty<OwinMiddlewareRegistration>();
             }
 
-            var openIdOptions = new OpenIdConnectAuthenticationOptions
+            var openIdOptions = new OpenIdConnectOptions
             {
                 ClientId = settings.ClientId,
                 MetadataAddress = settings.MetadataAddress,
-                RedirectUri = settings.PostLogoutRedirectUri,
-                PostLogoutRedirectUri = settings.PostLogoutRedirectUri,
-                Notifications = new OpenIdConnectAuthenticationNotifications()
+                SignedOutRedirectUri = settings.PostLogoutRedirectUri,
+                SignInScheme = OpenIdAuthenticationSchemes.GetScheme(_shellSettings, OpenIdAuthenticationSchemes.ExternalCookie),
+                Events = new OpenIdConnectEvents
                 {
-                    AuthenticationFailed = context =>
+                    OnRemoteFailure = context =>
                     {
                         context.HandleResponse();
-                        context.Response.Redirect(Constants.General.AuthenticationErrorUrl);
+                        context.Response.Redirect(context.Request.PathBase + Constants.General.AuthenticationErrorUrl);
 
-                        return Task.FromResult(0);
+                        return Task.CompletedTask;
                     }
                 }
             };
@@ -51,7 +56,12 @@ namespace Orchard.OpenId.OwinMiddlewares
                 new OwinMiddlewareRegistration {
                     Priority = Constants.General.OpenIdOwinMiddlewarePriority,
                     Configure = app => {
-                        app.UseOpenIdConnectAuthentication(openIdOptions);
+                        var dataProtection = app.ApplicationServices.GetRequiredService<IDataProtectionProvider>();
+                        OpenIdAuthenticationSchemes.Register<OpenIdConnectOptions, OpenIdConnectHandler>(
+                            app,
+                            OpenIdAuthenticationSchemes.GetScheme(_shellSettings, OpenIdConnectDefaults.AuthenticationScheme),
+                            openIdOptions,
+                            new OpenIdConnectPostConfigureOptions(dataProtection));
                     }
                 }
             };

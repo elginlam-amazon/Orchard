@@ -44,7 +44,7 @@ namespace Orchard.Services
                     return customAddresses.First();
             }
 
-            return request.UserHostAddress;
+            return workContext.HttpContext.Connection.RemoteIpAddress?.ToString();
         }
 
         private static IEnumerable<string> ParseAddresses(string value)

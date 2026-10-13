@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
 using Orchard.ContentManagement.MetaData.Models;
@@ -50,7 +50,7 @@ namespace Orchard.Templates.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageTemplates, T("Not authorized to manage templates")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var pager = new Pager(_siteService.GetSiteSettings(), pagerParameters);
@@ -60,7 +60,7 @@ namespace Orchard.Templates.Controllers
             {
                 var contentTypeDefinition = _contentDefinitionManager.GetTypeDefinition(model.TypeName);
                 if (contentTypeDefinition == null)
-                    return HttpNotFound();
+                    return NotFound();
 
                 model.TypeDisplayName = !string.IsNullOrWhiteSpace(contentTypeDefinition.DisplayName)
                                             ? contentTypeDefinition.DisplayName
@@ -107,7 +107,7 @@ namespace Orchard.Templates.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageTemplates, T("Not authorized to manage templates")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var routeValues = ControllerContext.RouteData.Values;
@@ -133,7 +133,7 @@ namespace Orchard.Templates.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageTemplates, T("Not authorized to manage templates")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             if (itemIds != null)
@@ -149,7 +149,7 @@ namespace Orchard.Templates.Controllers
                             if (!Services.Authorizer.Authorize(Orchard.Core.Contents.Permissions.PublishContent, item, T("Couldn't publish selected content.")))
                             {
                                 _transactionManager.Cancel();
-                                return new HttpUnauthorizedResult();
+                                return new UnauthorizedResult();
                             }
 
                             _contentManager.Publish(item);
@@ -162,7 +162,7 @@ namespace Orchard.Templates.Controllers
                             if (!Services.Authorizer.Authorize(Orchard.Core.Contents.Permissions.PublishContent, item, T("Couldn't unpublish selected content.")))
                             {
                                 _transactionManager.Cancel();
-                                return new HttpUnauthorizedResult();
+                                return new UnauthorizedResult();
                             }
 
                             _contentManager.Unpublish(item);
@@ -175,7 +175,7 @@ namespace Orchard.Templates.Controllers
                             if (!Services.Authorizer.Authorize(Orchard.Core.Contents.Permissions.DeleteContent, item, T("Couldn't remove selected content.")))
                             {
                                 _transactionManager.Cancel();
-                                return new HttpUnauthorizedResult();
+                                return new UnauthorizedResult();
                             }
 
                             _contentManager.Remove(item);
@@ -194,7 +194,7 @@ namespace Orchard.Templates.Controllers
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageTemplates, T("Not authorized to manage templates")))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var types = GetShapeTypes();

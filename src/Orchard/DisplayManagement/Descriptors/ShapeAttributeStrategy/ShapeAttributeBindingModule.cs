@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Autofac;
 using Autofac.Core;
+using Autofac.Core.Registration;
 using Orchard.Environment.Extensions.Models;
 
 namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
@@ -15,7 +16,7 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
             builder.RegisterInstance(_occurrences).As<IEnumerable<ShapeAttributeOccurrence>>();
         }
 
-        protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
+        protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistry, IComponentRegistration registration)
         {
 
             var occurrences = registration.Activator.LimitType.GetMethods()

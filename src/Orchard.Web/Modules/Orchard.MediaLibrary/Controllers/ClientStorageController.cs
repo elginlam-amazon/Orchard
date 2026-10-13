@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Handlers;
 using Orchard.FileSystems.Media;
@@ -45,13 +46,13 @@ namespace Orchard.MediaLibrary.Controllers
         {
             if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.SelectMediaContent, folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             // Check permission
             if (!_mediaLibraryService.CanManageMediaFolder(folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var viewModel = new ImportMediaViewModel
@@ -64,7 +65,7 @@ namespace Orchard.MediaLibrary.Controllers
             {
                 var replaceMedia = Services.ContentManager.Get<MediaPart>(replaceId.Value);
                 if (replaceMedia == null)
-                    return HttpNotFound();
+                    return NotFound();
 
                 viewModel.Replace = replaceMedia;
             }
@@ -77,23 +78,23 @@ namespace Orchard.MediaLibrary.Controllers
         {
             if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             // Check permission
             if (!_mediaLibraryService.CanManageMediaFolder(folderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var statuses = new List<object>();
             var settings = Services.WorkContext.CurrentSite.As<MediaLibrarySettingsPart>();
 
             // Loop through each file in the request
-            for (int i = 0; i < HttpContext.Request.Files.Count; i++)
+            for (int i = 0; i < HttpContext.Request.Form.Files.Count; i++)
             {
                 // Pointer to file
-                var file = HttpContext.Request.Files[i];
+                var file = HttpContext.Request.Form.Files[i];
                 var filename = Path.GetFileName(file.FileName);
 
                 // if the file has been pasted, provide a default name
@@ -115,7 +116,7 @@ namespace Orchard.MediaLibrary.Controllers
 
                 try
                 {
-                    var mediaPart = _mediaLibraryService.ImportMedia(file.InputStream, folderPath, filename, type);
+                    var mediaPart = _mediaLibraryService.ImportMedia(file.OpenReadStream(), folderPath, filename, type);
                     Services.ContentManager.Create(mediaPart);
 
                     statuses.Add(new
@@ -123,7 +124,7 @@ namespace Orchard.MediaLibrary.Controllers
                         id = mediaPart.Id,
                         name = mediaPart.Title,
                         type = mediaPart.MimeType,
-                        size = file.ContentLength,
+                        size = file.Length,
                         progress = 1.0,
                         url = mediaPart.FileName,
                     });
@@ -148,24 +149,24 @@ namespace Orchard.MediaLibrary.Controllers
             }
 
             // Return JSON
-            return Json(statuses, JsonRequestBehavior.AllowGet);
+            return Json(statuses);
         }
 
         [HttpPost]
         public ActionResult Replace(int replaceId, string type)
         {
             if (!Services.Authorizer.Authorize(Permissions.ManageOwnMedia))
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             var replaceMedia = Services.ContentManager.Get<MediaPart>(replaceId);
             if (replaceMedia == null)
-                return HttpNotFound();
+                return NotFound();
 
             // Check permission
             if (!(_mediaLibraryService.CheckMediaFolderPermission(Permissions.EditMediaContent, replaceMedia.FolderPath) && _mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, replaceMedia.FolderPath))
                 && !_mediaLibraryService.CanManageMediaFolder(replaceMedia.FolderPath))
             {
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
             }
 
             var statuses = new List<object>();
@@ -173,10 +174,10 @@ namespace Orchard.MediaLibrary.Controllers
             var settings = Services.WorkContext.CurrentSite.As<MediaLibrarySettingsPart>();
 
             // Loop through each file in the request
-            for (int i = 0; i < HttpContext.Request.Files.Count; i++)
+            for (int i = 0; i < HttpContext.Request.Form.Files.Count; i++)
             {
                 // Pointer to file
-                var file = HttpContext.Request.Files[i];
+                var file = HttpContext.Request.Form.Files[i];
                 var filename = Path.GetFileName(file.FileName);
 
                 // if the file has been pasted, provide a default name
@@ -201,7 +202,7 @@ namespace Orchard.MediaLibrary.Controllers
                 {
                     var mimeType = _mimeTypeProvider.GetMimeType(filename);
 
-                    string replaceContentType = _mediaLibraryService.MimeTypeToContentType(file.InputStream, mimeType, type) ?? type;
+                    string replaceContentType = _mediaLibraryService.MimeTypeToContentType(file.OpenReadStream(), mimeType, type) ?? type;
                     if (!replaceContentType.Equals(replaceMedia.TypeDefinition.Name, StringComparison.OrdinalIgnoreCase))
                         throw new Exception(T("Cannot replace {0} with {1}", replaceMedia.TypeDefinition.Name, replaceContentType).Text);
 
@@ -232,7 +233,7 @@ namespace Orchard.MediaLibrary.Controllers
                         // it changes the media file name
                         replaceMedia.FileName = filename;
                     }
-                    _mediaLibraryService.UploadMediaFile(replaceMedia.FolderPath, replaceMedia.FileName, file.InputStream);
+                    _mediaLibraryService.UploadMediaFile(replaceMedia.FolderPath, replaceMedia.FileName, file.OpenReadStream());
                     replaceMedia.MimeType = mimeType;
 
                     _handlers.Invoke(x => x.Updated(new UpdateContentContext(replaceMedia.ContentItem)), Logger);
@@ -247,7 +248,7 @@ namespace Orchard.MediaLibrary.Controllers
                         id = replaceMedia.Id,
                         name = replaceMedia.Title,
                         type = replaceMedia.MimeType,
-                        size = file.ContentLength,
+                        size = file.Length,
                         progress = 1.0,
                         url = replaceMedia.FileName,
                     });
@@ -264,7 +265,7 @@ namespace Orchard.MediaLibrary.Controllers
                 }
             }
 
-            return Json(statuses, JsonRequestBehavior.AllowGet);
+            return Json(statuses);
         }
     }
 }

@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Web.Mvc;
-using System.Web.Routing;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.Core.XmlRpc;
 using Orchard.Core.XmlRpc.Models;
 using Orchard.Localization;
 using Orchard.Mvc.Extensions;
+using Orchard.Mvc.Html;
+using Orchard.Mvc.Routes;
 using Orchard.Security;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Media.Services
 {
@@ -17,13 +19,13 @@ namespace Orchard.Media.Services
         private readonly IMembershipService _membershipService;
         private readonly IAuthorizationService _authorizationService;
         private readonly IMediaService _mediaService;
-        private readonly RouteCollection _routeCollection;
+        private readonly OrchardRouteCollection _routeCollection;
 
         public XmlRpcHandler(
             IMembershipService membershipService,
             IAuthorizationService authorizationService,
             IMediaService mediaService,
-            RouteCollection routeCollection)
+            OrchardRouteCollection routeCollection)
         {
             _membershipService = membershipService;
             _authorizationService = authorizationService;
@@ -43,7 +45,7 @@ namespace Orchard.Media.Services
 
         public void Process(XmlRpcContext context)
         {
-            var urlHelper = new UrlHelper(context.ControllerContext.RequestContext, _routeCollection);
+            var urlHelper = HtmlHelperFactory.CreateUrlHelper(context.ControllerContext);
 
             if (context.Request.MethodName == "metaWeblog.newMediaObject")
             {
@@ -60,7 +62,7 @@ namespace Orchard.Media.Services
             string userName,
             string password,
             XRpcStruct file,
-            UrlHelper url)
+            IUrlHelper url)
         {
 
             List<LocalizedString> validationErrors;

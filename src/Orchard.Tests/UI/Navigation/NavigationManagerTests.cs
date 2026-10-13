@@ -1,8 +1,9 @@
+using Microsoft.AspNetCore.Mvc.Routing;
 using System;
 using System.Linq;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using NUnit.Framework;
 using Orchard.ContentManagement;
 using Orchard.Core.Navigation.Services;
@@ -20,10 +21,20 @@ namespace Orchard.Tests.UI.Navigation
     [TestFixture]
     public class NavigationManagerTests
     {
+        /// <summary>
+        /// A url helper for a request without any route (the url generation needs a router).
+        /// </summary>
+        private static UrlHelper CreateUrlHelper()
+        {
+            var routeData = new RouteData();
+            routeData.Routers.Add(new Orchard.Mvc.Routes.OrchardRouteCollection());
+            return new UrlHelper(new ActionContext(new StubHttpContext("~/"), routeData, new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor()));
+        }
+
         [Test]
         public void EmptyMenuIfNameDoesntMatch()
         {
-            var manager = new NavigationManager(new[] { new StubProvider() }, new IMenuProvider[] { }, new StubAuth(), new INavigationFilter[0], new UrlHelper(new RequestContext(new StubHttpContext("~/"), new RouteData())), new StubOrchardServices(), new ShellSettings());
+            var manager = new NavigationManager(new[] { new StubProvider() }, new IMenuProvider[] { }, new StubAuth(), new INavigationFilter[0], CreateUrlHelper(), new StubOrchardServices(), new ShellSettings());
 
             var menuItems = manager.BuildMenu("primary");
             Assert.That(menuItems.Count(), Is.EqualTo(0));
@@ -44,7 +55,7 @@ namespace Orchard.Tests.UI.Navigation
         [Test]
         public void NavigationManagerShouldUseProvidersToBuildNamedMenu()
         {
-            var manager = new NavigationManager(new[] { new StubProvider() }, new IMenuProvider[] { }, new StubAuth(), new INavigationFilter[0], new UrlHelper(new RequestContext(new StubHttpContext("~/"), new RouteData())), new StubOrchardServices(), new ShellSettings());
+            var manager = new NavigationManager(new[] { new StubProvider() }, new IMenuProvider[] { }, new StubAuth(), new INavigationFilter[0], CreateUrlHelper(), new StubOrchardServices(), new ShellSettings());
 
             var menuItems = manager.BuildMenu("admin");
             Assert.That(menuItems.Count(), Is.EqualTo(2));
@@ -57,7 +68,7 @@ namespace Orchard.Tests.UI.Navigation
         [Test]
         public void NavigationManagerShouldCatchProviderErrors()
         {
-            var manager = new NavigationManager(new[] { new BrokenProvider() }, new IMenuProvider[] { }, new StubAuth(), new INavigationFilter[0], new UrlHelper(new RequestContext(new StubHttpContext("~/"), new RouteData())), new StubOrchardServices(), new ShellSettings());
+            var manager = new NavigationManager(new[] { new BrokenProvider() }, new IMenuProvider[] { }, new StubAuth(), new INavigationFilter[0], CreateUrlHelper(), new StubOrchardServices(), new ShellSettings());
 
             var menuItems = manager.BuildMenu("admin");
             Assert.That(menuItems.Count(), Is.EqualTo(0));
@@ -66,7 +77,7 @@ namespace Orchard.Tests.UI.Navigation
         [Test]
         public void NavigationManagerShouldMergeAndOrderNavigation()
         {
-            var manager = new NavigationManager(new INavigationProvider[] { new StubProvider(), new Stub2Provider() }, new IMenuProvider[] { }, new StubAuth(), new INavigationFilter[0], new UrlHelper(new RequestContext(new StubHttpContext("~/"), new RouteData())), new StubOrchardServices(), new ShellSettings());
+            var manager = new NavigationManager(new INavigationProvider[] { new StubProvider(), new Stub2Provider() }, new IMenuProvider[] { }, new StubAuth(), new INavigationFilter[0], CreateUrlHelper(), new StubOrchardServices(), new ShellSettings());
 
             var menuItems = manager.BuildMenu("admin");
             Assert.That(menuItems.Count(), Is.EqualTo(3));

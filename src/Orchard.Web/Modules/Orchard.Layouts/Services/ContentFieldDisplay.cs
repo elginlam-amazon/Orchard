@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Mvc;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Drivers;
 using Orchard.DisplayManagement;
@@ -19,7 +19,7 @@ namespace Orchard.Layouts.Services
         public ContentFieldDisplay(
             IShapeFactory shapeFactory,
             Lazy<IShapeTableLocator> shapeTableLocator,
-            RequestContext requestContext,
+            ActionContext requestContext,
             IVirtualPathProvider virtualPathProvider,
             IWorkContextAccessor workContextAccessor,
             ShellSettings shellSettings,

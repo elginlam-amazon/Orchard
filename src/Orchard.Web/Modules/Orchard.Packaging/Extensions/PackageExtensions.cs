@@ -1,10 +1,10 @@
 using System;
 using System.IO;
 using System.Linq;
-using NuGet;
 using Orchard.Environment.Extensions.Folders;
 using Orchard.Environment.Extensions.Models;
 using Orchard.Packaging.Models;
+using Orchard.Packaging.Packages;
 
 namespace Orchard.Packaging.Extensions
 {
