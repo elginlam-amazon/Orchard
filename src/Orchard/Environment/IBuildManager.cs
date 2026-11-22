@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Web.Compilation;
 using Orchard.Exceptions;
 using Orchard.FileSystems.VirtualPath;
 using Orchard.Logging;
@@ -37,7 +36,9 @@ namespace Orchard.Environment
 
         public IEnumerable<Assembly> GetReferencedAssemblies()
         {
-            return BuildManager.GetReferencedAssemblies().OfType<Assembly>();
+            // System.Web.Compilation.BuildManager is not available in .NET Core.
+            // Return the assemblies currently loaded in the runtime instead.
+            return AppDomain.CurrentDomain.GetAssemblies();
         }
 
         public bool HasReferencedAssembly(string name)
@@ -54,23 +55,12 @@ namespace Orchard.Environment
             return _assemblyLoader.Load(name);
         }
 
-
         public Assembly GetCompiledAssembly(string virtualPath)
         {
-            try
-            {
-                return BuildManager.GetCompiledAssembly(virtualPath);
-            }
-            catch (Exception ex)
-            {
-                if (ex.IsFatal())
-                {
-                    throw;
-                }
-                Logger.Warning(ex, "Error when compiling assembly under {0}.", virtualPath);
-                return null;
-            }
-
+            // System.Web.Compilation.BuildManager.GetCompiledAssembly is not available in .NET Core.
+            // Razor views are compiled by the Razor/MVC runtime; there is no equivalent on-demand API.
+            Logger.Debug("GetCompiledAssembly: '{0}' – no-op on .NET Core.", virtualPath);
+            return null;
         }
     }
 }

@@ -243,7 +243,7 @@ namespace Orchard.OutputCache.Filters
 
                 // Add ETag header for the newly created item
                 var etag = Guid.NewGuid().ToString("n");
-                if (HttpRuntime.UsingIntegratedPipeline)
+                if (true /* HttpRuntime.UsingIntegratedPipeline always true on .NET Core */)
                 {
                     if (response.Headers.Get("ETag") == null)
                     {
@@ -523,7 +523,7 @@ namespace Orchard.OutputCache.Filters
             if (filterContext.HttpContext.Request.IsLocalUrl(redirectUrl))
             {
                 // Remove all cached versions of the same item.
-                var helper = new UrlHelper(filterContext.HttpContext.Request.RequestContext);
+                var helper = new UrlHelper(filterContext.HttpContext.Request.RequestContext());
                 var absolutePath = new Uri(helper.MakeAbsolute(redirectUrl)).AbsolutePath;
                 var invariantCacheKey = ComputeCacheKey(_shellSettings.Name, absolutePath, null);
                 _cacheService.RemoveByTag(invariantCacheKey);
@@ -610,14 +610,14 @@ namespace Orchard.OutputCache.Filters
 
             // Add ETag header
             var itemETag = cacheItem.ETag;
-            if (HttpRuntime.UsingIntegratedPipeline && response.Headers.Get("ETag") == null && cacheItem.ETag != null)
+            if (true /* HttpRuntime.UsingIntegratedPipeline always true on .NET Core */ && response.Headers.Get("ETag") == null && cacheItem.ETag != null)
             {
                 if (_etagNeedsRefresh)
                 {
                     // Add ETag header for the newly created item
                     var newEtag = Guid.NewGuid().ToString("n");
                     itemETag = "";
-                    if (HttpRuntime.UsingIntegratedPipeline)
+                    if (true /* HttpRuntime.UsingIntegratedPipeline always true on .NET Core */)
                     {
                         if (response.Headers.Get("ETag") == null)
                         {

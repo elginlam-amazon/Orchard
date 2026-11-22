@@ -1,35 +1,17 @@
 using System.Reflection;
-using System.Web.Compilation;
 
 namespace Orchard.Environment.Extensions.Compilers
 {
-    public class CSharpExtensionBuildProviderShim : BuildProvider, IShim
+    // CSharpExtensionBuildProviderShim previously extended System.Web.Compilation.BuildProvider,
+    // which does not exist in .NET Core. The class is kept as an IShim registration stub only;
+    // the ASP.NET Framework compilation pipeline it bridged is replaced by the Roslyn/Razor runtime.
+    public class CSharpExtensionBuildProviderShim : IShim
     {
-        private readonly CompilerType _codeCompilerType;
-
         public CSharpExtensionBuildProviderShim()
         {
             OrchardHostContainerRegistry.RegisterShim(this);
-
-            _codeCompilerType = GetDefaultCompilerTypeForLanguage("C#");
-
-            var orchardVersion = new AssemblyName(typeof(IDependency).Assembly.FullName).Version;
-            // Additional options after the ones defined in web.config require to be separated by a leading space character.
-            _codeCompilerType.CompilerParameters.CompilerOptions += $" /define:ORCHARD_{orchardVersion.Major}_{orchardVersion.Minor}";
         }
 
         public IOrchardHostContainer HostContainer { get; set; }
-
-        public override CompilerType CodeCompilerType => _codeCompilerType;
-
-        public override void GenerateCode(AssemblyBuilder assemblyBuilder)
-        {
-            var context = new CompileExtensionContext
-            {
-                VirtualPath = this.VirtualPath,
-                AssemblyBuilder = new AspNetAssemblyBuilder(assemblyBuilder, this)
-            };
-            HostContainer.Resolve<IExtensionCompiler>().Compile(context);
-        }
     }
 }

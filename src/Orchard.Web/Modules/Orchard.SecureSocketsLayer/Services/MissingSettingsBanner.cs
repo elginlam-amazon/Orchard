@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Web;
 using System.Web.Mvc;
 using Orchard.Localization;
 using Orchard.UI.Admin.Notification;
@@ -27,7 +28,7 @@ namespace Orchard.SecureSocketsLayer.Services
 
             if (!settings.Enabled)
             {
-                var urlHelper = new UrlHelper(workContext.HttpContext.Request.RequestContext);
+                var urlHelper = new UrlHelper(workContext.HttpContext.Request.RequestContext());
                 var url = urlHelper.Action("Ssl", "Admin", new { Area = "Settings" });
                 yield return new NotifyEntry { Message = T("The <a href=\"{0}\">SSL settings</a> need to be configured.", url), Type = NotifyType.Warning };
             }

@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
 
 namespace Orchard.ContentManagement.Handlers
 {
@@ -27,11 +26,6 @@ namespace Orchard.ContentManagement.Handlers
 
         protected override void BuildDisplayShape(BuildDisplayContext context, TContent instance)
         {
-        }
-
-        class ViewDataContainer : IViewDataContainer
-        {
-            public ViewDataDictionary ViewData { get; set; }
         }
 
         private string LongestMatch(string displayType)

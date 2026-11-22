@@ -48,7 +48,7 @@ namespace Orchard.ContentPicker.Services
             var request = _workContext.Value.HttpContext.Request;
 
             // Set the currently selected path
-            Stack<MenuItem> selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, request.RequestContext.RouteData);
+            Stack<MenuItem> selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, request.RequestContext().RouteData);
 
             dynamic shapeFactory = _shapeFactory.Value;
 

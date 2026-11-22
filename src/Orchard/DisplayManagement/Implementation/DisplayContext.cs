@@ -6,7 +6,7 @@ namespace Orchard.DisplayManagement.Implementation
     {
         public DisplayHelper Display { get; set; }
         public ViewContext ViewContext { get; set; }
-        public IViewDataContainer ViewDataContainer { get; set; }
+        public object ViewDataContainer { get; set; }
         public object Value { get; set; }
     }
 }

@@ -161,9 +161,10 @@ namespace Orchard.FileSystems.AppData
 
             // Modify file's access control to inherit permissions from parent directory. When files are moved they do not inherit
             // permissions from the parent directory by default
-            System.Security.AccessControl.FileSecurity fileSecurity = File.GetAccessControl(path);
+            var fileInfo = new System.IO.FileInfo(path);
+            System.Security.AccessControl.FileSecurity fileSecurity = fileInfo.GetAccessControl();
             fileSecurity.SetAccessRuleProtection(false, false);
-            File.SetAccessControl(path, fileSecurity);
+            fileInfo.SetAccessControl(fileSecurity);
         }
 
         public Stream CreateFile(string path)

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Web;
-using System.Web.Routing;
 using Orchard.ContentManagement.Handlers;
 using Orchard.DisplayManagement;
 using Orchard.DisplayManagement.Descriptors;
@@ -19,7 +18,7 @@ namespace Orchard.ContentManagement
         private readonly IShapeFactory _shapeFactory;
         private readonly Lazy<IShapeTableLocator> _shapeTableLocator;
 
-        private readonly RequestContext _requestContext;
+        private readonly HttpContextBase _httpContextBase;
         private readonly IVirtualPathProvider _virtualPathProvider;
         private readonly IWorkContextAccessor _workContextAccessor;
         private readonly ShellSettings _shellSettings;
@@ -29,7 +28,7 @@ namespace Orchard.ContentManagement
             Lazy<IEnumerable<IContentHandler>> handlers,
             IShapeFactory shapeFactory,
             Lazy<IShapeTableLocator> shapeTableLocator,
-            RequestContext requestContext,
+            HttpContextBase httpContextBase,
             IVirtualPathProvider virtualPathProvider,
             IWorkContextAccessor workContextAccessor,
             ShellSettings shellSettings)
@@ -37,7 +36,7 @@ namespace Orchard.ContentManagement
             _handlers = handlers;
             _shapeFactory = shapeFactory;
             _shapeTableLocator = shapeTableLocator;
-            _requestContext = requestContext;
+            _httpContextBase = httpContextBase;
             _virtualPathProvider = virtualPathProvider;
             _workContextAccessor = workContextAccessor;
             _shellSettings = shellSettings;
@@ -64,7 +63,7 @@ namespace Orchard.ContentManagement
             itemShape.Metadata.DisplayType = actualDisplayType;
 
             var context = new BuildDisplayContext(itemShape, content, actualDisplayType, groupId, _shapeFactory);
-            var workContext = _workContextAccessor.GetContext(_requestContext.HttpContext);
+            var workContext = _workContextAccessor.GetContext(_httpContextBase);
             context.Layout = workContext.Layout;
 
             BindPlacement(context, actualDisplayType, stereotype);
@@ -89,7 +88,7 @@ namespace Orchard.ContentManagement
             ((IShape)itemShape).Metadata.Alternates.Add(actualShapeType + "__" + content.ContentItem.ContentType);
 
             var context = new BuildEditorContext(itemShape, content, groupId, _shapeFactory);
-            var workContext = _workContextAccessor.GetContext(_requestContext.HttpContext);
+            var workContext = _workContextAccessor.GetContext(_httpContextBase);
             context.Layout = workContext.Layout;
             BindPlacement(context, null, stereotype);
 
@@ -111,7 +110,7 @@ namespace Orchard.ContentManagement
             dynamic itemShape = CreateItemShape(actualShapeType);
             itemShape.ContentItem = content.ContentItem;
 
-            var workContext = _workContextAccessor.GetContext(_requestContext.HttpContext);
+            var workContext = _workContextAccessor.GetContext(_httpContextBase);
 
             var theme = workContext.CurrentTheme;
             var shapeTable = _shapeTableLocator.Value.Lookup(theme.Id);
@@ -140,7 +139,7 @@ namespace Orchard.ContentManagement
             context.FindPlacement = (partShapeType, differentiator, defaultLocation) =>
             {
 
-                var workContext = _workContextAccessor.GetContext(_requestContext.HttpContext);
+                var workContext = _workContextAccessor.GetContext(_httpContextBase);
 
                 var theme = workContext.CurrentTheme;
                 var shapeTable = _shapeTableLocator.Value.Lookup(theme.Id);
@@ -182,7 +181,7 @@ namespace Orchard.ContentManagement
         /// </summary>
         private string GetPath()
         {
-            var appRelativePath = _virtualPathProvider.ToAppRelative(_requestContext.HttpContext.Request.Path);
+            var appRelativePath = _virtualPathProvider.ToAppRelative(_httpContextBase.Request.Path.ToString());
             // If the tenant has a prefix, we strip the tenant prefix away.
             if (_urlPrefix != null)
                 appRelativePath = _urlPrefix.RemoveLeadingSegments(appRelativePath);

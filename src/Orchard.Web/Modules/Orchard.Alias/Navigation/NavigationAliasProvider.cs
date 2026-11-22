@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Web;
 using System.Web.Routing;
 using Orchard.ContentManagement;
 using Orchard.Environment.Extensions;
@@ -49,7 +50,7 @@ namespace Orchard.Alias.Navigation
                     RouteValueDictionary contentRoute;
                     if (menuLevel == urlLevel)
                     {
-                        contentRoute = request.RequestContext.RouteData.Values;
+                        contentRoute = request.RequestContext().RouteData.Values;
                     }
                     else
                     {

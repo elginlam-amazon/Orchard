@@ -8,8 +8,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac;
 using Autofac.Core;
 using Microsoft.CSharp.RuntimeBinder;
@@ -22,17 +20,13 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
     {
         private readonly IEnumerable<ShapeAttributeOccurrence> _shapeAttributeOccurrences;
         private readonly IComponentContext _componentContext;
-        private readonly RouteCollection _routeCollection;
 
         public ShapeAttributeBindingStrategy(
             IEnumerable<ShapeAttributeOccurrence> shapeAttributeOccurrences,
-            IComponentContext componentContext,
-            RouteCollection routeCollection)
+            IComponentContext componentContext)
         {
             _shapeAttributeOccurrences = shapeAttributeOccurrences;
-            // todo: using a component context won't work when this is singleton
             _componentContext = componentContext;
-            _routeCollection = routeCollection;
         }
 
         public void Discover(ShapeTableBuilder builder)
@@ -56,7 +50,7 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
         {
             return context =>
             {
-                var serviceInstance = _componentContext.ResolveComponent(attributeOccurrence.Registration, Enumerable.Empty<Parameter>());
+                var serviceInstance = _componentContext.Resolve(attributeOccurrence.Registration.Activator.LimitType);
 
                 // oversimplification for the sake of evolving
                 return PerformInvoke(context, attributeOccurrence.MethodInfo, serviceInstance);
@@ -79,8 +73,6 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
             }
             catch (TargetInvocationException e)
             {
-                // Throwing a TIE here will probably kill the web process
-                // in Azure. For unknown reasons.
                 throw new Exception(string.Concat("TargetInvocationException ", methodInfo.Name), e.InnerException);
             }
         }
@@ -103,20 +95,6 @@ namespace Orchard.DisplayManagement.Descriptors.ShapeAttributeStrategy
 
             if (parameter.Name == "Output" && parameter.ParameterType == typeof(Action<object>))
                 return new Action<object>(output.Write);
-
-            // meh--
-            if (parameter.Name == "Html")
-            {
-                return new HtmlHelper(
-                    displayContext.ViewContext,
-                    displayContext.ViewDataContainer,
-                    _routeCollection);
-            }
-
-            if (parameter.Name == "Url" && parameter.ParameterType.IsAssignableFrom(typeof(UrlHelper)))
-            {
-                return new UrlHelper(displayContext.ViewContext.RequestContext, _routeCollection);
-            }
 
             var getter = _getters.GetOrAdd(parameter.Name, n =>
                 CallSite<Func<CallSite, object, dynamic>>.Create(

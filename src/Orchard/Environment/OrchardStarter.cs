@@ -2,10 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using System.Web.Hosting;
-using System.Web.Http;
-using System.Web.Http.Dispatcher;
-using System.Web.Mvc;
 using Autofac;
 using Autofac.Configuration;
 using Orchard.Caching;
@@ -28,14 +24,9 @@ using Orchard.FileSystems.VirtualPath;
 using Orchard.FileSystems.WebSite;
 using Orchard.Logging;
 using Orchard.Mvc;
-using Orchard.Mvc.DataAnnotations;
-using Orchard.Mvc.Filters;
 using Orchard.Mvc.ViewEngines.Razor;
-using Orchard.Mvc.ViewEngines.ThemeAwareness;
 using Orchard.Services;
 using Orchard.UI.Resources;
-using Orchard.WebApi;
-using Orchard.WebApi.Filters;
 
 namespace Orchard.Environment
 {
@@ -135,52 +126,18 @@ namespace Orchard.Environment
 
             registrations(builder);
 
-            var autofacSection = ConfigurationManager.GetSection(ConfigurationSettingsReaderConstants.DefaultSectionName);
-            if (autofacSection != null)
-                builder.RegisterModule(new ConfigurationSettingsReader());
+            var appRoot = AppContext.BaseDirectory;
+            var optionalHostConfig = Path.GetFullPath(Path.Combine(appRoot, "Config", "Host.config"));
+            // XML-based Autofac configuration (ConfigurationSettingsReader) not supported in .NET 10
 
-            var optionalHostConfig = HostingEnvironment.MapPath("~/Config/Host.config");
-            if (File.Exists(optionalHostConfig))
-                builder.RegisterModule(new ConfigurationSettingsReader(ConfigurationSettingsReaderConstants.DefaultSectionName, optionalHostConfig));
-
-            var optionalComponentsConfig = HostingEnvironment.MapPath("~/Config/HostComponents.config");
+            var optionalComponentsConfig = Path.GetFullPath(Path.Combine(appRoot, "Config", "HostComponents.config"));
             if (File.Exists(optionalComponentsConfig))
                 builder.RegisterModule(new HostComponentsConfigModule(optionalComponentsConfig));
 
             var container = builder.Build();
 
-            //
-            // Register Virtual Path Providers
-            //
-            if (HostingEnvironment.IsHosted)
-            {
-                foreach (var vpp in container.Resolve<IEnumerable<ICustomVirtualPathProvider>>())
-                {
-                    HostingEnvironment.RegisterVirtualPathProvider(vpp.Instance);
-                }
-            }
-
-            ControllerBuilder.Current.SetControllerFactory(new OrchardControllerFactory());
-            FilterProviders.Providers.Add(new OrchardFilterProvider());
-
-            GlobalConfiguration.Configuration.Services.Replace(typeof(IHttpControllerSelector), new DefaultOrchardWebApiHttpControllerSelector(GlobalConfiguration.Configuration));
-            GlobalConfiguration.Configuration.Services.Replace(typeof(IHttpControllerActivator), new DefaultOrchardWebApiHttpControllerActivator(GlobalConfiguration.Configuration));
-            GlobalConfiguration.Configuration.DependencyResolver = new AutofacWebApiDependencyResolver(container);
-
-            GlobalConfiguration.Configuration.Filters.Add(new OrchardApiActionFilterDispatcher());
-            GlobalConfiguration.Configuration.Filters.Add(new OrchardApiExceptionFilterDispatcher());
-            GlobalConfiguration.Configuration.Filters.Add(new OrchardApiAuthorizationFilterDispatcher());
-
-            ViewEngines.Engines.Clear();
-            ViewEngines.Engines.Add(new ThemeAwareViewEngineShim());
-
             var hostContainer = new DefaultOrchardHostContainer(container);
-            //MvcServiceLocator.SetCurrent(hostContainer);
             OrchardHostContainerRegistry.RegisterHostContainer(hostContainer);
-
-            // Register localized data annotations
-            ModelValidatorProviders.Providers.Clear();
-            ModelValidatorProviders.Providers.Add(new LocalizedModelValidatorProvider());
 
             return container;
         }

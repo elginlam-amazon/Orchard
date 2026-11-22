@@ -5,6 +5,7 @@ using System.Web.Mvc;
 using System.Web.Routing;
 using Autofac;
 using Autofac.Core;
+using Autofac.Core.Registration;
 using Moq;
 using NUnit.Framework;
 using Orchard.ContentManagement.Records;
@@ -175,7 +176,7 @@ namespace Orchard.Tests.Environment
 
         public class BetaModule : IModule
         {
-            public void Configure(IComponentRegistry componentRegistry)
+            public void Configure(IComponentRegistryBuilder componentRegistryBuilder)
             {
                 throw new NotImplementedException();
             }

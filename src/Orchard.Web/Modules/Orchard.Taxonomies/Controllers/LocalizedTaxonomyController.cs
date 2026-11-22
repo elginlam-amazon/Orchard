@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using System.Web.UI.WebControls;
+// using System.Web.UI.WebControls; // Not available on .NET Core
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
 using Orchard.Environment.Extensions;

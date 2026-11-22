@@ -1,3 +1,4 @@
+using System.Web;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -297,7 +298,7 @@ namespace Orchard.Comments.Services
             var workContext = _orchardServices.WorkContext;
             if (workContext.HttpContext != null)
             {
-                var url = new UrlHelper(workContext.HttpContext.Request.RequestContext);
+                var url = new UrlHelper(workContext.HttpContext.Request.RequestContext());
                 return url.AbsoluteAction(action, "Comment", new { area = "Orchard.Comments", nonce = CreateNonce(part, TimeSpan.FromDays(7)) });
             }
 

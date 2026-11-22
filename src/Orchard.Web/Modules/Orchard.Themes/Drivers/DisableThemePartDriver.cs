@@ -16,13 +16,13 @@ namespace Orchard.Themes.Drivers
 
         protected override DriverResult Display(DisableThemePart part, string displayType, dynamic shapeHelper)
         {
-            if (AdminFilter.IsApplied(_httpContext.Request.RequestContext))
+            if (AdminFilter.IsApplied(_httpContext.Request.RequestContext()))
             {
                 return null;
             }
             return ContentShape("Parts_DisableTheme", () =>
             {
-                ThemeFilter.Disable(_httpContext.Request.RequestContext);
+                ThemeFilter.Disable(_httpContext.Request.RequestContext());
                 return null;
             });
         }

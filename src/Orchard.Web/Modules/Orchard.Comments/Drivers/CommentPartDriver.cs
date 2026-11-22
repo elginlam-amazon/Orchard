@@ -1,3 +1,4 @@
+using System.Web;
 using System;
 using System.Globalization;
 using System.Xml;
@@ -52,7 +53,7 @@ namespace Orchard.Comments.Drivers
         // GET
         protected override DriverResult Editor(CommentPart part, dynamic shapeHelper)
         {
-            if (UI.Admin.AdminFilter.IsApplied(_workContextAccessor.GetContext().HttpContext.Request.RequestContext))
+            if (UI.Admin.AdminFilter.IsApplied(_workContextAccessor.GetContext().HttpContext.Request.RequestContext()))
             {
                 return ContentShape("Parts_Comment_AdminEdit",
                     () => shapeHelper.EditorTemplate(TemplateName: "Parts.Comment.AdminEdit", Model: part, Prefix: Prefix));

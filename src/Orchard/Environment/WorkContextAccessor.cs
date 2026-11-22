@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.Remoting;
-using System.Runtime.Remoting.Messaging;
+using System.Threading;
 using System.Web;
 using Autofac;
 using Orchard.Logging;
@@ -12,6 +11,12 @@ namespace Orchard.Environment
 {
     public class WorkContextAccessor : ILogicalWorkContextAccessor
     {
+        // AsyncLocal replaces CallContext.LogicalSetData/GetData for .NET Core async-flow storage.
+        // A single static dictionary keyed by slot name so that each WorkContextAccessor instance
+        // (one per tenant, differentiated by _workContextSlot GUID) stores its own entry.
+        private static readonly AsyncLocal<Dictionary<string, WorkContext>> _asyncLocalContexts =
+            new AsyncLocal<Dictionary<string, WorkContext>>();
+
         readonly ILifetimeScope _lifetimeScope;
 
         readonly IHttpContextAccessor _httpContextAccessor;
@@ -45,8 +50,9 @@ namespace Orchard.Environment
 
         public WorkContext GetLogicalContext()
         {
-            var context = CallContext.LogicalGetData(_workContextSlot) as ObjectHandle;
-            return context != null ? context.Unwrap() as WorkContext : null;
+            if (_asyncLocalContexts.Value == null) return null;
+            _asyncLocalContexts.Value.TryGetValue(_workContextSlot, out var context);
+            return context;
         }
 
         public IWorkContextScope CreateWorkContextScope(HttpContextBase httpContext)
@@ -109,21 +115,33 @@ namespace Orchard.Environment
 
             public CallContextScopeImplementation(IEnumerable<IWorkContextEvents> events, ILifetimeScope lifetimeScope, string workContextSlot)
             {
-
-                CallContext.LogicalSetData(workContextSlot, null);
+                // Clear any existing context for this slot
+                SetSlotValue(workContextSlot, null);
 
                 WorkContext = lifetimeScope.Resolve<WorkContext>();
                 var httpContext = lifetimeScope.Resolve<HttpContextBase>();
                 WorkContext.HttpContext = httpContext;
 
-                CallContext.LogicalSetData(workContextSlot, new ObjectHandle(WorkContext));
+                SetSlotValue(workContextSlot, WorkContext);
 
                 _disposer = () =>
                 {
                     events.Invoke(e => e.Finished(), NullLogger.Instance);
-                    CallContext.FreeNamedDataSlot(workContextSlot);
+                    RemoveSlotValue(workContextSlot);
                     lifetimeScope.Dispose();
                 };
+            }
+
+            private static void SetSlotValue(string slot, WorkContext value)
+            {
+                if (_asyncLocalContexts.Value == null)
+                    _asyncLocalContexts.Value = new Dictionary<string, WorkContext>();
+                _asyncLocalContexts.Value[slot] = value;
+            }
+
+            private static void RemoveSlotValue(string slot)
+            {
+                _asyncLocalContexts.Value?.Remove(slot);
             }
 
             void IDisposable.Dispose()

@@ -13,7 +13,7 @@ namespace Orchard.DisplayManagement.Implementation
             _shapeFactory = shapeFactory;
         }
 
-        public dynamic CreateHelper(ViewContext viewContext, IViewDataContainer viewDataContainer)
+        public dynamic CreateHelper(ViewContext viewContext, object viewDataContainer)
         {
             return new DisplayHelper(
                 _displayManager,

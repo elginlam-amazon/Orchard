@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using Autofac;
 using Autofac.Core;
+using Autofac.Core.Registration;
+using Autofac.Core.Resolving.Pipeline;
 using Module = Autofac.Module;
 
 namespace Orchard.Localization
@@ -22,7 +24,7 @@ namespace Orchard.Localization
             builder.RegisterType<Text>().As<IText>().InstancePerDependency();
         }
 
-        protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
+        protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistry, IComponentRegistration registration)
         {
 
             var userProperty = FindUserProperty(registration.Activator.LimitType);
@@ -39,14 +41,16 @@ namespace Orchard.Localization
 
                 foreach (var scope in scopes)
                 {
-                    registration.Activated += (sender, e) =>
+                    var capturedScope = scope;
+                    registration.PipelineBuilding += (sender, pipeline) =>
                     {
-                        if (e.Instance.GetType().FullName != scope)
+                        pipeline.Use(PipelinePhase.Activation, MiddlewareInsertionMode.EndOfPhase, (ctxt, next) =>
                         {
-                            return;
-                        }
-                        var localizer = _localizerCache.GetOrAdd(scope, key => LocalizationUtilities.Resolve(e.Context, scopes));
-                        userProperty.SetValue(e.Instance, localizer, null);
+                            next(ctxt);
+                            if (ctxt.Instance?.GetType().FullName != capturedScope) return;
+                            var localizer = _localizerCache.GetOrAdd(capturedScope, key => LocalizationUtilities.Resolve(ctxt.ActivationScope, scopes));
+                            userProperty.SetValue(ctxt.Instance, localizer, null);
+                        });
                     };
                 }
             }

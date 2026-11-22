@@ -16,39 +16,11 @@ namespace Orchard.Mvc.Wrappers
             _httpRequestBase = httpRequestBase;
         }
 
-        public override byte[] BinaryRead(int count)
-        {
-            return _httpRequestBase.BinaryRead(count);
-        }
+        public override byte[] BinaryRead(int count) => _httpRequestBase.BinaryRead(count);
 
-        public override int[] MapImageCoordinates(string imageFieldName)
-        {
-            return _httpRequestBase.MapImageCoordinates(imageFieldName);
-        }
-
-        public override string MapPath(string virtualPath)
-        {
-            return _httpRequestBase.MapPath(virtualPath);
-        }
-
-        public override string MapPath(string virtualPath, string baseVirtualDir, bool allowCrossAppMapping)
-        {
-            return _httpRequestBase.MapPath(virtualPath, baseVirtualDir, allowCrossAppMapping);
-        }
-
-        public override void SaveAs(string filename, bool includeHeaders)
-        {
-            _httpRequestBase.SaveAs(filename, includeHeaders);
-        }
-
-        public override void ValidateInput()
-        {
-            _httpRequestBase.ValidateInput();
-        }
+        public override void SaveAs(string filename, bool includeHeaders) => _httpRequestBase.SaveAs(filename, includeHeaders);
 
         public override string[] AcceptTypes => _httpRequestBase.AcceptTypes;
-
-        public override string AnonymousID => _httpRequestBase.AnonymousID;
 
         public override string ApplicationPath => _httpRequestBase.ApplicationPath;
 
@@ -56,32 +28,17 @@ namespace Orchard.Mvc.Wrappers
 
         public override HttpBrowserCapabilitiesBase Browser => _httpRequestBase.Browser;
 
-        public override HttpClientCertificate ClientCertificate => _httpRequestBase.ClientCertificate;
-
         public override Encoding ContentEncoding
         {
-            get
-            {
-                return _httpRequestBase.ContentEncoding;
-            }
-            set
-            {
-                _httpRequestBase.ContentEncoding = value;
-            }
+            get => _httpRequestBase.ContentEncoding;
         }
 
         public override int ContentLength => _httpRequestBase.ContentLength;
 
         public override string ContentType
         {
-            get
-            {
-                return _httpRequestBase.ContentType;
-            }
-            set
-            {
-                _httpRequestBase.ContentType = value;
-            }
+            get => _httpRequestBase.ContentType;
+            set => _httpRequestBase.ContentType = value;
         }
 
         public override HttpCookieCollection Cookies => _httpRequestBase.Cookies;
@@ -91,18 +48,6 @@ namespace Orchard.Mvc.Wrappers
         public override string FilePath => _httpRequestBase.FilePath;
 
         public override HttpFileCollectionBase Files => _httpRequestBase.Files;
-
-        public override Stream Filter
-        {
-            get
-            {
-                return _httpRequestBase.Filter;
-            }
-            set
-            {
-                _httpRequestBase.Filter = value;
-            }
-        }
 
         public override NameValueCollection Form => _httpRequestBase.Form;
 
@@ -118,13 +63,7 @@ namespace Orchard.Mvc.Wrappers
 
         public override bool IsSecureConnection => _httpRequestBase.IsSecureConnection;
 
-        public override string this[string key]
-        {
-            get
-            {
-                return _httpRequestBase[key];
-            }
-        }
+        public override string this[string key] => _httpRequestBase[key];
 
         public override WindowsIdentity LogonUserIdentity => _httpRequestBase.LogonUserIdentity;
 
@@ -134,25 +73,13 @@ namespace Orchard.Mvc.Wrappers
 
         public override string PathInfo => _httpRequestBase.PathInfo;
 
-        public override string PhysicalApplicationPath => _httpRequestBase.PhysicalApplicationPath;
-
         public override string PhysicalPath => _httpRequestBase.PhysicalPath;
 
         public override NameValueCollection QueryString => _httpRequestBase.QueryString;
 
         public override string RawUrl => _httpRequestBase.RawUrl;
 
-        public override string RequestType
-        {
-            get
-            {
-                return _httpRequestBase.RequestType;
-            }
-            set
-            {
-                _httpRequestBase.RequestType = value;
-            }
-        }
+        public override string RequestType => _httpRequestBase.RequestType;
 
         public override NameValueCollection ServerVariables => _httpRequestBase.ServerVariables;
 
@@ -169,6 +96,5 @@ namespace Orchard.Mvc.Wrappers
         public override string UserHostName => _httpRequestBase.UserHostName;
 
         public override string[] UserLanguages => _httpRequestBase.UserLanguages;
-
     }
 }

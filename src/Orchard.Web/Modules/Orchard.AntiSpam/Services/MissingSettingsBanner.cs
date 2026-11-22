@@ -1,3 +1,4 @@
+using System.Web;
 using System.Collections.Generic;
 using System.Web.Mvc;
 using Orchard.AntiSpam.Models;
@@ -27,7 +28,7 @@ namespace Orchard.AntiSpam.Services
 
             if (RecaptchaSettings.PublicKey == null || RecaptchaSettings.PrivateKey == null)
             {
-                var urlHelper = new UrlHelper(workContext.HttpContext.Request.RequestContext);
+                var urlHelper = new UrlHelper(workContext.HttpContext.Request.RequestContext());
                 var url = urlHelper.Action("Spam", "Admin", new { Area = "Settings" });
                 yield return new NotifyEntry { Message = T("The <a href=\"{0}\">ReCaptcha settings</a> need to be configured.", url), Type = NotifyType.Warning };
             }

@@ -7,6 +7,6 @@ namespace Orchard.DisplayManagement
     /// </summary>
     public interface IDisplayHelperFactory : IDependency
     {
-        dynamic CreateHelper(ViewContext viewContext, IViewDataContainer viewDataContainer);
+        dynamic CreateHelper(ViewContext viewContext, object viewDataContainer);
     }
 }

@@ -145,7 +145,13 @@ namespace Orchard.Tokens.Tests
 
             public override bool TryResolve<T>(out T service)
             {
-                return _lifetimeScope.TryResolve<T>(out service);
+                if (_lifetimeScope.TryResolve(typeof(T), out var obj))
+                {
+                    service = (T)obj;
+                    return true;
+                }
+                service = default;
+                return false;
             }
 
             public override bool TryResolve(Type serviceType, out object service)

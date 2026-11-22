@@ -21,7 +21,7 @@ namespace Orchard.Users.Services
         {
             if (filterContext.Result is HttpUnauthorizedResult)
             {
-                filterContext.HttpContext.Response.SuppressFormsAuthenticationRedirect = true;
+                // filterContext.HttpContext.Response.SuppressFormsAuthenticationRedirect = true; // Not available on .NET Core
 
                 filterContext.Result = new RedirectToRouteResult(
                     new RouteValueDictionary

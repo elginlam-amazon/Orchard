@@ -93,6 +93,8 @@ namespace Orchard.Logging
             }
         }
 
+        public bool IsTraceEnabled => Logger.IsEnabledFor(Level.Verbose);
+
         public bool IsDebugEnabled => Logger.IsEnabledFor(Level.Debug);
 
         public bool IsErrorEnabled => Logger.IsEnabledFor(Level.Error);
@@ -115,6 +117,69 @@ namespace Orchard.Logging
         public virtual Logger CreateChildLogger(string name)
         {
             return Factory.Create(Logger.Name + "." + name);
+        }
+
+        public void Trace(string message)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Verbose, message, null);
+            }
+        }
+
+        public void Trace(Func<string> messageFactory)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Verbose, messageFactory.Invoke(), null);
+            }
+        }
+
+        public void Trace(string message, Exception exception)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Verbose, message, exception);
+            }
+        }
+
+        public void TraceFormat(string format, params object[] args)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Verbose, new SystemStringFormat(CultureInfo.InvariantCulture, format, args), null);
+            }
+        }
+
+        public void TraceFormat(Exception exception, string format, params object[] args)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Verbose, new SystemStringFormat(CultureInfo.InvariantCulture, format, args), exception);
+            }
+        }
+
+        public void TraceFormat(IFormatProvider formatProvider, string format, params object[] args)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Verbose, new SystemStringFormat(formatProvider, format, args), null);
+            }
+        }
+
+        public void TraceFormat(Exception exception, IFormatProvider formatProvider, string format, params object[] args)
+        {
+            if (IsTraceEnabled)
+            {
+                AddExtendedThreadInfo();
+                Logger.Log(declaringType, Level.Verbose, new SystemStringFormat(formatProvider, format, args), exception);
+            }
         }
 
         public void Debug(string message)

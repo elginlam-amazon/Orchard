@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
 
 namespace Orchard.ContentManagement.MetaData.Models
 {
@@ -10,16 +9,8 @@ namespace Orchard.ContentManagement.MetaData.Models
 
         public T TryGetModel<T>(string key) where T : class
         {
-            var binder = new DefaultModelBinder();
-            var controllerContext = new ControllerContext();
-            var context = new ModelBindingContext
-            {
-                ModelMetadata = ModelMetadataProviders.Current.GetMetadataForType(null, typeof(T)),
-                ModelName = key,
-                ValueProvider = new DictionaryValueProvider<string>(this, null)
-            };
-            return (T)binder.BindModel(controllerContext, context);
-
+            // Model binding from dictionary not supported in this migration stage
+            return null;
         }
 
         public T TryGetModel<T>() where T : class

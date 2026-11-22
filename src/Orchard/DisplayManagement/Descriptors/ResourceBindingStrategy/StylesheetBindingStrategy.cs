@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
-using System.Web.Hosting;
 using Orchard.Environment;
 using Orchard.Environment.Descriptor.Models;
 using Orchard.Environment.Extensions;
@@ -147,13 +146,7 @@ namespace Orchard.DisplayManagement.Descriptors.ResourceBindingStrategy
 
         private string GetPhysicalPath(string url)
         {
-            if (!string.IsNullOrEmpty(url) && !Uri.IsWellFormedUriString(url, UriKind.Absolute) && !url.StartsWith("//"))
-            {
-                if (VirtualPathUtility.IsAbsolute(url) || VirtualPathUtility.IsAppRelative(url))
-                {
-                    return HostingEnvironment.MapPath(url.Split(_queryStringChars)[0]);
-                }
-            }
+            // HostingEnvironment.MapPath not available in ASP.NET Core; return null to disable file hashing
             return null;
         }
 
@@ -183,7 +176,7 @@ namespace Orchard.DisplayManagement.Descriptors.ResourceBindingStrategy
         {
             // normalize urls that could be like ~/ or /OrchardLocal/ or /OrchardLocal/tenant-prefix
             // driving them to a ~/ format
-            var appRelativeUrl = System.Web.VirtualPathUtility.ToAppRelative(url);
+            var appRelativeUrl = VirtualPathUtility.ToAppRelative(url);
             var path = appRelativeUrl.TrimStart('~');
             var indexOfQueryString = path.IndexOf('?');
 

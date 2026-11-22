@@ -267,17 +267,7 @@ namespace Orchard.Environment.ShellBuilders
                     // Register code-only registrations specific to a shell
                     _shellContainerRegistrations.Registrations(builder);
 
-                    var optionalShellByNameConfig = HostingEnvironment.MapPath("~/Config/Sites." + settings.Name + ".config");
-                    if (File.Exists(optionalShellByNameConfig))
-                    {
-                        builder.RegisterModule(new ConfigurationSettingsReader(ConfigurationSettingsReaderConstants.DefaultSectionName, optionalShellByNameConfig));
-                    }
-                    else
-                    {
-                        var optionalShellConfig = HostingEnvironment.MapPath("~/Config/Sites.config");
-                        if (File.Exists(optionalShellConfig))
-                            builder.RegisterModule(new ConfigurationSettingsReader(ConfigurationSettingsReaderConstants.DefaultSectionName, optionalShellConfig));
-                    }
+                    // XML-based Autofac configuration (ConfigurationSettingsReader) not supported in .NET 10
 
                     var optionalComponentsConfig = HostingEnvironment.MapPath("~/Config/HostComponents.config");
                     if (File.Exists(optionalComponentsConfig))

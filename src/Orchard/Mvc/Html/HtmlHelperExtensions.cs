@@ -7,6 +7,7 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Mvc.Html;
 using System.Web.Routing;
+using Microsoft.AspNetCore.Routing;
 using Orchard.Localization;
 using Orchard.Utility;
 using Orchard.Utility.Extensions;
@@ -55,6 +56,9 @@ namespace Orchard.Mvc.Html
             tag.SetInnerText(labelText);
             return MvcHtmlString.Create(tag.ToString(TagRenderMode.Normal));
         }
+
+        public static IHtmlString LabelFor<TModel, TValue>(this HtmlHelper<TModel> html, Expression<Func<TModel, TValue>> expression, string labelText, object htmlAttributes)
+            => LabelFor(html, expression, labelText);
 
         public static MvcHtmlString SelectOption<T>(this HtmlHelper html, T currentValue, T optionValue, string text)
         {
@@ -471,7 +475,7 @@ namespace Orchard.Mvc.Html
 
         public static IHtmlString AntiForgeryTokenGetUrl(this HtmlHelper htmlHelper, string baseUrl)
         {
-            return new HtmlString(string.Format("{0}{1}__RequestVerificationToken={2}", baseUrl, baseUrl.IndexOf('?') > -1 ? "&" : "?", htmlHelper.ViewContext.HttpContext.Server.UrlEncode(htmlHelper.AntiForgeryTokenValueOrchard().ToString())));
+            return new HtmlString(string.Format("{0}{1}__RequestVerificationToken={2}", baseUrl, baseUrl.IndexOf('?') > -1 ? "&" : "?", System.Net.WebUtility.UrlEncode(htmlHelper.AntiForgeryTokenValueOrchard().ToString())));
         }
 
         #endregion

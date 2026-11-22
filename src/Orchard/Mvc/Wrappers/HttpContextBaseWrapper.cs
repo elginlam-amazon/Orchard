@@ -3,8 +3,6 @@ using System.Collections;
 using System.Globalization;
 using System.Security.Principal;
 using System.Web;
-using System.Web.Caching;
-using System.Web.Profile;
 
 namespace Orchard.Mvc.Wrappers
 {
@@ -25,31 +23,6 @@ namespace Orchard.Mvc.Wrappers
         public override void ClearError()
         {
             _httpContextBase.ClearError();
-        }
-
-        public override object GetGlobalResourceObject(string classKey, string resourceKey)
-        {
-            return _httpContextBase.GetGlobalResourceObject(classKey, resourceKey);
-        }
-
-        public override object GetGlobalResourceObject(string classKey, string resourceKey, CultureInfo culture)
-        {
-            return _httpContextBase.GetGlobalResourceObject(classKey, resourceKey, culture);
-        }
-
-        public override object GetLocalResourceObject(string virtualPath, string resourceKey)
-        {
-            return _httpContextBase.GetLocalResourceObject(virtualPath, resourceKey);
-        }
-
-        public override object GetLocalResourceObject(string virtualPath, string resourceKey, CultureInfo culture)
-        {
-            return _httpContextBase.GetLocalResourceObject(virtualPath, resourceKey, culture);
-        }
-
-        public override object GetSection(string sectionName)
-        {
-            return _httpContextBase.GetSection(sectionName);
         }
 
         public override object GetService(Type serviceType)
@@ -83,47 +56,24 @@ namespace Orchard.Mvc.Wrappers
 
         public override HttpApplication ApplicationInstance
         {
-            get
-            {
-                return _httpContextBase.ApplicationInstance;
-            }
-            set
-            {
-                _httpContextBase.ApplicationInstance = value;
-            }
+            get => _httpContextBase.ApplicationInstance;
         }
 
-        public override Cache Cache => _httpContextBase.Cache;
-
         public override IHttpHandler CurrentHandler => _httpContextBase.CurrentHandler;
-
-        public override RequestNotification CurrentNotification => _httpContextBase.CurrentNotification;
 
         public override Exception Error => _httpContextBase.Error;
 
         public override IHttpHandler Handler
         {
-            get
-            {
-                return _httpContextBase.Handler;
-            }
-            set
-            {
-                _httpContextBase.Handler = value;
-            }
+            get => _httpContextBase.Handler;
+            set => _httpContextBase.Handler = value;
         }
 
-        public override bool IsCustomErrorEnabled => _httpContextBase.IsCustomErrorEnabled;
-
         public override bool IsDebuggingEnabled => _httpContextBase.IsDebuggingEnabled;
-
-        public override bool IsPostNotification => _httpContextBase.IsDebuggingEnabled;
 
         public override IDictionary Items => _httpContextBase.Items;
 
         public override IHttpHandler PreviousHandler => _httpContextBase.PreviousHandler;
-
-        public override ProfileBase Profile => _httpContextBase.Profile;
 
         public override HttpRequestBase Request => _httpContextBase.Request;
 
@@ -133,34 +83,12 @@ namespace Orchard.Mvc.Wrappers
 
         public override HttpSessionStateBase Session => _httpContextBase.Session;
 
-        public override bool SkipAuthorization
-        {
-            get
-            {
-                return _httpContextBase.SkipAuthorization;
-            }
-            set
-            {
-                _httpContextBase.SkipAuthorization = value;
-            }
-        }
-
         public override DateTime Timestamp => _httpContextBase.Timestamp;
-
-        public override TraceContext Trace => _httpContextBase.Trace;
 
         public override IPrincipal User
         {
-            get
-            {
-                return _httpContextBase.User;
-            }
-            set
-            {
-                _httpContextBase.User = value;
-            }
+            get => _httpContextBase.User;
+            set => _httpContextBase.User = value;
         }
-
-
     }
 }

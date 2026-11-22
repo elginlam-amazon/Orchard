@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Timers;
-using System.Web.Compilation;
+using Timer = System.Timers.Timer;
+using ElapsedEventArgs = System.Timers.ElapsedEventArgs;
 using Orchard.Exceptions;
 using Orchard.FileSystems.VirtualPath;
 using Orchard.Logging;
@@ -149,8 +149,10 @@ namespace Orchard.Environment
                     .Where(f => context.FileExtensionsToCompile.Any(e => f.EndsWith(e, StringComparison.OrdinalIgnoreCase)))
                     .FirstOrDefault();
 
+                // System.Web.Compilation.BuildManager.GetCompiledAssembly is not available in .NET Core.
+                // Razor views are compiled by the runtime; background pre-compilation is a no-op here.
                 if (firstFile != null)
-                    BuildManager.GetCompiledAssembly(firstFile);
+                    Logger.Debug("Background view compilation skipped for '{0}' (not supported on .NET Core).", firstFile);
             }
             catch (Exception ex)
             {

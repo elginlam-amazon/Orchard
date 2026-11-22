@@ -16,8 +16,8 @@ namespace Orchard.Localization.Selectors
             // Attempt to determine culture by route.
             // This normally happens when you are using non standard pages that are not content items
             // {culture}/foo or ?culture={culture}
-            var routeCulture = context.Request.RequestContext.RouteData.Values["culture"] ??
-                context.Request.RequestContext.HttpContext.Request.Params["culture"];
+            var routeCulture = context.Request.RequestContext().RouteData.Values["culture"] ??
+                context.Request.RequestContext().HttpContext.Request.Params["culture"];
             if (routeCulture != null && !string.IsNullOrWhiteSpace(routeCulture.ToString()))
             {
                 try

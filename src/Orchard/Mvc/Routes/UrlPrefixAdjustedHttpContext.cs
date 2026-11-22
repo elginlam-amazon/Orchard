@@ -16,10 +16,7 @@ namespace Orchard.Mvc.Routes
 
         public override HttpRequestBase Request => new AdjustedRequest(_httpContextBase.Request, _prefix);
 
-        public override void SetSessionStateBehavior(SessionStateBehavior sessionStateBehavior)
-        {
-            _httpContextBase.SetSessionStateBehavior(sessionStateBehavior);
-        }
+        // SetSessionStateBehavior removed: not in slim HttpContextBase from SystemWebAdapters 2.3.0
 
         class AdjustedRequest : HttpRequestBaseWrapper
         {

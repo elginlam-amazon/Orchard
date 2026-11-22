@@ -1,12 +1,15 @@
 using System;
 using System.Collections;
+using Autofac;
 using Autofac.Core;
+using Autofac.Core.Registration;
+using Autofac.Core.Resolving.Pipeline;
 
 namespace Orchard.Environment
 {
     internal class CollectionOrderModule : IModule
     {
-        public void Configure(IComponentRegistry componentRegistry)
+        public void Configure(IComponentRegistryBuilder componentRegistry)
         {
             componentRegistry.Registered += (sender, registered) =>
             {
@@ -14,14 +17,16 @@ namespace Orchard.Environment
                 var limitType = registered.ComponentRegistration.Activator.LimitType;
                 if (typeof(IEnumerable).IsAssignableFrom(limitType))
                 {
-                    registered.ComponentRegistration.Activated += (sender2, activated) =>
+                    registered.ComponentRegistration.PipelineBuilding += (sender2, pipeline) =>
                     {
-                        // Autofac's IEnumerable feature returns an Array
-                        if (activated.Instance is Array)
+                        pipeline.Use(PipelinePhase.Activation, MiddlewareInsertionMode.EndOfPhase, (ctxt, next) =>
                         {
-                            // Orchard needs FIFO, not FILO, component order
-                            Array.Reverse((Array)activated.Instance);
-                        }
+                            next(ctxt);
+                            if (ctxt.Instance is Array arr)
+                            {
+                                Array.Reverse(arr);
+                            }
+                        });
                     };
                 }
             };

@@ -82,7 +82,7 @@ namespace Orchard.Setup.Controllers
         public ActionResult IndexPOST(SetupViewModel model)
         {
             // Sets the setup request timeout to a configurable amount of seconds to give enough time to execute custom recipes.
-            HttpContext.Server.ScriptTimeout = RecipeExecutionTimeout;
+            // HttpContext.Server.ScriptTimeout = RecipeExecutionTimeout; // ScriptTimeout not available on .NET Core
 
             var recipes = _setupService.Recipes().ToList();
 

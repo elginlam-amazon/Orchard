@@ -93,7 +93,7 @@ namespace Orchard.Tests.Stubs
                 _httpContext = httpContext;
             }
 
-            public override string ApplyAppPathModifier(string virtualPath)
+            public new string ApplyAppPathModifier(string virtualPath)
             {
                 return "~/" + virtualPath.TrimStart('/');
             }

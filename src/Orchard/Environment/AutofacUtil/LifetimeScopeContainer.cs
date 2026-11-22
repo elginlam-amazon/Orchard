@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.Loader;
+using System.Threading.Tasks;
 using Autofac;
 using Autofac.Core;
 using Autofac.Core.Lifetime;
@@ -16,16 +19,20 @@ namespace Orchard.Environment.AutofacUtil
             _lifetimeScope = lifetimeScope;
         }
 
-        public object ResolveComponent(IComponentRegistration registration, IEnumerable<Parameter> parameters)
+        public object ResolveComponent(in ResolveRequest request)
         {
-            return _lifetimeScope.ResolveComponent(registration, parameters);
+            return _lifetimeScope.ResolveComponent(in request);
         }
 
         public IComponentRegistry ComponentRegistry => _lifetimeScope.ComponentRegistry;
 
+        public DiagnosticListener DiagnosticSource => (_lifetimeScope as IContainer)?.DiagnosticSource ?? new DiagnosticListener("Orchard");
+
         public void Dispose()
         {
         }
+
+        public ValueTask DisposeAsync() => _lifetimeScope.DisposeAsync();
 
         public ILifetimeScope BeginLifetimeScope()
         {
@@ -45,6 +52,16 @@ namespace Orchard.Environment.AutofacUtil
         public ILifetimeScope BeginLifetimeScope(object tag, Action<ContainerBuilder> configurationAction)
         {
             return _lifetimeScope.BeginLifetimeScope(tag, configurationAction);
+        }
+
+        public ILifetimeScope BeginLoadContextLifetimeScope(AssemblyLoadContext loadContext, Action<ContainerBuilder> configurationAction)
+        {
+            return _lifetimeScope.BeginLoadContextLifetimeScope(loadContext, configurationAction);
+        }
+
+        public ILifetimeScope BeginLoadContextLifetimeScope(object tag, AssemblyLoadContext loadContext, Action<ContainerBuilder> configurationAction)
+        {
+            return _lifetimeScope.BeginLoadContextLifetimeScope(tag, loadContext, configurationAction);
         }
 
         public IDisposer Disposer => _lifetimeScope.Disposer;

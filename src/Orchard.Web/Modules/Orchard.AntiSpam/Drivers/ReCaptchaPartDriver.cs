@@ -1,3 +1,4 @@
+using System.Web;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -45,7 +46,7 @@ namespace Orchard.AntiSpam.Drivers
             {
                 var workContext = _workContextAccessor.GetContext();
                 // don't display the part in the admin
-                if (AdminFilter.IsApplied(workContext.HttpContext.Request.RequestContext))
+                if (AdminFilter.IsApplied(workContext.HttpContext.Request.RequestContext()))
                 {
                     return null;
                 }
@@ -72,7 +73,7 @@ namespace Orchard.AntiSpam.Drivers
             var settings = workContext.CurrentSite.As<ReCaptchaSettingsPart>();
 
             // don't display the part in the admin
-            if (AdminFilter.IsApplied(workContext.HttpContext.Request.RequestContext))
+            if (AdminFilter.IsApplied(workContext.HttpContext.Request.RequestContext()))
             {
                 return null;
             }

@@ -1,3 +1,4 @@
+using System.Web;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -92,7 +93,7 @@ namespace Orchard.Layouts.Drivers
 
             var shapeHelper = New;
             var request = _workContextAccessor.GetContext().HttpContext.Request;
-            var routeData = request.RequestContext.RouteData;
+            var routeData = request.RequestContext().RouteData;
             var selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, routeData);
             var menuShape = shapeHelper.Menu();
             var topLevelItems = menuItems.ToList();

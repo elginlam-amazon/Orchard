@@ -51,7 +51,7 @@ namespace Orchard.ImageEditor.Controllers
         [Themed(false)]
         public ActionResult Edit(string folderPath, string filename)
         {
-            if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.EditMediaContent, folderPath))
+            if (!_mediaLibraryService.CheckMediaFolderPermission(Orchard.MediaLibrary.Permissions.EditMediaContent, folderPath))
                 return new HttpUnauthorizedResult();
 
             // Check permission.
@@ -82,7 +82,7 @@ namespace Orchard.ImageEditor.Controllers
         [HttpPost]
         public ActionResult Upload(int id, string content, int width, int height)
         {
-            if (!Services.Authorizer.Authorize(Permissions.ManageOwnMedia))
+            if (!Services.Authorizer.Authorize(Orchard.MediaLibrary.Permissions.ManageOwnMedia))
                 return new HttpUnauthorizedResult();
 
             var media = Services.ContentManager.Get(id).As<MediaPart>();
@@ -94,7 +94,7 @@ namespace Orchard.ImageEditor.Controllers
 
             // Check permission.
             var rootMediaFolder = _mediaLibraryService.GetRootMediaFolder();
-            if (!Services.Authorizer.Authorize(Permissions.ImportMediaContent) && !_mediaLibraryService.CanManageMediaFolder(media.FolderPath))
+            if (!Services.Authorizer.Authorize(Orchard.MediaLibrary.Permissions.ImportMediaContent) && !_mediaLibraryService.CanManageMediaFolder(media.FolderPath))
             {
                 return new HttpUnauthorizedResult();
             }
@@ -136,7 +136,7 @@ namespace Orchard.ImageEditor.Controllers
 
         public ActionResult Proxy(string url)
         {
-            if (!Services.Authorizer.Authorize(Permissions.ManageOwnMedia))
+            if (!Services.Authorizer.Authorize(Orchard.MediaLibrary.Permissions.ManageOwnMedia))
                 return HttpNotFound();
 
             var sslFailureCallback = new RemoteCertificateValidationCallback((o, cert, chain, errors) => true);
