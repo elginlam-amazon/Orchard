@@ -1,0 +1,9 @@
+<Project>
+  <!-- Global using aliases for types that moved in .NET 10 migration (net10.0 targets only) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <!-- RouteValueDictionary is in Microsoft.AspNetCore.Routing, not System.Web.Routing -->
+    <Using Include="Microsoft.AspNetCore.Routing.RouteValueDictionary" Alias="RouteValueDictionary" />
+    <!-- ModelStateDictionary is in Microsoft.AspNetCore.Mvc.ModelBinding, used widely as System.Web.Mvc.ModelStateDictionary -->
+    <Using Include="Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary" Alias="ModelStateDictionary" />
+  </ItemGroup>
+</Project>

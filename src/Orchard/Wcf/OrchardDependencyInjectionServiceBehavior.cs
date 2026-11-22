@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.ServiceModel;
-using System.ServiceModel.Channels;
-using System.ServiceModel.Description;
-using System.ServiceModel.Dispatcher;
+using CoreWCF;
+using CoreWCF.Channels;
+using CoreWCF.Description;
+using CoreWCF.Dispatcher;
 using Autofac.Core;
 
 namespace Orchard.Wcf

@@ -49,7 +49,7 @@ namespace Orchard.Workflows.Tokens
                            }
 
                            var url = "~/Workflows/Signal/Trigger?nonce=" + HttpUtility.UrlEncode(_signalService.Value.CreateNonce(contentItemId, token));
-                           return new UrlHelper(_workContextAccessor.GetContext().HttpContext.Request.RequestContext).MakeAbsolute(url);
+                           return new UrlHelper(_workContextAccessor.GetContext().HttpContext.Request.RequestContext()).MakeAbsolute(url);
                        });
         }
     }

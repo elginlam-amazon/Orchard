@@ -1,5 +1,5 @@
 using System;
-using System.Web.Security;
+using Orchard.Security;
 using Orchard.ContentManagement.Drivers;
 using Orchard.Users.Models;
 

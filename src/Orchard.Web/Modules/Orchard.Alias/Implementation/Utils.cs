@@ -43,7 +43,7 @@ namespace Orchard.Alias.Implementation
                 areaName = Convert.ToString(value, CultureInfo.InvariantCulture);
 
             var virtualPathDatas = routeDescriptors.Where(r2 => r2.Route.GetAreaName() == areaName)
-                .Invoke(r2 => r2.Route.GetVirtualPath(httpContext.Request.RequestContext, routeValues), NullLogger.Instance)
+                .Invoke(r2 => r2.Route.GetVirtualPath(httpContext.Request.RequestContext(), routeValues), NullLogger.Instance)
                 .Where(vp => vp != null)
                 .ToArray();
 
@@ -59,7 +59,7 @@ namespace Orchard.Alias.Implementation
 
             var routeValueDictionary = new RouteValueDictionary(routeValues.ToDictionary(kv => RemoveDash(kv.Key), kv => (object)kv.Value));
             var virtualPathDatas = routeDescriptors.Where(r2 => r2.Route.GetAreaName() == areaName)
-                .Invoke(r2 => r2.Route.GetVirtualPath(httpContext.Request.RequestContext, routeValueDictionary), NullLogger.Instance)
+                .Invoke(r2 => r2.Route.GetVirtualPath(httpContext.Request.RequestContext(), routeValueDictionary), NullLogger.Instance)
                 .Where(vp => vp != null)
                 .ToArray();
 

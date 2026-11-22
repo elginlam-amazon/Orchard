@@ -71,7 +71,7 @@ namespace Orchard.Templates.Services
                         obj.WebPageContext = new WebPageContext(displayContext.ViewContext.HttpContext, obj as WebPageRenderingBase, model);
                         obj.ViewContext = shapeViewContext;
 
-                        obj.ViewData = new ViewDataDictionary(displayContext.ViewDataContainer.ViewData) { Model = model };
+                        obj.ViewData = new ViewDataDictionary((displayContext.ViewDataContainer as System.Web.Mvc.IViewDataContainer)?.ViewData) { Model = model };
                         obj.InitHelpers();
                     }
                     else
@@ -82,7 +82,7 @@ namespace Orchard.Templates.Services
                         var viewData = new ViewDataDictionary(model);
                         obj.ViewContext = new ViewContext(
                             new ControllerContext(
-                                _httpContextBase.Request.RequestContext,
+                                _httpContextBase.Request.RequestContext(),
                                 new StubController()),
                                 new StubView(),
                                 viewData,

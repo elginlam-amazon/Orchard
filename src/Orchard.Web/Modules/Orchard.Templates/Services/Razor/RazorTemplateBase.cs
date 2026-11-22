@@ -26,6 +26,15 @@ namespace Orchard.Templates.Compilation.Razor
     public abstract class RazorTemplateBase<T> : Mvc.ViewEngines.Razor.WebViewPage<T>, IRazorTemplateBase<T>
     {
         public WebPageContext WebPageContext { get; set; }
+
+        // Explicit implementations to satisfy IRazorTemplateBase (non-generic) interface
+        dynamic IRazorTemplateBase.Model => (dynamic)(object)Model;
+        ViewDataDictionary IRazorTemplateBase.ViewData
+        {
+            get => ViewData;
+            set => ViewData = (ViewDataDictionary<T>)value;
+        }
+
         public virtual void Render(TextWriter writer)
         {
             InitHelpers();

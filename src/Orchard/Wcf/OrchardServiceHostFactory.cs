@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using System.ServiceModel;
-using System.ServiceModel.Activation;
+using CoreWCF;
+using CoreWCF.Configuration;
 using Autofac;
 using Autofac.Core;
 using Orchard.Environment;

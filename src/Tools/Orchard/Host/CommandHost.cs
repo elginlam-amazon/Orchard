@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Remoting;
-using System.Runtime.Remoting.Lifetime;
 using System.Security;
 using System.Web.Hosting;
 using Orchard.Parameters;
@@ -33,7 +31,7 @@ namespace Orchard.Host
 
         public CommandHost()
         {
-            HostingEnvironment.RegisterObject(this);
+            // HostingEnvironment.RegisterObject not available in net10
         }
 
         [SecurityCritical]
@@ -54,17 +52,13 @@ namespace Orchard.Host
 
         private static void ExtendLifeTimeLease(MarshalByRefObject obj)
         {
-            if (RemotingServices.IsObjectOutOfAppDomain(obj))
-            {
-                var lease = (ILease)RemotingServices.GetLifetimeService(obj);
-                lease.Renew(TimeSpan.FromDays(30));
-            }
+            // .NET Remoting not available in net10 - lease management is a no-op
         }
 
         [SecuritySafeCritical]
         void IRegisteredObject.Stop(bool immediate)
         {
-            HostingEnvironment.UnregisterObject(this);
+            // HostingEnvironment.UnregisterObject not available in net10
         }
 
         public CommandReturnCodes StartSession(TextReader input, TextWriter output)

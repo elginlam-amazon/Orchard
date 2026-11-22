@@ -85,7 +85,7 @@ namespace Orchard.Tokens.Providers
         private static string GetRouteValue(string token, HttpRequestBase request)
         {
             object result;
-            return !request.RequestContext.RouteData.Values.TryGetValue(token, out result) ? string.Empty : result.ToString();
+            return !request.RequestContext().RouteData.Values.TryGetValue(token, out result) ? string.Empty : result.ToString();
         }
 
         private ContentItem GetRoutedContentItem(HttpRequestBase request)

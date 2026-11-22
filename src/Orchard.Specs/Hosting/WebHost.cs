@@ -134,11 +134,12 @@ namespace Orchard.Specs.Hosting
             PhysicalDirectory = _tempSite;
             VirtualDirectory = virtualDirectory;
 
-            _webHostAgent = (WebHostAgent)ApplicationHost.CreateApplicationHost(typeof(WebHostAgent), VirtualDirectory, PhysicalDirectory);
-
+            // ApplicationHost.CreateApplicationHost not available on .NET Core - cross-AppDomain hosting not supported
+            _webHostAgent = new WebHostAgent();
 
             var shuttle = new Shuttle();
-            Execute(() => { shuttle.CodeGenDir = HttpRuntime.CodegenDir; });
+            // HttpRuntime.CodegenDir not available on .NET Core
+            Execute(() => { shuttle.CodeGenDir = new Path(System.IO.Path.GetTempPath()); });
 
             // ASP.NET folder seems to be always nested into an empty directory
             _codeGenDir = shuttle.CodeGenDir;

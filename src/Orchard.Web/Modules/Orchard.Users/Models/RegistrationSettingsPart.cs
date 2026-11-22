@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.Web.Security;
+using Orchard.Security;
 using Orchard.ContentManagement;
 using Orchard.Security;
 

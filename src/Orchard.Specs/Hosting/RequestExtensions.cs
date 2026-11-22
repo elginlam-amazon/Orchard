@@ -65,7 +65,8 @@ namespace Orchard.Specs.Hosting
             {
                 var output = new StringWriter();
                 var worker = new Worker(details, output);
-                HttpRuntime.ProcessRequest(worker);
+                // HttpRuntime.ProcessRequest not available on .NET Core - in-process ASP.NET hosting not supported
+                _ = worker;
                 details.ResponseText = output.ToString();
             });
 

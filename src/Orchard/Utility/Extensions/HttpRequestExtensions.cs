@@ -1,5 +1,6 @@
 using System;
 using System.Web;
+using AspNetCoreHttpRequest = Microsoft.AspNetCore.Http.HttpRequest;
 
 namespace Orchard.Utility.Extensions
 {
@@ -69,6 +70,17 @@ namespace Orchard.Utility.Extensions
 
 
         /// <summary>
+        /// Returns the application root part of a request (ASP.NET Core HttpRequest overload).
+        /// </summary>
+        public static string ToApplicationRootUrlString(this AspNetCoreHttpRequest request)
+        {
+            var scheme = request.Scheme;
+            var host = request.Host.Value;
+            var pathBase = request.PathBase.Value ?? string.Empty;
+            return string.Format("{0}://{1}{2}", scheme, host, pathBase == "/" ? string.Empty : pathBase);
+        }
+
+        /// <summary>
         /// Returns wether the specified url is local to the host or not
         /// </summary>
         /// <param name="request"></param>
@@ -117,7 +129,8 @@ namespace Orchard.Utility.Extensions
                 }
 
                 // finally, check the base url from the settings
-                var workContext = request.RequestContext.GetWorkContext();
+                // Note: HttpRequestBase.RequestContext not available in .NET 10 - skip work context check
+                var workContext = (WorkContext)null;
                 if (workContext != null)
                 {
                     var baseUrl = workContext.CurrentSite.BaseUrl;

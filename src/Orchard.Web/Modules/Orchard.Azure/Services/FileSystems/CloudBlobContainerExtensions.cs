@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.Azure.Storage.Blob;
 
 namespace Orchard.Azure.Services.FileSystems
 {

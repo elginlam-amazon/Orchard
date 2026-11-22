@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
+using Newtonsoft.Json;
 using Orchard.Environment.Configuration;
 using Orchard.Environment.Extensions;
 using Orchard.Logging;
@@ -191,18 +192,16 @@ namespace Orchard.Redis.OutputCache
 
         private static MemoryStream Serialize(CacheItem item)
         {
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
-            var memoryStream = new MemoryStream();
-            binaryFormatter.Serialize(memoryStream, item);
-            memoryStream.Seek(0, SeekOrigin.Begin);
-            return memoryStream;
+            var json = JsonConvert.SerializeObject(item);
+            var bytes = Encoding.UTF8.GetBytes(json);
+            return new MemoryStream(bytes);
         }
 
         private static CacheItem Deserialize(Stream stream)
         {
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
-            var result = (CacheItem)binaryFormatter.Deserialize(stream);
-            return result;
+            using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
+            var json = reader.ReadToEnd();
+            return JsonConvert.DeserializeObject<CacheItem>(json);
         }
 
         private static MemoryStream Compress(Stream stream)

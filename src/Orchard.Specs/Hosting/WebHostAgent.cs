@@ -13,7 +13,7 @@ namespace Orchard.Specs.Hosting
 
         public void Shutdown()
         {
-            HostingEnvironment.InitiateShutdown();
+            // HostingEnvironment.InitiateShutdown() not available on .NET Core
         }
     }
 }

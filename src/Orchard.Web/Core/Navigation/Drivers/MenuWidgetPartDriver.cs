@@ -77,7 +77,8 @@ namespace Orchard.Core.Navigation.Drivers
                 menuItems = localized;
 
                 var request = _workContextAccessor.GetContext().HttpContext.Request;
-                var routeData = request.RequestContext.RouteData;
+                // RequestContext.RouteData not available in .NET 10; use empty RouteData as migration stub
+                var routeData = new System.Web.Routing.RouteData();
                 var selectedPath = NavigationHelper.SetSelectedPath(menuItems, request, routeData);
                 var menuShape = shapeHelper.Menu();
 

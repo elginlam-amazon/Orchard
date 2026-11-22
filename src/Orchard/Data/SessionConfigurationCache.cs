@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using NHibernate.Cfg;
 using Orchard.Environment;
 using Orchard.Environment.Configuration;
@@ -82,73 +81,13 @@ namespace Orchard.Data
 
         private void StoreConfiguration(ConfigurationCache cache)
         {
-            var pathName = GetPathName(_shellSettings.Name);
-
-            try
-            {
-                var formatter = new BinaryFormatter();
-                using (var stream = _appDataFolder.CreateFile(pathName))
-                {
-                    formatter.Serialize(stream, cache.Hash);
-                    formatter.Serialize(stream, cache.Configuration);
-                }
-            }
-            catch (SerializationException ex)
-            {
-                //Note: This can happen when multiple processes/AppDomains try to save
-                //      the cached configuration at the same time. Only one concurrent
-                //      writer will win, and it's harmless for the other ones to fail.
-                for (Exception scan = ex; scan != null; scan = scan.InnerException)
-                    Logger.Warning("Error storing new NHibernate cache configuration: {0}", scan.Message);
-            }
+            // BinaryFormatter removed in .NET 10 - disk caching disabled; in-memory cache still works
         }
 
         private ConfigurationCache ReadConfiguration(string hash)
         {
-            var pathName = GetPathName(_shellSettings.Name);
-
-            if (!_appDataFolder.FileExists(pathName))
-                return null;
-
-            try
-            {
-                var formatter = new BinaryFormatter();
-                using (var stream = _appDataFolder.OpenFile(pathName))
-                {
-
-                    // if the stream is empty, stop here
-                    if (stream.Length == 0)
-                    {
-                        return null;
-                    }
-
-                    var oldHash = (string)formatter.Deserialize(stream);
-                    if (hash != oldHash)
-                    {
-                        Logger.Information("The cached NHibernate configuration is out of date. A new one will be re-generated.");
-                        return null;
-                    }
-
-                    var oldConfig = (Configuration)formatter.Deserialize(stream);
-
-                    return new ConfigurationCache
-                    {
-                        Hash = oldHash,
-                        Configuration = oldConfig
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                if (ex.IsFatal())
-                {
-                    throw;
-                }
-                for (var scan = ex; scan != null; scan = scan.InnerException)
-                    Logger.Warning("Error reading the cached NHibernate configuration: {0}", scan.Message);
-                Logger.Information("A new one will be re-generated.");
-                return null;
-            }
+            // BinaryFormatter removed in .NET 10 - disk cache disabled; in-memory cache still works
+            return null;
         }
 
         private Hash ComputeHash()

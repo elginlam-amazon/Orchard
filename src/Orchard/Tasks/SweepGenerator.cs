@@ -1,7 +1,8 @@
 using System;
-using System.Timers;
 using Orchard.Exceptions;
 using Orchard.Logging;
+using Timer = System.Timers.Timer;
+using ElapsedEventArgs = System.Timers.ElapsedEventArgs;
 
 namespace Orchard.Tasks
 {

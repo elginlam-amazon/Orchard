@@ -1,6 +1,5 @@
 using System.CodeDom;
 using System.Reflection;
-using System.Web.Compilation;
 
 namespace Orchard.Environment
 {
@@ -10,25 +9,11 @@ namespace Orchard.Environment
         void AddAssemblyReference(Assembly assembly);
     }
 
+    // AspNetAssemblyBuilder was removed: System.Web.Compilation.AssemblyBuilder and BuildProvider
+    // do not exist in .NET Core. The Roslyn/Razor compilation pipeline is used instead.
     public class AspNetAssemblyBuilder : IAssemblyBuilder
     {
-        private readonly AssemblyBuilder _assemblyBuilder;
-        private readonly BuildProvider _buildProvider;
-
-        public AspNetAssemblyBuilder(AssemblyBuilder assemblyBuilder, BuildProvider buildProvider)
-        {
-            _assemblyBuilder = assemblyBuilder;
-            _buildProvider = buildProvider;
-        }
-
-        public void AddCodeCompileUnit(CodeCompileUnit compileUnit)
-        {
-            _assemblyBuilder.AddCodeCompileUnit(_buildProvider, compileUnit);
-        }
-
-        public void AddAssemblyReference(Assembly assembly)
-        {
-            _assemblyBuilder.AddAssemblyReference(assembly);
-        }
+        public void AddCodeCompileUnit(CodeCompileUnit compileUnit) { }
+        public void AddAssemblyReference(Assembly assembly) { }
     }
 }

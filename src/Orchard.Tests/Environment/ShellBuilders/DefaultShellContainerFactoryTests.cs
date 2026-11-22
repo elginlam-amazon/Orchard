@@ -4,6 +4,7 @@ using System.Web.Http.Controllers;
 using System.Web.Mvc;
 using Autofac;
 using Autofac.Core;
+using Autofac.Core.Registration;
 using Autofac.Core.Lifetime;
 using Autofac.Features.Indexed;
 using Autofac.Features.Metadata;
@@ -124,7 +125,7 @@ namespace Orchard.Tests.Environment.ShellBuilders
 
         public class TestModule : Module
         {
-            protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
+            protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistryBuilder, IComponentRegistration registration)
             {
                 registration.Metadata["Hello"] = "World";
             }
@@ -348,12 +349,10 @@ namespace Orchard.Tests.Environment.ShellBuilders
                 builder.RegisterType<ProxIntercept>();
             }
 
-            protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
+            protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistryBuilder, IComponentRegistration registration)
             {
                 if (registration.Activator.LimitType == typeof(ProxDependency))
-                {
                     registration.InterceptedBy<ProxIntercept>();
-                }
             }
         }
 

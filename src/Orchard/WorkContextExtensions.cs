@@ -3,6 +3,7 @@ using System.Web.Http.Controllers;
 using System.Web.Mvc;
 using System.Web.Routing;
 using Autofac;
+using AspNetActionContext = Microsoft.AspNetCore.Mvc.ActionContext;
 
 namespace Orchard
 {
@@ -91,6 +92,22 @@ namespace Orchard
                 return null;
 
             return GetWorkContext(controllerContext.RequestContext);
+        }
+
+        public static WorkContext GetWorkContext(this AspNetActionContext actionContext)
+        {
+            if (actionContext == null)
+                return null;
+
+            var routeData = actionContext.RouteData;
+            if (routeData?.DataTokens == null)
+                return null;
+
+            if (!routeData.DataTokens.TryGetValue("IWorkContextAccessor", out var workContextValue) || !(workContextValue is IWorkContextAccessor))
+                return null;
+
+            var workContextAccessor = (IWorkContextAccessor)workContextValue;
+            return workContextAccessor.GetContext();
         }
 
         public static IWorkContextScope CreateWorkContextScope(this ILifetimeScope lifetimeScope, HttpContextBase httpContext)

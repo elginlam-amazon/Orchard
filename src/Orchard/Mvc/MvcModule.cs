@@ -5,9 +5,6 @@ using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
 using System.Web;
-using System.Web.Caching;
-using System.Web.Hosting;
-using System.Web.Instrumentation;
 using System.Web.Mvc;
 using System.Web.Routing;
 using Autofac;
@@ -32,23 +29,15 @@ namespace Orchard.Mvc
 
         static HttpContextBase HttpContextBaseFactory(IComponentContext context)
         {
-
             var httpContext = context.Resolve<IHttpContextAccessor>().Current();
             if (httpContext != null)
                 return httpContext;
 
             var siteService = context.Resolve<ISiteService>();
 
-            // Wrapping the code accessing the SiteSettings in a function that will be executed later (in HttpContextPlaceholder),
-            // so that the RequestContext will have been established when the time comes to actually load the site settings,
-            // which requires activating the Site content item, which in turn requires a UrlHelper, which in turn requires a RequestContext,
-            // thus preventing a StackOverflowException.
-
             var baseUrl = new Func<string>(() =>
             {
                 var s = siteService.GetSiteSettings().BaseUrl;
-
-                // When Setup is running from the command line, no BaseUrl exists yet.
                 return string.IsNullOrEmpty(s) ? "http://localhost" : s;
             });
 
@@ -57,12 +46,10 @@ namespace Orchard.Mvc
 
         static RequestContext RequestContextFactory(IComponentContext context)
         {
-
             var httpContext = HttpContextBaseFactory(context);
 
             if (!httpContext.IsBackgroundContext())
             {
-
                 var mvcHandler = httpContext.Handler as MvcHandler;
                 if (mvcHandler != null)
                 {
@@ -94,7 +81,6 @@ namespace Orchard.Mvc
         /// </summary>
         public class HttpContextPlaceholder : HttpContextBase, IDisposable
         {
-            private HttpContext _httpContext;
             private HttpRequestPlaceholder _request;
             private readonly Lazy<string> _baseUrl;
             private readonly IDictionary _items = new Dictionary<object, object>();
@@ -106,34 +92,12 @@ namespace Orchard.Mvc
 
             public void Dispose()
             {
-                _httpContext = null;
-                if (HttpContext.Current != null)
-                    HttpContext.Current = null;
             }
 
             public override HttpRequestBase Request
             {
-
-                // Note: To fully resolve the baseUrl, some factories are needed (HttpContextBase, RequestContext...),
-                // so, doing this in such a factory creates a circular dependency (see HttpContextBase factory comments).
-
-                // When rendering a view in a background task, an Html Helper can access HttpContext.Current directly,
-                // so, here we create a fake HttpContext based on the baseUrl, and use it to update HttpContext.Current.
-                // We cannot do this before in a factory (see note above), anyway, by doing this on each Request access,
-                // we have a better chance to maintain the HttpContext.Current state even with some asynchronous code.
-
                 get
                 {
-                    if (_httpContext == null)
-                    {
-                        var httpContext = new HttpContext(new HttpRequest("", _baseUrl.Value, ""), new HttpResponse(new StringWriter()));
-                        httpContext.Items[IsBackgroundHttpContextKey] = true;
-                        _httpContext = httpContext;
-                    }
-
-                    if (HttpContext.Current != _httpContext)
-                        HttpContext.Current = _httpContext;
-
                     if (_request == null)
                     {
                         _request = new HttpRequestPlaceholder(this, _baseUrl);
@@ -144,10 +108,6 @@ namespace Orchard.Mvc
 
             internal RequestContext RequestContext
             {
-
-                // Uses the Request object but without creating an HttpContext which would need to resolve the baseUrl,
-                // so, can be used by the RequestContext factory without creating a circular dependency (see note above).
-
                 get
                 {
                     if (_request == null)
@@ -166,41 +126,24 @@ namespace Orchard.Mvc
 
             public override IDictionary Items => _items;
 
-            public override PageInstrumentationService PageInstrumentation => new PageInstrumentationService();
-
-            public override Cache Cache => HttpRuntime.Cache;
-
             public override HttpServerUtilityBase Server => new HttpServerUtilityPlaceholder();
 
-            public override object GetService(Type serviceType)
-            {
-                return null;
-            }
+            public override object GetService(Type serviceType) => null;
         }
 
         public class HttpSessionStatePlaceholder : HttpSessionStateBase
         {
-            public override object this[string name]
-            {
-                get
-                {
-                    return null;
-                }
-            }
+            public override object this[string name] => null;
         }
 
         public class HttpResponsePlaceholder : HttpResponseBase
         {
-            public override string ApplyAppPathModifier(string virtualPath)
-            {
-                return virtualPath;
-            }
-
+            public new string ApplyAppPathModifier(string virtualPath) => virtualPath;
             public override HttpCookieCollection Cookies => new HttpCookieCollection();
         }
 
         /// <summary>
-        /// standin context for background tasks. 
+        /// standin context for background tasks.
         /// </summary>
         public class HttpRequestPlaceholder : HttpRequestBase
         {
@@ -216,13 +159,13 @@ namespace Orchard.Mvc
                 _baseUrl = baseUrl;
             }
 
-            public override RequestContext RequestContext
+            public new System.Web.Routing.RequestContext RequestContext
             {
                 get
                 {
                     if (_requestContext == null)
                     {
-                        _requestContext = new RequestContext(_httpContext, new RouteData());
+                        _requestContext = new System.Web.Routing.RequestContext(_httpContext, new System.Web.Routing.RouteData());
                     }
                     return _requestContext;
                 }
@@ -232,19 +175,10 @@ namespace Orchard.Mvc
 
             public override string RawUrl => Url.OriginalString;
 
-            /// <summary>
-            /// anonymous identity provided for background task.
-            /// </summary>
             public override bool IsAuthenticated => false;
 
-            /// <summary>
-            /// Create an anonymous ID the same way as ASP.NET would.
-            /// Some users of an HttpRequestPlaceHolder object could expect this,
-            /// say CookieCultureSelector from module Orchard.CulturePicker.
-            /// </summary>
-            public override string AnonymousID => Guid.NewGuid().ToString("D", CultureInfo.InvariantCulture);
+            public new string AnonymousID => Guid.NewGuid().ToString("D", CultureInfo.InvariantCulture);
 
-            // empty collection provided for background operation
             public override NameValueCollection Form => new NameValueCollection();
 
             public override Uri Url
@@ -276,7 +210,6 @@ namespace Orchard.Mvc
                     return new NameValueCollection {
                         { "SERVER_PORT", Url.Port.ToString(CultureInfo.InvariantCulture) },
                         { "HTTP_HOST", Url.Authority.ToString(CultureInfo.InvariantCulture) },
-
                     };
                 }
             }
@@ -298,28 +231,12 @@ namespace Orchard.Mvc
 
         public class HttpBrowserCapabilitiesPlaceholder : HttpBrowserCapabilitiesBase
         {
-            public override string this[string key]
-            {
-                get
-                {
-                    return "";
-                }
-            }
-
             public override bool IsMobileDevice => false;
-            public override string Browser => "Placeholder";
-            public override bool Cookies => true;
-            public override ArrayList Browsers => new ArrayList();
         }
 
         public class HttpServerUtilityPlaceholder : HttpServerUtilityBase
         {
-            public override int ScriptTimeout { get; set; }
-
-            public override string MapPath(string path)
-            {
-                return HostingEnvironment.MapPath(path);
-            }
+            public override string MapPath(string path) => System.Web.Hosting.HostingEnvironment.MapPath(path);
         }
     }
 }

@@ -65,9 +65,8 @@ namespace Orchard.Mvc.Routes
             using (_routeCollection.GetWriteLock())
             {
                 // existing routes are removed while the collection is briefly inaccessable
-                _routeCollection
-                    .OfType<HubRoute>()
-                    .ForEach(x => x.ReleaseShell(_shellSettings));
+                foreach (var hubRoute in _routeCollection.OfType<HubRoute>().ToList())
+                    hubRoute.ReleaseShell(_shellSettings);
 
                 // HACK: For inserting names in internal dictionary when inserting route to RouteCollection.
                 var routeCollectionType = typeof(RouteCollection);

@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Web.Mvc;
 using Orchard.ContentManagement.Handlers;
 
 namespace Orchard.ContentManagement.Drivers
@@ -19,11 +18,6 @@ namespace Orchard.ContentManagement.Drivers
 
         public override void Apply(BuildEditorContext context)
         {
-        }
-
-        class ViewDataContainer : IViewDataContainer
-        {
-            public ViewDataDictionary ViewData { get; set; }
         }
 
         public ContentItemTemplateResult<TContent> LongestMatch(string displayType, params string[] knownDisplayTypes)

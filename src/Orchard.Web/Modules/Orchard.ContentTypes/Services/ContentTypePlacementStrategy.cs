@@ -1,3 +1,4 @@
+using System.Web;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,7 +60,7 @@ namespace Orchard.ContentTypes.Services
                     {
                         var workContext = _workContextAccessor.GetContext();
                         if (ctx.DisplayType == null &&
-                            AdminFilter.IsApplied(workContext.HttpContext.Request.RequestContext))
+                            AdminFilter.IsApplied(workContext.HttpContext.Request.RequestContext()))
                         { // Tests if it's executing in admin in order to override placement.info for editors in back-end only
 
                             foreach (var customPlacement in customPlacements)

@@ -1,5 +1,6 @@
 using System.Reflection;
 using Autofac;
+using Autofac.Core.Registration;
 using Orchard.Data.Providers;
 using Module = Autofac.Module;
 
@@ -12,7 +13,7 @@ namespace Orchard.Data
             builder.RegisterGeneric(typeof(Repository<>)).As(typeof(IRepository<>)).InstancePerDependency();
 
         }
-        protected override void AttachToComponentRegistration(Autofac.Core.IComponentRegistry componentRegistry, Autofac.Core.IComponentRegistration registration)
+        protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistry, Autofac.Core.IComponentRegistration registration)
         {
             if (typeof(IDataServicesProvider).IsAssignableFrom(registration.Activator.LimitType))
             {

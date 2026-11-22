@@ -2,13 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
 using Autofac;
 
 namespace Orchard.Environment
 {
 
-    public class DefaultOrchardHostContainer : IOrchardHostContainer, IDependencyResolver
+    public class DefaultOrchardHostContainer : IOrchardHostContainer
     {
         private readonly IContainer _container;
 
@@ -72,13 +71,12 @@ namespace Orchard.Environment
             return Resolve(typeof(TService), default(TService));
         }
 
-        object IDependencyResolver.GetService(Type serviceType)
+        public object GetService(Type serviceType)
         {
-            // Resolve service, or null
             return Resolve(serviceType, default(object));
         }
 
-        IEnumerable<object> IDependencyResolver.GetServices(Type serviceType)
+        public IEnumerable<object> GetServices(Type serviceType)
         {
             return Resolve<IEnumerable>(typeof(IEnumerable<>).MakeGenericType(serviceType), Enumerable.Empty<object>()).Cast<object>();
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Autofac;
 using Orchard.ContentManagement.MetaData.Models;
 using Orchard.ContentManagement.Records;

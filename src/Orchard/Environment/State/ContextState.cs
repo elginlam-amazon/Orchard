@@ -1,6 +1,6 @@
 using System;
-using System.Runtime.Remoting;
-using System.Runtime.Remoting.Messaging;
+using System.Collections.Generic;
+using System.Threading;
 using System.Web;
 using Orchard.Mvc.Extensions;
 
@@ -12,6 +12,10 @@ namespace Orchard.Environment.State
     /// <typeparam name="T">The type of data to store</typeparam>
     public class ContextState<T> where T : class
     {
+        // AsyncLocal replaces CallContext.LogicalSetData/GetData for .NET Core async-flow storage.
+        private static readonly AsyncLocal<Dictionary<string, object>> _asyncLocalStorage =
+            new AsyncLocal<Dictionary<string, object>>();
+
         private readonly string _name;
         private readonly Func<T> _defaultValue;
 
@@ -26,22 +30,25 @@ namespace Orchard.Environment.State
             _defaultValue = defaultValue;
         }
 
+        private static Dictionary<string, object> GetOrCreateStorage()
+        {
+            if (_asyncLocalStorage.Value == null)
+                _asyncLocalStorage.Value = new Dictionary<string, object>();
+            return _asyncLocalStorage.Value;
+        }
+
         public T GetState()
         {
             if (HttpContext.Current.IsBackgroundHttpContext())
             {
-                // Because CallContext Logical Data can be shared across application domains,
-                // here we also check if it's a real local instance, not a tranparent proxy.
-                var handle = CallContext.LogicalGetData(_name) as ObjectHandle;
-                var data = handle != null && !RemotingServices.IsTransparentProxy(handle) ? handle.Unwrap() : null;
+                var storage = GetOrCreateStorage();
+                storage.TryGetValue(_name, out var data);
 
                 if (data == null)
                 {
                     if (_defaultValue != null)
                     {
-                        // Because CallContext Logical Data can be shared across application domains,
-                        // data are wrapped in an ObjectHandle that inherits from MarshalByRefObject.
-                        CallContext.LogicalSetData(_name, new ObjectHandle(data = _defaultValue()));
+                        storage[_name] = data = _defaultValue();
                         return data as T;
                     }
                 }
@@ -61,7 +68,7 @@ namespace Orchard.Environment.State
         {
             if (HttpContext.Current.IsBackgroundHttpContext())
             {
-                CallContext.LogicalSetData(_name, new ObjectHandle(state));
+                GetOrCreateStorage()[_name] = state;
             }
             else
             {

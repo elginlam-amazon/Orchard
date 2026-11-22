@@ -49,9 +49,9 @@ namespace Orchard.Mvc.ModelBinders
                 // The steps above don't affect binding booleans from any where other than a form,
                 // because those won't give us here a list of possible values to aggregate.
             }
-            catch
+            catch (Exception ex)
             {
-                bindingContext.ModelState.AddModelError(bindingContext.ModelName, new FormatException());
+                bindingContext.ModelState.AddModelError(bindingContext.ModelName, ex.Message);
                 return null;
             }
             return value;

@@ -1,6 +1,8 @@
+using System.IO;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Orchard.DisplayManagement.Shapes
 {
@@ -13,11 +15,38 @@ namespace Orchard.DisplayManagement.Shapes
     {
         public OrchardTagBuilder(string tagName) : base(tagName) { }
 
-        public IHtmlString StartElement => new HtmlString(ToString(TagRenderMode.StartTag));
-        public IHtmlString EndElement => new HtmlString(ToString(TagRenderMode.EndTag));
+        public IHtmlString StartElement
+        {
+            get
+            {
+                TagRenderMode = TagRenderMode.StartTag;
+                return new HtmlString(RenderToString());
+            }
+        }
+
+        public IHtmlString EndElement
+        {
+            get
+            {
+                TagRenderMode = TagRenderMode.EndTag;
+                return new HtmlString(RenderToString());
+            }
+        }
+
         public IHtmlString ToHtmlString(TagRenderMode renderMode = TagRenderMode.Normal)
         {
-            return new HtmlString(ToString(renderMode));
+            TagRenderMode = renderMode;
+            return new HtmlString(RenderToString());
+        }
+
+        public string ToString(System.Web.Mvc.TagRenderMode renderMode)
+            => ToHtmlString((TagRenderMode)(int)renderMode).ToHtmlString();
+
+        private string RenderToString()
+        {
+            using var sw = new StringWriter();
+            WriteTo(sw, HtmlEncoder.Default);
+            return sw.ToString();
         }
     }
 
@@ -30,7 +59,7 @@ namespace Orchard.DisplayManagement.Shapes
             foreach (var cssClass in shape.Classes ?? Enumerable.Empty<string>())
                 tagBuilder.AddCssClass(cssClass);
             if (!string.IsNullOrEmpty(shape.Id))
-                tagBuilder.GenerateId(shape.Id);
+                tagBuilder.GenerateId(shape.Id, "_");
             return tagBuilder;
         }
     }

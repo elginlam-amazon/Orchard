@@ -17,7 +17,7 @@ namespace Orchard.DisplayManagement.Implementation
             IDisplayManager displayManager,
             IShapeFactory shapeFactory,
             ViewContext viewContext,
-            IViewDataContainer viewDataContainer)
+            object viewDataContainer)
         {
             _displayManager = displayManager;
             _shapeFactory = shapeFactory;
@@ -26,7 +26,7 @@ namespace Orchard.DisplayManagement.Implementation
         }
 
         public ViewContext ViewContext { get; set; }
-        public IViewDataContainer ViewDataContainer { get; set; }
+        public object ViewDataContainer { get; set; }
 
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
         {

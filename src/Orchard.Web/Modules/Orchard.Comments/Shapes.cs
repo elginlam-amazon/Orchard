@@ -1,6 +1,5 @@
 using System.IO;
 using System.Web.Mvc;
-using System.Web.Mvc.Html;
 using Orchard.ContentManagement;
 using Orchard.DisplayManagement;
 using Orchard.Localization;

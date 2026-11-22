@@ -1,6 +1,6 @@
-using System.ServiceModel;
-using System.ServiceModel.Channels;
-using System.ServiceModel.Dispatcher;
+using CoreWCF;
+using CoreWCF.Channels;
+using CoreWCF.Dispatcher;
 using Autofac.Core;
 
 namespace Orchard.Wcf

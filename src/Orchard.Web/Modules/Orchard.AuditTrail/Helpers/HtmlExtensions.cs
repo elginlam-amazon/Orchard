@@ -1,6 +1,6 @@
 using System.Web;
 using System.Web.Mvc;
-using System.Web.Mvc.Html;
+// using System.Web.Mvc.Html; // empty namespace not available on .NET Core
 
 namespace Orchard.AuditTrail.Helpers
 {

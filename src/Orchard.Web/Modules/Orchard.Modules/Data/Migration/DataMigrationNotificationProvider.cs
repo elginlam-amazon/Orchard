@@ -38,7 +38,7 @@ namespace Orchard.Modules.Data.Migration
 
             if (features.Any())
             {
-                UrlHelper urlHelper = new UrlHelper(_workContext.HttpContext.Request.RequestContext);
+                UrlHelper urlHelper = new UrlHelper(new System.Web.Routing.RequestContext(_workContext.HttpContext, new System.Web.Routing.RouteData()));
 
                 yield return new NotifyEntry
                 {
